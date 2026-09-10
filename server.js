@@ -271,6 +271,32 @@ app.post('/api/players', requireAdmin, async (req, res) => {
   }
 });
 
+// Cập nhật ảnh đại diện avatar (Mở cho tất cả thành viên tự cập nhật từ điện thoại/máy tính)
+app.put('/api/players/:id/avatar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { avatar } = req.body;
+
+    if (!avatar) {
+      return res.status(400).json({ error: 'Thiếu dữ liệu ảnh đại diện' });
+    }
+
+    if (isMongoConnected) {
+      const updated = await Player.findOneAndUpdate({ id }, { avatar }, { new: true });
+      return res.json(updated);
+    }
+
+    const idx = fallbackData.players.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      fallbackData.players[idx].avatar = avatar;
+      return res.json(fallbackData.players[idx]);
+    }
+    res.status(404).json({ error: 'Player not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/players/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;

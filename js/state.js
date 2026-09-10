@@ -207,6 +207,26 @@ class StateManager {
     return null;
   }
 
+  async updatePlayerAvatar(id, avatarBase64) {
+    const index = this.data.players.findIndex(p => p.id === id);
+    if (index !== -1) {
+      this.data.players[index].avatar = avatarBase64;
+      this.saveData();
+
+      // Gửi API cập nhật avatar lên server MongoDB (mở cho cả thành viên)
+      try {
+        fetch(`${API_BASE}/players/${id}/avatar`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ avatar: avatarBase64 })
+        }).catch(err => console.warn('Sync updatePlayerAvatar error:', err));
+      } catch (e) { }
+
+      return this.data.players[index];
+    }
+    return null;
+  }
+
   async deletePlayer(id) {
     this.data.players = this.data.players.filter(p => p.id !== id);
     if (this.data.matches) {
