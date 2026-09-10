@@ -7,6 +7,9 @@
   <title>FC TNT - Quản Lý Đội Bóng Phủi & Bảng Vinh Danh Trao Thưởng</title>
   <meta name="description"
     content="Ứng dụng quản lý đội bóng đá phong trào, lưu lịch sử trận đấu, chấm điểm phong độ cầu thủ thang điểm 10 và bảng xếp hạng trao giải Vua phá lưới, Vua kiến tạo, MVP.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
@@ -723,9 +726,46 @@
             </div>
           </div>
 
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Kiểu Cổ Áo</label>
+              <select class="form-control" id="kit-collar-style">
+                <option value="vneck">Cổ Chữ V Thể Thao (V-Neck)</option>
+                <option value="round">Cổ Tròn Bo Dệt (Crew Neck)</option>
+                <option value="polo">Cổ Bẻ (Polo Collar)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Họa Tiết Kỹ Thuật Số</label>
+              <select class="form-control" id="kit-pattern-style">
+                <option value="floral">Hoa Văn Dạ Quang Hoàng Gia (Baroque Floral)</option>
+                <option value="stripes">Sọc Dọc Thi Đấu (Vertical Stripes)</option>
+                <option value="chevron">Họa Tiết Mũi Tên Đan Xen (Chevron Vector)</option>
+                <option value="plain">Trơn Tinh Tế (Clean Minimalist)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Font Số Thi Đấu</label>
+              <select class="form-control" id="kit-number-font">
+                <option value="bebas">Premier League (Bebas Bold)</option>
+                <option value="rajdhani">Champions League (Rajdhani Cut)</option>
+                <option value="classic">Classic Athletic (Impact Block)</option>
+              </select>
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; margin-top: 1.5rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #fff; cursor: pointer;">
+                <input type="checkbox" id="kit-enable-overlay" checked style="width: 18px; height: 18px; accent-color: var(--accent-emerald);">
+                <span>In Tên & Số Đè Lên Mặt Sau</span>
+              </label>
+            </div>
+          </div>
+
           <div class="form-group" style="margin-top: 0.5rem;">
             <label class="form-label" style="display: flex; justify-content: space-between;">
-              <span>📸 Ảnh Mặt Trước Áo (Tải ảnh chụp thật)</span>
+              <span>📸 Ảnh Mặt Trước Áo (Tùy chọn tải ảnh chụp thực tế)</span>
               <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.clearFrontImage()" style="padding: 2px 8px; font-size: 0.72rem; color: #ef4444;">🗑️ Xóa ảnh</button>
             </label>
             <div style="display: flex; gap: 0.75rem; align-items: center;">
@@ -737,7 +777,7 @@
 
           <div class="form-group">
             <label class="form-label" style="display: flex; justify-content: space-between;">
-              <span>📸 Ảnh Mặt Sau Áo (Tải ảnh chụp thật)</span>
+              <span>📸 Ảnh Mặt Sau Áo (Tùy chọn tải ảnh chụp thực tế)</span>
               <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.clearBackImage()" style="padding: 2px 8px; font-size: 0.72rem; color: #ef4444;">🗑️ Xóa ảnh</button>
             </label>
             <div style="display: flex; gap: 0.75rem; align-items: center;">
@@ -745,7 +785,7 @@
               <img id="kit-back-preview" src="" style="width: 48px; height: 48px; object-fit: contain; background: #0b1120; border-radius: 8px; border: 1px solid var(--border-subtle); display: none;" onerror="this.style.display='none'" onload="this.style.display='block'">
             </div>
             <input type="hidden" id="kit-back-image">
-            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;">* Mẹo: Để trống ảnh nếu muốn dùng mẫu áo 3D kỹ thuật số mặc định tự tạo từ màu sắc bên trên.</small>
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;">* Mẹo: Nếu ảnh tải lên đã có in sẵn tên số thì có thể bỏ tick ô "In Tên & Số Đè Lên" để áo hiển thị đúng ảnh gốc!</small>
           </div>
         </div>
         <div class="modal-footer">

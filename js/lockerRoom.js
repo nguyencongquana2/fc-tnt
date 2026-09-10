@@ -267,63 +267,125 @@ window.lockerRoomModule = {
 
     const playerName = (player.name || 'FC TNT').toUpperCase();
     const playerNumber = player.number !== undefined && player.number !== null ? player.number : 10;
+    const enableOverlay = kit.enableOverlay !== false; // Default true
+    const numberFont = kit.numberFont === 'rajdhani' ? "'Rajdhani', sans-serif" : (kit.numberFont === 'classic' ? 'Impact, sans-serif' : "'Bebas Neue', sans-serif");
 
     // Mặt trước
     const frontHTML = kit.frontImage ? `
-      <div class="jersey-face jersey-front custom-image">
-        <img src="${kit.frontImage}" alt="${kit.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 26px 26px 10px 10px; display: block;">
+      <div class="jersey-face jersey-front custom-image" style="--border-color: ${kit.secondaryColor};">
+        <img src="${kit.frontImage}" alt="${kit.name}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+        <div class="jersey-collar-wrap">
+          <div class="jersey-collar-rib">
+            <span class="jersey-size-tag">FC TNT • L</span>
+          </div>
+        </div>
+        <div class="jersey-sleeve-cuff-left"></div>
+        <div class="jersey-sleeve-cuff-right"></div>
+        <div class="jersey-texture-mesh"></div>
         <div class="jersey-lighting-overlay"></div>
       </div>
     ` : `
-      <div class="jersey-face jersey-front" style="background: linear-gradient(135deg, ${kit.primaryColor} 0%, ${kit.primaryColor} 75%, ${kit.secondaryColor} 100%);">
-        <div class="jersey-collar" style="border-top: 14px solid ${kit.secondaryColor};"></div>
-        <div class="jersey-shoulder-stripes">
-          <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-          <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-          <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+      <div class="jersey-face jersey-front" style="background: radial-gradient(circle at 50% 30%, ${kit.primaryColor} 0%, #030712 100%); --border-color: ${kit.secondaryColor};">
+        ${kit.patternStyle === 'floral' || !kit.patternStyle ? '<div class="jersey-pattern-floral"></div>' : ''}
+        
+        <div class="jersey-collar-wrap">
+          <div class="jersey-collar-rib" style="border-color: ${kit.secondaryColor};">
+            <span class="jersey-size-tag">FC TNT • DRI-FIT ADV</span>
+          </div>
         </div>
+
+        <div class="jersey-shoulder-stripes">
+          <div class="stripe-group stripe-left">
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+          </div>
+          <div class="stripe-group stripe-right">
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+          </div>
+        </div>
+
+        <div class="jersey-sleeve-cuff-left" style="background: ${kit.secondaryColor};"></div>
+        <div class="jersey-sleeve-cuff-right" style="background: ${kit.secondaryColor};"></div>
+
         <div class="jersey-chest-row">
-          <div class="jersey-chest-logo">⚡</div>
-          <div class="jersey-team-crest" style="border-color: ${kit.secondaryColor};">
+          <div class="jersey-chest-logo" style="color: ${kit.secondaryColor};">⚡</div>
+          <div class="jersey-team-crest">
             <span class="crest-icon">⚽</span>
             <span class="crest-text">${teamName}</span>
           </div>
         </div>
+
         <div class="jersey-sponsor-box">
-          <div class="jersey-sponsor-logo">✦ ${kit.sponsor || teamName} ✦</div>
-          <div class="jersey-sponsor-sub">OFFICIAL MATCH KIT • ${kit.season || '2025/2026'}</div>
+          <div class="jersey-sponsor-logo" style="color: #ffffff;">✦ ${kit.sponsor || teamName} ✦</div>
+          <div class="jersey-sponsor-sub">OFFICIAL MATCHWEAR • ${kit.season || '2025/2026'}</div>
         </div>
-        <div class="jersey-bottom-tag">AUTHENTIC FOOTBALL GEAR</div>
+
+        <div class="jersey-bottom-tag">AUTHENTIC FOOTBALL GEAR • DRY-FIT</div>
+        <div class="jersey-texture-mesh"></div>
         <div class="jersey-lighting-overlay"></div>
       </div>
     `;
 
     // Mặt sau
     const backHTML = kit.backImage ? `
-      <div class="jersey-face jersey-back custom-image">
-        <img src="${kit.backImage}" alt="${kit.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 26px 26px 10px 10px; display: block;">
-        <div class="jersey-back-print-overlay">
-          <div class="jersey-back-name" style="color: ${kit.textColor};">${playerName}</div>
-          <div class="jersey-back-number" style="color: ${kit.numberColor};">${playerNumber}</div>
+      <div class="jersey-face jersey-back custom-image" style="--border-color: ${kit.secondaryColor};">
+        <img src="${kit.backImage}" alt="${kit.name}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+        <div class="jersey-collar-wrap">
+          <div class="jersey-collar-rib">
+            <span class="jersey-size-tag">FC TNT</span>
+          </div>
         </div>
+        <div class="jersey-sleeve-cuff-left"></div>
+        <div class="jersey-sleeve-cuff-right"></div>
+        
+        ${enableOverlay ? `
+          <div class="jersey-back-print-overlay">
+            <div class="jersey-back-name" style="color: ${kit.textColor}; font-family: ${numberFont};">${playerName}</div>
+            <div class="jersey-back-number" style="color: ${kit.numberColor}; font-family: ${numberFont};">${playerNumber}</div>
+            <div class="jersey-back-team-slug" style="color: ${kit.textColor}; opacity: 0.9;">${teamName}</div>
+          </div>
+        ` : ''}
+
+        <div class="jersey-texture-mesh"></div>
         <div class="jersey-lighting-overlay"></div>
       </div>
     ` : `
-      <div class="jersey-face jersey-back" style="background: linear-gradient(135deg, ${kit.primaryColor} 0%, ${kit.primaryColor} 80%, ${kit.secondaryColor} 100%);">
-        <div class="jersey-collar" style="border-top: 14px solid ${kit.secondaryColor};"></div>
-        <div class="jersey-shoulder-stripes">
-          <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-          <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-          <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+      <div class="jersey-face jersey-back" style="background: radial-gradient(circle at 50% 30%, ${kit.primaryColor} 0%, #030712 100%); --border-color: ${kit.secondaryColor};">
+        ${kit.patternStyle === 'floral' || !kit.patternStyle ? '<div class="jersey-pattern-floral"></div>' : ''}
+        
+        <div class="jersey-collar-wrap">
+          <div class="jersey-collar-rib" style="border-color: ${kit.secondaryColor};">
+            <span class="jersey-size-tag">FC TNT</span>
+          </div>
         </div>
+
+        <div class="jersey-shoulder-stripes">
+          <div class="stripe-group stripe-left">
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+          </div>
+          <div class="stripe-group stripe-right">
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
+          </div>
+        </div>
+
+        <div class="jersey-sleeve-cuff-left" style="background: ${kit.secondaryColor};"></div>
+        <div class="jersey-sleeve-cuff-right" style="background: ${kit.secondaryColor};"></div>
         
         <div class="jersey-back-print-area">
-          <div class="jersey-back-name" style="color: ${kit.textColor};">${playerName}</div>
-          <div class="jersey-back-number" style="color: ${kit.numberColor};">${playerNumber}</div>
-          <div class="jersey-back-team-slug" style="color: ${kit.textColor}; opacity: 0.85;">${teamName}</div>
+          <div class="jersey-back-name" style="color: ${kit.textColor}; font-family: ${numberFont};">${playerName}</div>
+          <div class="jersey-back-number" style="color: ${kit.numberColor}; font-family: ${numberFont};">${playerNumber}</div>
+          <div class="jersey-back-team-slug" style="color: ${kit.textColor}; opacity: 0.9;">${teamName}</div>
         </div>
 
         <div class="jersey-bottom-tag">#${playerNumber} • ${player.position || 'FW'}</div>
+        <div class="jersey-texture-mesh"></div>
         <div class="jersey-lighting-overlay"></div>
       </div>
     `;
@@ -335,13 +397,16 @@ window.lockerRoomModule = {
     const descEl = document.getElementById('locker-kit-info-desc');
     if (descEl) {
       descEl.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <div>
             <h3 style="color: #fff; font-size: 1.25rem; font-weight: 800; margin-bottom: 0.25rem;">${kit.name}</h3>
             <p style="color: var(--text-muted); font-size: 0.85rem;">Mùa giải ${kit.season} • Nhà tài trợ: <strong style="color: var(--accent-emerald);">${kit.sponsor}</strong></p>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Đang in áo cho:</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.toggleOverlay()" style="font-size: 0.78rem;">
+              ${enableOverlay ? '🔲 In Tên/Số: ĐANG BẬT' : '🔘 In Tên/Số: ĐÃ TẮT'}
+            </button>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Đang in cho:</span>
             <span style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-emerald); color: #34d399; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.85rem;">
               #${playerNumber} ${playerName}
             </span>
@@ -349,6 +414,14 @@ window.lockerRoomModule = {
         </div>
       `;
     }
+  },
+
+  async toggleOverlay() {
+    const kit = this.getActiveKit();
+    kit.enableOverlay = kit.enableOverlay === false ? true : false;
+    await window.stateManager.updateKit(kit.id, { enableOverlay: kit.enableOverlay });
+    window.showToast(`👕 Đã ${kit.enableOverlay ? 'BẬT' : 'TẮT'} in tên số đè lên lưng áo!`);
+    this.render3DStage();
   },
 
   openKitModal(kitId) {
@@ -367,10 +440,22 @@ window.lockerRoomModule = {
     document.getElementById('kit-type-select').value = kit.type || 'home';
     document.getElementById('kit-season-input').value = kit.season || '2025 - 2026';
     document.getElementById('kit-sponsor-input').value = kit.sponsor || 'FC NTN';
-    document.getElementById('kit-primary-color').value = kit.primaryColor || '#dc2626';
-    document.getElementById('kit-secondary-color').value = kit.secondaryColor || '#ffffff';
+    document.getElementById('kit-primary-color').value = kit.primaryColor || '#0a0e17';
+    document.getElementById('kit-secondary-color').value = kit.secondaryColor || '#38bdf8';
     document.getElementById('kit-text-color').value = kit.textColor || '#ffffff';
-    document.getElementById('kit-number-color').value = kit.numberColor || '#fbbf24';
+    document.getElementById('kit-number-color').value = kit.numberColor || '#38bdf8';
+
+    const collarEl = document.getElementById('kit-collar-style');
+    if (collarEl) collarEl.value = kit.collarStyle || 'vneck';
+
+    const patternEl = document.getElementById('kit-pattern-style');
+    if (patternEl) patternEl.value = kit.patternStyle || 'floral';
+
+    const fontEl = document.getElementById('kit-number-font');
+    if (fontEl) fontEl.value = kit.numberFont || 'bebas';
+
+    const overlayEl = document.getElementById('kit-enable-overlay');
+    if (overlayEl) overlayEl.checked = kit.enableOverlay !== false;
 
     const frontImg = kit.frontImage || '';
     document.getElementById('kit-front-image').value = frontImg;
@@ -444,6 +529,10 @@ window.lockerRoomModule = {
       secondaryColor: document.getElementById('kit-secondary-color').value,
       textColor: document.getElementById('kit-text-color').value,
       numberColor: document.getElementById('kit-number-color').value,
+      collarStyle: document.getElementById('kit-collar-style')?.value || 'vneck',
+      patternStyle: document.getElementById('kit-pattern-style')?.value || 'floral',
+      numberFont: document.getElementById('kit-number-font')?.value || 'bebas',
+      enableOverlay: document.getElementById('kit-enable-overlay')?.checked ?? true,
       frontImage: document.getElementById('kit-front-image').value.trim(),
       backImage: document.getElementById('kit-back-image').value.trim()
     };
