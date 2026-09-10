@@ -185,6 +185,10 @@ window.playersModule = {
               <span class="pos-tag ${posClass}">${p.position}</span>
             </div>
             
+            <div class="player-card-header-nickname">
+              ${p.nickname ? `<span class="player-nickname-pill" title="Biệt danh: ${p.nickname}">"${p.nickname}"</span>` : ''}
+            </div>
+
             <div style="position: relative; cursor: pointer;" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Bấm để tải ảnh đại diện từ điện thoại/máy tính">
               <img class="player-avatar-large" src="${p.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}" alt="${p.name}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'">
               <div style="position: absolute; bottom: -2px; right: -2px; background: var(--accent-emerald); color: #000; font-size: 0.65rem; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: 2px solid #111; box-shadow: 0 2px 4px rgba(0,0,0,0.6);">
@@ -193,9 +197,9 @@ window.playersModule = {
             </div>
           </div>
 
-          <div class="player-name-section">
-            <div class="player-real-name">${p.name} #${p.number}</div>
-            <div class="player-nick-name">${p.nickname ? `"${p.nickname}"` : ''}</div>
+          <div class="player-jersey-section">
+            <div class="player-jersey-name">${p.name}</div>
+            <div class="player-jersey-number">${p.number !== undefined && p.number !== null ? p.number : '-'}</div>
           </div>
 
           <div class="player-mini-stats">
