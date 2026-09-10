@@ -99,6 +99,22 @@ mongoose.connect(MONGODB_URI, {
   isMongoConnected = false;
 });
 
+// Cấu hình mã PIN Quản trị viên (Mặc định 123456, có thể đổi trong .env)
+const ADMIN_PIN = process.env.ADMIN_PIN || '123456';
+const ADMIN_TOKEN = 'fc_tnt_admin_' + Buffer.from(ADMIN_PIN).toString('base64');
+
+// Middleware xác thực quyền Admin cho các thao tác thêm / sửa / xóa dữ liệu
+const requireAdmin = (req, res, next) => {
+  const token = req.headers['x-admin-token'];
+  if (token === ADMIN_TOKEN || token === 'fc_tnt_admin_authenticated') {
+    return next();
+  }
+  return res.status(401).json({ 
+    error: 'Yêu cầu quyền Quản trị viên! Vui lòng đăng nhập mã PIN để thực hiện thao tác này.',
+    requireAuth: true 
+  });
+};
+
 // =========================================================================
 // REST API ROUTES
 // =========================================================================
@@ -110,6 +126,33 @@ app.get('/api/status', (req, res) => {
     database: isMongoConnected ? 'MongoDB Connected' : 'Local Fallback Mode',
     timestamp: new Date().toISOString()
   });
+});
+
+// Auth endpoints
+app.post('/api/auth/login', (req, res) => {
+  const { pin } = req.body;
+  if (!pin) {
+    return res.status(400).json({ success: false, error: 'Vui lòng nhập mã PIN!' });
+  }
+
+  if (String(pin).trim() === String(ADMIN_PIN).trim()) {
+    return res.json({
+      success: true,
+      token: ADMIN_TOKEN,
+      message: 'Đăng nhập Quản trị viên thành công!'
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: 'Mã PIN Quản trị không chính xác! Vui lòng thử lại.'
+  });
+});
+
+app.get('/api/auth/check', (req, res) => {
+  const token = req.headers['x-admin-token'];
+  const isValid = token === ADMIN_TOKEN || token === 'fc_tnt_admin_authenticated';
+  res.json({ isAdmin: isValid });
 });
 
 // GET /api/data (Lấy toàn bộ dữ liệu đồng bộ)
@@ -155,7 +198,7 @@ app.get('/api/players', async (req, res) => {
   }
 });
 
-app.post('/api/players', async (req, res) => {
+app.post('/api/players', requireAdmin, async (req, res) => {
   try {
     const data = req.body;
     if (!data.id) data.id = 'p_' + Date.now();
@@ -172,7 +215,7 @@ app.post('/api/players', async (req, res) => {
   }
 });
 
-app.put('/api/players/:id', async (req, res) => {
+app.put('/api/players/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -193,7 +236,7 @@ app.put('/api/players/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/players/:id', async (req, res) => {
+app.delete('/api/players/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -222,7 +265,7 @@ app.get('/api/matches', async (req, res) => {
   }
 });
 
-app.post('/api/matches', async (req, res) => {
+app.post('/api/matches', requireAdmin, async (req, res) => {
   try {
     const matchData = req.body;
     if (!matchData.id) matchData.id = 'm_' + Date.now();
@@ -239,7 +282,7 @@ app.post('/api/matches', async (req, res) => {
   }
 });
 
-app.put('/api/matches/:id', async (req, res) => {
+app.put('/api/matches/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -260,7 +303,7 @@ app.put('/api/matches/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/matches/:id', async (req, res) => {
+app.delete('/api/matches/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -277,7 +320,7 @@ app.delete('/api/matches/:id', async (req, res) => {
 });
 
 // Xóa tất cả các trận đấu
-app.delete('/api/matches', async (req, res) => {
+app.delete('/api/matches', requireAdmin, async (req, res) => {
   try {
     if (isMongoConnected) {
       await Match.deleteMany({});
@@ -292,7 +335,7 @@ app.delete('/api/matches', async (req, res) => {
 });
 
 // ================= TEAM & BACKUP API =================
-app.put('/api/team', async (req, res) => {
+app.put('/api/team', requireAdmin, async (req, res) => {
   try {
     const { name, slogan, logo } = req.body;
 
@@ -318,7 +361,7 @@ app.put('/api/team', async (req, res) => {
 });
 
 // Khôi phục toàn bộ từ file Backup JSON
-app.post('/api/backup/restore', async (req, res) => {
+app.post('/api/backup/restore', requireAdmin, async (req, res) => {
   try {
     const { teamInfo, players, matches } = req.body;
 

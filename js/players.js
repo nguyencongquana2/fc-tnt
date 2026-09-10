@@ -184,11 +184,13 @@ window.playersModule = {
               <span class="pos-tag ${posClass}">${p.position}</span>
             </div>
             
-            <div style="position: relative; cursor: pointer;" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Bấm để đổi ảnh đại diện">
+            <div style="position: relative; ${window.stateManager.isAdmin ? 'cursor: pointer;' : ''}" ${window.stateManager.isAdmin ? `onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Bấm để đổi ảnh đại diện"` : ''}>
               <img class="player-avatar-large" src="${p.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}" alt="${p.name}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'">
-              <div style="position: absolute; bottom: -2px; right: -2px; background: var(--accent-emerald); color: #000; font-size: 0.65rem; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: 2px solid #111; box-shadow: 0 2px 4px rgba(0,0,0,0.6);">
-                📷
-              </div>
+              ${window.stateManager.isAdmin ? `
+                <div style="position: absolute; bottom: -2px; right: -2px; background: var(--accent-emerald); color: #000; font-size: 0.65rem; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: 2px solid #111; box-shadow: 0 2px 4px rgba(0,0,0,0.6);">
+                  📷
+                </div>
+              ` : ''}
             </div>
           </div>
 
@@ -343,19 +345,29 @@ window.playersModule = {
 
     content.innerHTML = `
       <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
-        <div style="position: relative; cursor: pointer;" onclick="window.playersModule.quickUploadAvatar('${player.id}')" title="Bấm để đổi ảnh đại diện">
+        <div style="position: relative; ${window.stateManager.isAdmin ? 'cursor: pointer;' : ''}" ${window.stateManager.isAdmin ? `onclick="window.playersModule.quickUploadAvatar('${player.id}')" title="Bấm để đổi ảnh đại diện"` : ''}>
           <img src="${player.avatar}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-emerald);">
-          <div style="position: absolute; bottom: 0; right: 0; background: var(--accent-emerald); color: #000; font-size: 0.75rem; font-weight: 800; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.6);">
-            📷
-          </div>
+          ${window.stateManager.isAdmin ? `
+            <div style="position: absolute; bottom: 0; right: 0; background: var(--accent-emerald); color: #000; font-size: 0.75rem; font-weight: 800; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.6);">
+              📷
+            </div>
+          ` : ''}
         </div>
         <div>
           <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <h2 style="font-family: var(--font-display); font-size: 1.6rem; color: #fff;">${player.name}</h2>
             <span class="pos-tag pos-${player.position.toLowerCase()}">${player.position}</span>
-            <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; margin-left: 0.5rem;">
-              📷 Đổi Ảnh
-            </button>
+            ${window.stateManager.isAdmin ? `
+              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; margin-left: 0.5rem;">
+                📷 Đổi Ảnh
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.closeProfileModal(); window.playersModule.openPlayerModal('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
+                ✏️ Sửa
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="window.playersModule.closeProfileModal(); window.playersModule.deletePlayer('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
+                🗑️ Xóa
+              </button>
+            ` : ''}
           </div>
           <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">#${player.number} ${player.nickname ? `• "${player.nickname}"` : ''}</p>
           <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem;">${player.note || 'Chưa có ghi chú đặc biệt'}</p>

@@ -9,6 +9,8 @@ window.appModule = {
     this.bindNavigation();
     this.bindBackupRestore();
     this.bindTeamSettings();
+    this.bindAuth();
+    this.updateAuthUI();
     this.renderDashboard();
 
     // Initial render of sub-modules
@@ -18,7 +20,130 @@ window.appModule = {
 
     // Re-render when state updates
     window.stateManager.subscribe(() => {
+      this.updateAuthUI();
       this.renderDashboard();
+    });
+  },
+
+  bindAuth() {
+    const loginBtn = document.getElementById('auth-login-btn');
+    const logoutBtn = document.getElementById('auth-logout-btn');
+    const pinForm = document.getElementById('admin-pin-form');
+    const togglePinBtn = document.getElementById('toggle-pin-visibility-btn');
+    const pinInput = document.getElementById('admin-pin-input');
+
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => this.openAdminModal());
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        window.stateManager.logoutAdmin();
+        window.showToast('🚪 Đã đăng xuất khỏi chế độ Quản trị viên. Bạn đang ở chế độ Xem!', 'info');
+        this.updateAuthUI();
+        if (window.matchesModule) window.matchesModule.renderMatches();
+        if (window.playersModule) window.playersModule.renderPlayers();
+      });
+    }
+
+    if (togglePinBtn && pinInput) {
+      togglePinBtn.addEventListener('click', () => {
+        if (pinInput.type === 'password') {
+          pinInput.type = 'text';
+          togglePinBtn.innerText = '🙈';
+        } else {
+          pinInput.type = 'password';
+          togglePinBtn.innerText = '👁️';
+        }
+      });
+    }
+
+    if (pinForm) {
+      pinForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pin = pinInput.value.trim();
+        const errorEl = document.getElementById('admin-pin-error');
+        if (errorEl) errorEl.innerText = '';
+
+        if (!pin) {
+          if (errorEl) errorEl.innerText = 'Vui lòng nhập mã PIN!';
+          return;
+        }
+
+        const submitBtn = pinForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerText = '⏳ Đang xác thực...';
+        }
+
+        const res = await window.stateManager.loginAdmin(pin);
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = '🔑 Xác Nhận Mở Khóa';
+        }
+
+        if (res.success) {
+          this.closeAdminModal();
+          window.showToast('🎉 Đăng nhập Quản trị viên thành công! Bạn có toàn quyền quản lý đội bóng.');
+          this.updateAuthUI();
+          if (window.matchesModule) window.matchesModule.renderMatches();
+          if (window.playersModule) window.playersModule.renderPlayers();
+        } else {
+          if (errorEl) errorEl.innerText = res.error || 'Mã PIN không đúng!';
+          pinInput.focus();
+        }
+      });
+    }
+  },
+
+  openAdminModal() {
+    const modal = document.getElementById('admin-pin-modal');
+    const pinInput = document.getElementById('admin-pin-input');
+    const errorEl = document.getElementById('admin-pin-error');
+    if (errorEl) errorEl.innerText = '';
+    if (pinInput) {
+      pinInput.value = '';
+      pinInput.type = 'password';
+    }
+    const toggleBtn = document.getElementById('toggle-pin-visibility-btn');
+    if (toggleBtn) toggleBtn.innerText = '👁️';
+
+    if (modal) {
+      modal.classList.add('active');
+      setTimeout(() => pinInput && pinInput.focus(), 150);
+    }
+  },
+
+  closeAdminModal() {
+    const modal = document.getElementById('admin-pin-modal');
+    if (modal) modal.classList.remove('active');
+  },
+
+  updateAuthUI() {
+    const isAdmin = window.stateManager.isAdmin;
+    const badge = document.getElementById('auth-role-badge');
+    const loginBtn = document.getElementById('auth-login-btn');
+    const logoutBtn = document.getElementById('auth-logout-btn');
+
+    if (badge) {
+      if (isAdmin) {
+        badge.className = 'auth-role-badge admin';
+        badge.innerHTML = '👑 <span>Quản Trị</span>';
+        badge.title = 'Bạn đang đăng nhập với quyền Quản trị viên FC TNT';
+      } else {
+        badge.className = 'auth-role-badge viewer';
+        badge.innerHTML = '👁️ <span>Thành Viên</span>';
+        badge.title = 'Chế độ chỉ xem cho thành viên trong đội';
+      }
+    }
+
+    if (loginBtn) loginBtn.style.display = isAdmin ? 'none' : 'inline-flex';
+    if (logoutBtn) logoutBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+
+    // Show or hide admin-only elements
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = isAdmin ? '' : 'none';
     });
   },
 

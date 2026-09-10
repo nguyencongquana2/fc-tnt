@@ -35,14 +35,60 @@ const DEFAULT_DATA = {
   matches: []
 };
 
+const ADMIN_AUTH_KEY = 'fc_tnt_admin_token';
+
 class StateManager {
   constructor() {
+    this.isAdmin = !!sessionStorage.getItem(ADMIN_AUTH_KEY) || !!localStorage.getItem(ADMIN_AUTH_KEY);
     this.data = this.loadData();
     this.listeners = [];
     this.isServerSynced = false;
 
     // Tự động đồng bộ với backend MongoDB khi khởi chạy
     this.syncWithBackend();
+  }
+
+  getAdminToken() {
+    return sessionStorage.getItem(ADMIN_AUTH_KEY) || localStorage.getItem(ADMIN_AUTH_KEY) || '';
+  }
+
+  async loginAdmin(pin, remember = true) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        this.isAdmin = true;
+        if (remember) {
+          localStorage.setItem(ADMIN_AUTH_KEY, data.token);
+        } else {
+          sessionStorage.setItem(ADMIN_AUTH_KEY, data.token);
+        }
+        this.notify();
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, error: data.error || 'Mã PIN không đúng!' };
+      }
+    } catch (err) {
+      // Fallback offline pin check
+      if (String(pin).trim() === '123456') {
+        this.isAdmin = true;
+        localStorage.setItem(ADMIN_AUTH_KEY, 'fc_tnt_admin_authenticated');
+        this.notify();
+        return { success: true, message: 'Đăng nhập Quản trị viên (Chế độ offline) thành công!' };
+      }
+      return { success: false, error: 'Không thể kết nối máy chủ để xác thực!' };
+    }
+  }
+
+  logoutAdmin() {
+    this.isAdmin = false;
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
+    localStorage.removeItem(ADMIN_AUTH_KEY);
+    this.notify();
   }
 
   loadData() {
@@ -127,7 +173,10 @@ class StateManager {
     try {
       fetch(`${API_BASE}/players`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        },
         body: JSON.stringify(newPlayer)
       }).catch(err => console.warn('Sync addPlayer error:', err));
     } catch (e) { }
@@ -145,7 +194,10 @@ class StateManager {
       try {
         fetch(`${API_BASE}/players/${id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-token': this.getAdminToken()
+          },
           body: JSON.stringify(this.data.players[index])
         }).catch(err => console.warn('Sync updatePlayer error:', err));
       } catch (e) { }
@@ -169,7 +221,11 @@ class StateManager {
     // Gửi API xóa lên server MongoDB
     try {
       fetch(`${API_BASE}/players/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        }
       }).catch(err => console.warn('Sync deletePlayer error:', err));
     } catch (e) { }
   }
@@ -197,7 +253,10 @@ class StateManager {
     try {
       fetch(`${API_BASE}/matches`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        },
         body: JSON.stringify(newMatch)
       }).catch(err => console.warn('Sync addMatch error:', err));
     } catch (e) { }
@@ -215,7 +274,10 @@ class StateManager {
       try {
         fetch(`${API_BASE}/matches/${id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-token': this.getAdminToken()
+          },
           body: JSON.stringify(this.data.matches[index])
         }).catch(err => console.warn('Sync updateMatch error:', err));
       } catch (e) { }
@@ -232,7 +294,11 @@ class StateManager {
     // Gửi API xóa lên server MongoDB
     try {
       fetch(`${API_BASE}/matches/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        }
       }).catch(err => console.warn('Sync deleteMatch error:', err));
     } catch (e) { }
   }
@@ -244,7 +310,11 @@ class StateManager {
     // Gửi API xóa tất cả trận lên server MongoDB
     try {
       fetch(`${API_BASE}/matches`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        }
       }).catch(err => console.warn('Sync clearAllMatches error:', err));
     } catch (e) { }
   }
@@ -403,7 +473,10 @@ class StateManager {
     try {
       fetch(`${API_BASE}/team`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        },
         body: JSON.stringify(this.data.teamInfo)
       }).catch(err => console.warn('Sync updateTeamInfo error:', err));
     } catch (e) { }
@@ -428,7 +501,10 @@ class StateManager {
         try {
           fetch(`${API_BASE}/backup/restore`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-admin-token': this.getAdminToken()
+            },
             body: JSON.stringify(parsed)
           }).catch(err => console.warn('Sync importDataJSON error:', err));
         } catch (e) { }

@@ -79,12 +79,14 @@ window.matchesModule = {
             
             <div style="display: flex; align-items: center; gap: 0.5rem;" onclick="event.stopPropagation()">
               <span class="match-result-badge ${resultClass}">${resultText}</span>
-              <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.openCreateMatchModal('${m.id}')" title="Sửa trận" style="padding: 0.25rem 0.6rem;">
-                ✏️ Sửa
-              </button>
-              <button class="btn btn-danger btn-sm" onclick="window.matchesModule.deleteMatch('${m.id}', event)" title="Xóa trận này" style="padding: 0.25rem 0.6rem;">
-                🗑️ Xóa
-              </button>
+              ${window.stateManager.isAdmin ? `
+                <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.openCreateMatchModal('${m.id}')" title="Sửa trận" style="padding: 0.25rem 0.6rem;">
+                  ✏️ Sửa
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="window.matchesModule.deleteMatch('${m.id}', event)" title="Xóa trận này" style="padding: 0.25rem 0.6rem;">
+                  🗑️ Xóa
+                </button>
+              ` : ''}
             </div>
           </div>
 
@@ -325,8 +327,10 @@ window.matchesModule = {
           <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.toggleViewMode()">
             ${this.activeViewMode === 'pitch' ? '📋 Xem Dạng Bảng Kéo' : '🏟️ Xem Sơ Đồ 3-1-2'}
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.openCreateMatchModal('${m.id}')">✏️ Sửa Tỉ Số/Đội</button>
-          <button class="btn btn-danger btn-sm" onclick="window.matchesModule.deleteMatch('${m.id}')">🗑️ Xóa Trận</button>
+          ${window.stateManager.isAdmin ? `
+            <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.openCreateMatchModal('${m.id}')">✏️ Sửa Tỉ Số/Đội</button>
+            <button class="btn btn-danger btn-sm" onclick="window.matchesModule.deleteMatch('${m.id}')">🗑️ Xóa Trận</button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -690,6 +694,12 @@ window.matchesModule = {
   },
 
   handleDragStart(e, playerId, fromSlot) {
+    if (!window.stateManager.isAdmin) {
+      if (e.preventDefault) e.preventDefault();
+      window.showToast('🔒 Bạn đang ở Chế Độ Xem. Hãy đăng nhập Quản trị viên để thay đổi đội hình!', 'info');
+      return false;
+    }
+
     this.dragState.playerId = playerId;
     this.dragState.fromSlot = fromSlot;
     this.dragState.isDragging = true;
@@ -918,6 +928,48 @@ window.matchesModule = {
 
     const container = document.getElementById('quick-edit-container');
     if (!container) return;
+
+    if (!window.stateManager.isAdmin) {
+      container.innerHTML = `
+        <div class="quick-edit-card" style="border-color: rgba(255,255,255,0.15);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+              <img src="${p.avatar}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-emerald);">
+              <div>
+                <div style="font-weight: 800; font-size: 1rem; color: #fff;">${p.name} (#${p.number})</div>
+                <div style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600;">
+                  ${ps.isStarter !== false ? 'Đang đá chính (Sân 3-1-2)' : 'Đang ngồi dự bị'}
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('quick-edit-container').innerHTML = ''" style="padding: 0.2rem 0.6rem;">&times;</button>
+          </div>
+
+          <div style="display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.85rem;">
+            <div style="text-align: center;">
+              <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Điểm Trận</div>
+              <div style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 900; color: var(--accent-emerald);">${Number(ps.rating || 7.0).toFixed(1)} ⭐</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Bàn Thắng</div>
+              <div style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 900; color: var(--accent-ruby);">${ps.goals || 0} ⚽</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Kiến Tạo</div>
+              <div style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 900; color: var(--accent-cyan);">${ps.assists || 0} 👟</div>
+            </div>
+          </div>
+
+          ${ps.note ? `<div style="font-size: 0.82rem; color: var(--text-main); font-style: italic; background: rgba(255,255,255,0.03); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); margin-bottom: 0.85rem;">💬 "${ps.note}"</div>` : ''}
+
+          <div style="text-align: center; font-size: 0.78rem; color: var(--text-dim); padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.08);">
+            🔒 <em>Đăng nhập Quản trị viên để chấm điểm & điều chỉnh.</em>
+          </div>
+        </div>
+      `;
+      container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
 
     container.innerHTML = `
       <div class="quick-edit-card">
