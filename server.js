@@ -54,17 +54,17 @@ const OFFICIAL_PLAYERS = [
 const OFFICIAL_KITS = [
   {
     id: 'kit_home',
-    name: 'Áo Sân Nhà (Home Kit)',
+    name: 'Áo Sân Nhà (Black Blue Floral Edition)',
     type: 'home',
     season: '2025 - 2026',
-    primaryColor: '#dc2626',
-    secondaryColor: '#ffffff',
+    primaryColor: '#0a0e17',
+    secondaryColor: '#38bdf8',
     textColor: '#ffffff',
-    numberColor: '#fbbf24',
-    frontImage: '',
-    backImage: '',
+    numberColor: '#38bdf8',
+    frontImage: '/assets/kits/kit_home_front.jpg',
+    backImage: '/assets/kits/kit_home_back.jpg',
     sponsor: 'FC NTN',
-    description: 'Trang phục thi đấu sân nhà sắc đỏ nhiệt huyết và kiên cường'
+    description: 'Trang phục thi đấu sân nhà hoa văn xanh dạ quang nghệ thuật trên nền đen huyền bí'
   },
   {
     id: 'kit_away',
@@ -107,12 +107,11 @@ async function seedInitialData() {
       console.log('✅ Seeded 15 players successfully!');
     }
 
-    const kitCount = await Kit.countDocuments();
-    if (kitCount === 0) {
-      console.log('🌱 Seeding 2 official kits to MongoDB...');
-      await Kit.insertMany(OFFICIAL_KITS);
-      console.log('✅ Seeded 2 kits successfully!');
+    // Luôn cập nhật hoặc khởi tạo mẫu áo chính thức
+    for (const kit of OFFICIAL_KITS) {
+      await Kit.findOneAndUpdate({ id: kit.id }, kit, { upsert: true });
     }
+    console.log('✅ Updated official kits in MongoDB successfully!');
 
     const teamCount = await Team.countDocuments();
     if (teamCount === 0) {

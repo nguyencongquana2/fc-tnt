@@ -27,17 +27,17 @@ const OFFICIAL_PLAYERS = [
 const OFFICIAL_KITS = [
   {
     id: 'kit_home',
-    name: 'Áo Sân Nhà (Home Kit)',
+    name: 'Áo Sân Nhà (Black Blue Floral Edition)',
     type: 'home',
     season: '2025 - 2026',
-    primaryColor: '#dc2626',
-    secondaryColor: '#ffffff',
+    primaryColor: '#0a0e17',
+    secondaryColor: '#38bdf8',
     textColor: '#ffffff',
-    numberColor: '#fbbf24',
-    frontImage: '',
-    backImage: '',
+    numberColor: '#38bdf8',
+    frontImage: '/assets/kits/kit_home_front.jpg',
+    backImage: '/assets/kits/kit_home_back.jpg',
     sponsor: 'FC NTN',
-    description: 'Trang phục thi đấu sân nhà sắc đỏ nhiệt huyết và kiên cường'
+    description: 'Trang phục thi đấu sân nhà hoa văn xanh dạ quang nghệ thuật trên nền đen huyền bí'
   },
   {
     id: 'kit_away',
