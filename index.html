@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FC TNT - Quản Lý Đội Bóng Phủi & Bảng Vinh Danh Trao Thưởng</title>
+  <meta name="description"
+    content="Ứng dụng quản lý đội bóng đá phong trào, lưu lịch sử trận đấu, chấm điểm phong độ cầu thủ thang điểm 10 và bảng xếp hạng trao giải Vua phá lưới, Vua kiến tạo, MVP.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+</head>
+
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand-wrapper" onclick="window.appModule.switchTab('dashboard')">
+        <div class="brand-icon-box">⚽</div>
+        <div>
+          <div class="brand-title">FC TNT</div>
+          <div class="brand-subtitle">Quản Lý & Trao Thưởng Đội Bóng</div>
+        </div>
+
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="dashboard" id="tab-btn-dashboard" title="Tổng quan">
+          📊 <span>Tổng Quan</span>
+        </button>
+        <button class="tab-btn" data-tab="awards" id="tab-btn-awards" title="Bảng trao thưởng">
+          🏆 <span>Bảng Trao Thưởng</span>
+        </button>
+        <button class="tab-btn" data-tab="matches" id="tab-btn-matches" title="Lịch sử trận đấu">
+          ⚽ <span>Trận Đấu & Chấm Điểm</span>
+        </button>
+        <button class="tab-btn" data-tab="players" id="tab-btn-players" title="Danh sách cầu thủ">
+          👥 <span>Đội Hình</span>
+        </button>
+      </nav>
+
+      <!-- Utility Actions -->
+      <div class="nav-actions">
+        <button class="btn btn-secondary btn-sm" id="export-data-btn" title="Xuất dữ liệu dự phòng">
+          💾 <span>Xuất Dữ Liệu</span>
+        </button>
+        <button class="btn btn-secondary btn-sm" id="import-data-btn" title="Nạp file dữ liệu">
+          📥 <span>Nhập Dữ Liệu</span>
+        </button>
+        <input type="file" id="import-file-input" accept=".json" style="display: none;">
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- TAB 1: TỔNG QUAN -->
+    <section id="tab-dashboard" class="tab-content active">
+      <div class="hero-banner">
+        <div class="hero-team-info">
+          <div class="team-badge-large">⚽</div>
+          <div>
+            <h1 class="hero-team-name" id="hero-team-name-text">FC PHỦI BROTHERS</h1>
+            <p class="hero-team-slogan" id="hero-team-slogan-text">"Đá hết mình - Thắng cùng mừng, Thua cùng uống"</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" id="edit-team-btn">✏️ Đổi Tên Đội</button>
+          <button class="btn btn-primary" onclick="window.matchesModule.openCreateMatchModal()">⚽ + Thêm Trận Đấu
+            Mới</button>
+          <button class="btn btn-gold" onclick="window.appModule.switchTab('awards')">🏆 Xem Bảng Trao Thưởng</button>
+        </div>
+      </div>
+
+      <!-- Stat Cards Grid -->
+      <div class="stat-cards-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-label">Tổng Số Trận</span>
+            <span class="stat-card-icon">🏟️</span>
+          </div>
+          <div class="stat-card-value" id="dash-total-matches">0</div>
+          <div class="stat-card-desc">Đã diễn ra từ đầu mùa</div>
+        </div>
+
+        <div class="stat-card cyan">
+          <div class="stat-card-header">
+            <span class="stat-card-label">Tỉ Lệ Thắng</span>
+            <span class="stat-card-icon">🔥</span>
+          </div>
+          <div class="stat-card-value" id="dash-win-rate">0%</div>
+          <div class="stat-card-desc">Phong độ toàn đội</div>
+        </div>
+
+        <div class="stat-card gold">
+          <div class="stat-card-header">
+            <span class="stat-card-label">Tổng Bàn Thắng</span>
+            <span class="stat-card-icon">⚡</span>
+          </div>
+          <div class="stat-card-value" id="dash-total-goals">0</div>
+          <div class="stat-card-desc">Hiệu suất dội bom</div>
+        </div>
+
+        <div class="stat-card purple">
+          <div class="stat-card-header">
+            <span class="stat-card-label">Thành Viên</span>
+            <span class="stat-card-icon">👥</span>
+          </div>
+          <div class="stat-card-value" id="dash-total-players">0</div>
+          <div class="stat-card-desc">Cầu thủ trong danh sách</div>
+        </div>
+      </div>
+
+      <!-- Spotlight Winners -->
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">🌟 Ngôi Sao Đang Dẫn Đầu (Spotlight)</h2>
+          <p class="section-subtitle">Các cá nhân xuất sắc nhất sẵn sàng nhận giải thưởng</p>
+        </div>
+      </div>
+
+      <div class="stat-cards-grid" style="margin-bottom: 2.5rem;">
+        <div class="stat-card gold" style="cursor: pointer;" onclick="window.appModule.switchTab('awards')">
+          <div class="stat-card-header">
+            <span class="stat-card-label" style="color: var(--accent-gold);">👑 CẦU THỦ XUẤT SẮC (MVP)</span>
+            <span class="stat-card-icon">🏆</span>
+          </div>
+          <div id="dash-mvp-spotlight">Đang cập nhật...</div>
+        </div>
+
+        <div class="stat-card" style="cursor: pointer;" onclick="window.appModule.switchTab('awards')">
+          <div class="stat-card-header">
+            <span class="stat-card-label" style="color: var(--accent-ruby);">⚽ VUA PHÁ LƯỚI</span>
+            <span class="stat-card-icon">🥇</span>
+          </div>
+          <div id="dash-scorer-spotlight">Đang cập nhật...</div>
+        </div>
+
+        <div class="stat-card cyan" style="cursor: pointer;" onclick="window.appModule.switchTab('awards')">
+          <div class="stat-card-header">
+            <span class="stat-card-label" style="color: var(--accent-cyan);">👟 VUA KIẾN TẠO</span>
+            <span class="stat-card-icon">🎯</span>
+          </div>
+          <div id="dash-assist-spotlight">Đang cập nhật...</div>
+        </div>
+      </div>
+
+      <!-- Recent Matches -->
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">📅 Trận Đấu Gần Nhất</h2>
+          <p class="section-subtitle">Chấm điểm hoặc xem nhanh diễn biến sơ đồ 3-1-2</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="window.appModule.switchTab('matches')">Xem Tất Cả Trận
+          →</button>
+      </div>
+      <div id="dash-recent-matches" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+
+      <div
+        style="margin-top: 3rem; text-align: center; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+        <button class="btn btn-secondary btn-sm" id="reset-sample-btn" style="color: var(--text-dim);">
+          🔄 Nạp lại dữ liệu mẫu demo
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 2: BẢNG TRAO THƯỞNG -->
+    <section id="tab-awards" class="tab-content">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">🏆 Bảng Trao Thưởng & Vinh Danh (Hall of Fame)</h2>
+          <p class="section-subtitle">Tôn vinh các cầu thủ xuất sắc nhất qua tất cả các trận đấu</p>
+        </div>
+      </div>
+
+      <div class="awards-grid">
+        <div class="award-category-card">
+          <div class="award-card-header">
+            <div class="award-badge-title">
+              <div class="award-icon-box mvp">👑</div>
+              <div>
+                <h3>Cầu Thủ Xuất Sắc Nhất</h3>
+                <p>Điểm trung bình (Rating) cao nhất</p>
+              </div>
+            </div>
+          </div>
+          <div id="mvp-container"></div>
+        </div>
+
+        <div class="award-category-card">
+          <div class="award-card-header">
+            <div class="award-badge-title">
+              <div class="award-icon-box scorer">⚽</div>
+              <div>
+                <h3>Vua Phá Lưới (Chiếc Giày Vàng)</h3>
+                <p>Nhiều bàn thắng nhất toàn đội</p>
+              </div>
+            </div>
+          </div>
+          <div id="scorers-container"></div>
+        </div>
+
+        <div class="award-category-card">
+          <div class="award-card-header">
+            <div class="award-badge-title">
+              <div class="award-icon-box assist">🎯</div>
+              <div>
+                <h3>Vua Kiến Tạo (Nhạc Trưởng)</h3>
+                <p>Nhiều đường chuyền thành bàn nhất</p>
+              </div>
+            </div>
+          </div>
+          <div id="assists-container"></div>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top: 3rem;">
+        <div class="section-title-wrap">
+          <h2 class="section-title">📋 Bảng Thống Kê Tổng Hợp Tất Cả Cầu Thủ</h2>
+          <p class="section-subtitle">Xếp hạng theo Điểm trung bình và Đóng góp bàn thắng</p>
+        </div>
+      </div>
+
+      <div
+        style="background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-subtle); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 650px;">
+          <thead>
+            <tr
+              style="border-bottom: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">
+              <th style="padding: 1rem; text-align: left;">Hạng</th>
+              <th style="padding: 1rem; text-align: left;">Cầu Thủ</th>
+              <th style="padding: 1rem; text-align: center;">Vị Trí</th>
+              <th style="padding: 1rem; text-align: center;">Số Trận</th>
+              <th style="padding: 1rem; text-align: center;">Bàn Thắng</th>
+              <th style="padding: 1rem; text-align: center;">Kiến Tạo</th>
+              <th style="padding: 1rem; text-align: center;">MOTM 🏆</th>
+              <th style="padding: 1rem; text-align: center;">Điểm TB ⭐</th>
+            </tr>
+          </thead>
+          <tbody id="full-stats-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: TRẬN ĐẤU & CHẤM ĐIỂM -->
+    <section id="tab-matches" class="tab-content">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">⚽ Lịch Sử Trận Đấu & Chấm Điểm</h2>
+          <p class="section-subtitle">Bấm vào từng trận để xem sơ đồ 3-1-2 và chấm điểm (0-10) cho anh em</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.clearAllMatches()"
+            title="Làm mới toàn bộ danh sách trận">
+            🗑️ Xóa Tất Cả Trận
+          </button>
+          <button class="btn btn-primary" onclick="window.matchesModule.openCreateMatchModal()">
+            ➕ Thêm Trận Đấu Mới
+          </button>
+        </div>
+      </div>
+
+      <div id="matches-list-container" class="matches-list"></div>
+    </section>
+
+    <!-- TAB 4: DANH SÁCH CẦU THỦ -->
+    <section id="tab-players" class="tab-content">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">👥 Đội Hình Cầu Thủ</h2>
+          <p class="section-subtitle">Quản lý 15 thành viên trong đội bóng, vị trí, số áo và xem hồ sơ</p>
+        </div>
+        <button class="btn btn-primary" id="add-player-btn">
+          ➕ Thêm Cầu Thủ Mới
+        </button>
+      </div>
+
+      <div id="players-grid-container" class="players-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CHI TIẾT TRẬN ĐẤU & CHẤM ĐIỂM      -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="match-detail-modal">
+    <div class="modal-container modal-xl">
+      <div class="modal-header">
+        <h3 class="modal-title" id="match-detail-title">⚽ Chi Tiết & Chấm Điểm Trận Đấu</h3>
+        <button class="modal-close-btn" onclick="window.matchesModule.closeMatchDetailModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="match-detail-info-header"></div>
+        <div id="match-rating-list-container"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="window.matchesModule.closeMatchDetailModal()">Hủy</button>
+        <button class="btn btn-primary" id="save-match-ratings-btn">💾 Lưu Bảng Điểm & Thống Kê</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: THÊM / SỬA TRẬN ĐẤU (2-COLUMN LAYOUT)-->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="match-form-modal">
+    <div class="modal-container modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="match-form-title">⚽ Thêm Trận Đấu Mới (Sân 7 • 3-1-2)</h3>
+        <button class="modal-close-btn" onclick="window.matchesModule.closeCreateMatchModal()">&times;</button>
+      </div>
+      <form id="match-form">
+        <div class="modal-body">
+          <div class="match-form-split-grid">
+            <!-- CỘT TRÁI: THÔNG TIN TRẬN ĐẤU -->
+            <div class="match-form-left-col">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">📅 Ngày đá</label>
+                  <input type="date" class="form-control" id="match-date" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">⏰ Giờ đá</label>
+                  <input type="time" class="form-control" id="match-time" value="19:30">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">🛡️ Tên đội đối thủ</label>
+                  <input type="text" class="form-control" id="match-opponent" placeholder="Vd: FC Anh Em Xóm, FC IT..."
+                    required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">🏟️ Loại sân</label>
+                  <select class="form-control" id="match-type">
+                    <option value="7">Sân 7 người (Sơ đồ 3-1-2)</option>
+                    <option value="5">Sân 5 người</option>
+                    <option value="11">Sân 11 người</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">📍 Địa điểm / Sân bóng</label>
+                <input type="text" class="form-control" id="match-venue"
+                  placeholder="Vd: Sân bóng Chuyên Việt, Sân Cầu Giấy...">
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">⚽ Bàn thắng ĐỘI NHÀ</label>
+                  <input type="number" min="0" class="form-control" id="match-home-score" value="0" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">🛡️ Bàn thắng ĐỐI THỦ</label>
+                  <input type="number" min="0" class="form-control" id="match-away-score" value="0" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">💬 Ghi chú diễn biến trận</label>
+                <input type="text" class="form-control" id="match-note"
+                  placeholder="Vd: Sơ đồ 3-1-2 phát huy hiệu quả...">
+              </div>
+            </div>
+
+            <!-- CỘT PHẢI: DANH SÁCH CẦU THỦ ĐĂNG KÝ THAM GIA -->
+            <div class="match-form-right-col">
+              <div class="lineup-select-header">
+                <div>
+                  <label class="form-label" style="margin-bottom: 0; color: #fff;">👥 DANH SÁCH CẦU THỦ ĐI ĐÁ:</label>
+                  <span style="font-size: 0.75rem; color: var(--text-dim);">Chọn các anh em có mặt trận này</span>
+                </div>
+                <div style="display: flex; gap: 0.4rem;">
+                  <button type="button" class="btn btn-secondary btn-sm"
+                    style="font-size: 0.72rem; padding: 0.2rem 0.5rem;"
+                    onclick="window.matchesModule.selectAllLineup(true)">Chọn Tất Cả</button>
+                  <button type="button" class="btn btn-secondary btn-sm"
+                    style="font-size: 0.72rem; padding: 0.2rem 0.5rem;"
+                    onclick="window.matchesModule.selectAllLineup(false)">Bỏ Chọn</button>
+                </div>
+              </div>
+
+              <div id="match-lineup-selection" class="lineup-checkbox-grid"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+            onclick="window.matchesModule.closeCreateMatchModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary">💾 Lưu Trận Đấu & Chấm Điểm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: THÊM / SỬA CẦU THỦ -->
+  <div class="modal-overlay" id="player-modal">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="player-modal-title">➕ Thêm Cầu Thủ Mới</h3>
+        <button class="modal-close-btn" onclick="window.playersModule.closePlayerModal()">&times;</button>
+      </div>
+      <form id="player-form">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Họ và Tên Cầu Thủ</label>
+              <input type="text" class="form-control" id="player-name" placeholder="Vd: Nguyễn Văn Tuấn" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Biệt danh (Nickname)</label>
+              <input type="text" class="form-control" id="player-nickname" placeholder="Vd: Tuấn Đạt, Long Tanker...">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Số Áo Thi Đấu</label>
+              <input type="number" min="1" max="99" class="form-control" id="player-number" placeholder="10" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vị Trí Thi Đấu Sở Trường</label>
+              <select class="form-control" id="player-position">
+                <option value="FW">Tiền Đạo (FW)</option>
+                <option value="MF">Tiền Vệ (MF)</option>
+                <option value="DF">Hậu Vệ (DF)</option>
+                <option value="GK">Thủ Môn (GK)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>📸 Ảnh Đại Diện Cầu Thủ</span>
+              <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600;">Hỗ trợ upload ảnh thật
+                từ máy/điện thoại</span>
+            </label>
+
+            <div class="avatar-upload-wrapper">
+              <div class="avatar-preview-container"
+                onclick="document.getElementById('player-avatar-file-input').click()"
+                title="Bấm để tải ảnh từ máy tính / điện thoại">
+                <img id="player-avatar-preview"
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80">
+                <div class="avatar-overlay-btn">📷 Đổi ảnh</div>
+              </div>
+
+              <div class="avatar-controls-right">
+                <input type="file" id="player-avatar-file-input" accept="image/*" style="display: none;">
+
+                <button type="button" class="btn btn-secondary btn-sm"
+                  onclick="document.getElementById('player-avatar-file-input').click()"
+                  style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem 1rem;">
+                  📁 Tải Ảnh Lên Từ Máy Tính / Điện Thoại
+                </button>
+
+                <div style="display: flex; gap: 0.5rem; width: 100%;">
+                  <select class="form-control" id="player-avatar-preset" style="flex: 1; font-size: 0.8rem;">
+                    <option value="">-- Hoặc chọn mẫu có sẵn --</option>
+                    <option
+                      value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80">
+                      Mẫu Nam Trẻ 1</option>
+                    <option
+                      value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80">
+                      Mẫu Nam Trẻ 2</option>
+                    <option
+                      value="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80">
+                      Mẫu Nam Nam Tính 3</option>
+                    <option
+                      value="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80">
+                      Mẫu Nam Năng Động 4</option>
+                    <option
+                      value="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80">
+                      Mẫu Nam Thể Thao 5</option>
+                  </select>
+                </div>
+
+                <input type="text" class="form-control" id="player-avatar-custom"
+                  placeholder="Hoặc dán URL link ảnh bất kỳ..." style="font-size: 0.78rem;">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Số Điện Thoại / Zalo</label>
+              <input type="text" class="form-control" id="player-phone" placeholder="09xxxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Đặc Điểm Thi Đấu</label>
+              <input type="text" class="form-control" id="player-note" placeholder="Vd: Chân trái khéo, sút xa tốt...">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.playersModule.closePlayerModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu Cầu Thủ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: HỒ SƠ PHONG ĐỘ CẦU THỦ -->
+  <div class="modal-overlay" id="player-profile-modal">
+    <div class="modal-container" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 class="modal-title">👤 Hồ Sơ Phong Độ Cầu Thủ</h3>
+        <button class="modal-close-btn" onclick="window.playersModule.closeProfileModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="player-profile-content"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="window.playersModule.closeProfileModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ĐỔI TÊN ĐỘI BÓNG -->
+  <div class="modal-overlay" id="team-modal">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🛡️ Cài Đặt Thông Tin Đội Bóng</h3>
+        <button class="modal-close-btn"
+          onclick="document.getElementById('team-modal').classList.remove('active')">&times;</button>
+      </div>
+      <form id="team-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Tên Đội Bóng</label>
+            <input type="text" class="form-control" id="team-name-input" placeholder="Vd: FC ANH EM PHỦI" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Khẩu Hiệu / Slogan</label>
+            <input type="text" class="form-control" id="team-slogan-input"
+              placeholder="Vd: Đá hết mình - Thắng cùng mừng, Thua cùng uống">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+            onclick="document.getElementById('team-modal').classList.remove('active')">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu Thông Tin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Global Avatar Quick Upload Input -->
+  <input type="file" id="global-player-avatar-file" accept="image/*" style="display: none;">
+
+  <!-- Toast Notification Hub -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Javascript Modules -->
+  <script src="js/state.js"></script>
+  <script src="js/players.js"></script>
+  <script src="js/matches.js"></script>
+  <script src="js/awards.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

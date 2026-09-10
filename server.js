@@ -1,0 +1,377 @@
+/**
+ * FC Stats Master - Backend Server
+ * Node.js + Express + MongoDB
+ */
+
+require('dotenv').config();
+const dns = require('dns');
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch (e) {
+  console.warn('Could not set custom DNS servers:', e.message);
+}
+
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
+
+const Player = require('./models/Player');
+const Match = require('./models/Match');
+const Team = require('./models/Team');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fc_stats_master';
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 15 Cầu thủ chính thức của đội bóng
+const OFFICIAL_PLAYERS = [
+  { id: 'p_1', name: 'Quân Kun', nickname: 'Quân Kun', number: 5, position: 'DF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ cánh trái' },
+  { id: 'p_2', name: 'Vinh Lê', nickname: 'Vinh Lê', number: 6, position: 'MF', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền vệ trung tâm điều tiết' },
+  { id: 'p_3', name: 'ToDiu', nickname: 'ToDiu', number: 24, position: 'GK', avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Thủ môn bắt chính' },
+  { id: 'p_4', name: 'Tài Thọ', nickname: 'Tài Thọ', number: 7, position: 'FW', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền đạo cánh phải bứt tốc' },
+  { id: 'p_5', name: 'ct', nickname: 'ct', number: 11, position: 'MF', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Kỹ thuật lắt léo' },
+  { id: 'p_6', name: 'Côn 35K1', nickname: 'Côn 35K1', number: 69, position: 'DF', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Trung vệ thòng không chiến' },
+  { id: 'p_7', name: 'Trường Giang', nickname: 'Trường Giang', number: 8, position: 'MF', avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền vệ năng động' },
+  { id: 'p_8', name: 'BusCek.exe', nickname: 'BusCek.exe', number: 31, position: 'DF', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ bọc lót' },
+  { id: 'p_9', name: 'Tiếnn', nickname: 'Tiếnn', number: 22, position: 'MF', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền vệ cánh tốc độ' },
+  { id: 'p_10', name: 'Đức Bắc', nickname: 'Đức Bắc', number: 4, position: 'DF', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ cánh phải dập khỏe' },
+  { id: 'p_11', name: 'Đình Chiến', nickname: 'Đình Chiến', number: 19, position: 'MF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tạt bóng chuẩn xác' },
+  { id: 'p_12', name: 'Hùng Sứt', nickname: 'Hùng Sứt', number: 10, position: 'FW', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền đạo cánh trái sát thủ' },
+  { id: 'p_13', name: 'Đình Anh', nickname: 'Đình Anh', number: 67, position: 'DF', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ tranh chấp tốt' },
+  { id: 'p_14', name: 'Thành Nam', nickname: 'Thành Nam', number: 88, position: 'FW', avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền đạo đánh đầu' },
+  { id: 'p_15', name: 'Sỹ Nam', nickname: 'Sỹ Nam', number: 12, position: 'GK', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Thủ môn phản xạ' }
+];
+
+let isMongoConnected = false;
+
+// Fallback in-memory storage if MongoDB is connecting or unavailable
+let fallbackData = {
+  teamInfo: {
+    name: 'FC ANH EM PHỦI',
+    slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
+    badge: '⚽',
+    formation: '3-1-2'
+  },
+  players: [...OFFICIAL_PLAYERS],
+  matches: []
+};
+
+// Seed initial database
+async function seedInitialData() {
+  try {
+    const playerCount = await Player.countDocuments();
+    if (playerCount === 0) {
+      console.log('🌱 Seeding 15 official players to MongoDB...');
+      await Player.insertMany(OFFICIAL_PLAYERS);
+      console.log('✅ Seeded 15 players successfully!');
+    }
+
+    const teamCount = await Team.countDocuments();
+    if (teamCount === 0) {
+      await Team.create({
+        name: 'FC ANH EM PHỦI',
+        slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
+        logo: '⚽'
+      });
+      console.log('✅ Seeded default team info successfully!');
+    }
+  } catch (err) {
+    console.error('Error during database seeding:', err);
+  }
+}
+
+// Connect to MongoDB
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000
+}).then(async () => {
+  isMongoConnected = true;
+  console.log('🌿 Connected to MongoDB Database successfully!');
+  await seedInitialData();
+}).catch((err) => {
+  console.warn('⚠️ MongoDB connection warning (Using in-memory/JSON fallback):', err.message);
+  isMongoConnected = false;
+});
+
+// =========================================================================
+// REST API ROUTES
+// =========================================================================
+
+// Health / Status endpoint
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'online',
+    database: isMongoConnected ? 'MongoDB Connected' : 'Local Fallback Mode',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// GET /api/data (Lấy toàn bộ dữ liệu đồng bộ)
+app.get('/api/data', async (req, res) => {
+  try {
+    if (isMongoConnected) {
+      let team = await Team.findOne();
+      if (!team) {
+        team = { name: 'FC ANH EM PHỦI', slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống', logo: '⚽' };
+      }
+      const players = await Player.find().sort({ number: 1 });
+      const matches = await Match.find().sort({ createdAt: -1 });
+
+      return res.json({
+        teamInfo: {
+          name: team.name,
+          slogan: team.slogan,
+          badge: team.logo || '⚽',
+          formation: '3-1-2'
+        },
+        players,
+        matches
+      });
+    }
+
+    res.json(fallbackData);
+  } catch (err) {
+    console.error(err);
+    res.json(fallbackData);
+  }
+});
+
+// ================= PLAYERS API =================
+app.get('/api/players', async (req, res) => {
+  try {
+    if (isMongoConnected) {
+      const players = await Player.find().sort({ number: 1 });
+      return res.json(players);
+    }
+    res.json(fallbackData.players);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/players', async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data.id) data.id = 'p_' + Date.now();
+
+    if (isMongoConnected) {
+      const created = await Player.create(data);
+      return res.status(201).json(created);
+    }
+
+    fallbackData.players.push(data);
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/players/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (isMongoConnected) {
+      const updated = await Player.findOneAndUpdate({ id }, updates, { new: true });
+      return res.json(updated);
+    }
+
+    const idx = fallbackData.players.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      fallbackData.players[idx] = { ...fallbackData.players[idx], ...updates };
+      return res.json(fallbackData.players[idx]);
+    }
+    res.status(404).json({ error: 'Player not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/players/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isMongoConnected) {
+      await Player.findOneAndDelete({ id });
+      return res.json({ success: true, message: 'Player deleted' });
+    }
+
+    fallbackData.players = fallbackData.players.filter(p => p.id !== id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= MATCHES API =================
+app.get('/api/matches', async (req, res) => {
+  try {
+    if (isMongoConnected) {
+      const matches = await Match.find().sort({ createdAt: -1 });
+      return res.json(matches);
+    }
+    res.json(fallbackData.matches);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/matches', async (req, res) => {
+  try {
+    const matchData = req.body;
+    if (!matchData.id) matchData.id = 'm_' + Date.now();
+
+    if (isMongoConnected) {
+      const created = await Match.create(matchData);
+      return res.status(201).json(created);
+    }
+
+    fallbackData.matches.unshift(matchData);
+    res.status(201).json(matchData);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/matches/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (isMongoConnected) {
+      const updated = await Match.findOneAndUpdate({ id }, updates, { new: true });
+      return res.json(updated);
+    }
+
+    const idx = fallbackData.matches.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      fallbackData.matches[idx] = { ...fallbackData.matches[idx], ...updates };
+      return res.json(fallbackData.matches[idx]);
+    }
+    res.status(404).json({ error: 'Match not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/matches/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isMongoConnected) {
+      await Match.findOneAndDelete({ id });
+      return res.json({ success: true, message: 'Match deleted' });
+    }
+
+    fallbackData.matches = fallbackData.matches.filter(m => m.id !== id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Xóa tất cả các trận đấu
+app.delete('/api/matches', async (req, res) => {
+  try {
+    if (isMongoConnected) {
+      await Match.deleteMany({});
+      return res.json({ success: true, message: 'All matches deleted' });
+    }
+
+    fallbackData.matches = [];
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= TEAM & BACKUP API =================
+app.put('/api/team', async (req, res) => {
+  try {
+    const { name, slogan, logo } = req.body;
+
+    if (isMongoConnected) {
+      let team = await Team.findOne();
+      if (!team) {
+        team = await Team.create({ name, slogan, logo });
+      } else {
+        if (name) team.name = name;
+        if (slogan !== undefined) team.slogan = slogan;
+        if (logo) team.logo = logo;
+        await team.save();
+      }
+      return res.json(team);
+    }
+
+    if (name) fallbackData.teamInfo.name = name;
+    if (slogan !== undefined) fallbackData.teamInfo.slogan = slogan;
+    res.json(fallbackData.teamInfo);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Khôi phục toàn bộ từ file Backup JSON
+app.post('/api/backup/restore', async (req, res) => {
+  try {
+    const { teamInfo, players, matches } = req.body;
+
+    if (isMongoConnected) {
+      if (players && Array.isArray(players) && players.length > 0) {
+        await Player.deleteMany({});
+        await Player.insertMany(players);
+      }
+
+      if (matches && Array.isArray(matches)) {
+        await Match.deleteMany({});
+        if (matches.length > 0) {
+          await Match.insertMany(matches);
+        }
+      }
+
+      if (teamInfo) {
+        let team = await Team.findOne();
+        if (team) {
+          team.name = teamInfo.name || team.name;
+          team.slogan = teamInfo.slogan || team.slogan;
+          await team.save();
+        } else {
+          await Team.create(teamInfo);
+        }
+      }
+
+      return res.json({ success: true, message: 'Database restored successfully' });
+    }
+
+    if (teamInfo) fallbackData.teamInfo = teamInfo;
+    if (players) fallbackData.players = players;
+    if (matches) fallbackData.matches = matches;
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Phục vụ frontend tĩnh
+app.use(express.static(path.join(__dirname, '')));
+
+// Route fallback cho Single Page App
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Khởi động server
+app.listen(PORT, () => {
+  console.log(`=================================================`);
+  console.log(`🚀 FC Stats Master Server is running!`);
+  console.log(`🌐 Local URL: http://localhost:${PORT}`);
+  console.log(`🌿 Database: ${MONGODB_URI}`);
+  console.log(`=================================================`);
+});

@@ -1,0 +1,25 @@
+{
+  "name": "fc-stats-master",
+  "version": "1.0.0",
+  "description": "FC Stats Master - Quản lý đội bóng phủi, sơ đồ sân 7 (3-1-2) và bảng vinh danh với Node.js & MongoDB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.10.0"
+  },
+  "keywords": [
+    "football",
+    "fc-management",
+    "mongodb",
+    "express",
+    "sofascore-pitch"
+  ],
+  "author": "FC Anh Em Phủi",
+  "license": "ISC"
+}
