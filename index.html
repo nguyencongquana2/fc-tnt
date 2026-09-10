@@ -40,6 +40,9 @@
         <button class="tab-btn" data-tab="players" id="tab-btn-players" title="Danh sách cầu thủ">
           👥 <span>Đội Hình</span>
         </button>
+        <button class="tab-btn" data-tab="locker-room" id="tab-btn-locker-room" title="Phòng thay đồ & Áo đấu 3D">
+          👕 <span>Phòng Thay Đồ 3D</span>
+        </button>
       </nav>
 
       <!-- Utility Actions & Admin Authentication -->
@@ -292,6 +295,74 @@
       </div>
 
       <div id="players-grid-container" class="players-grid"></div>
+    </section>
+
+    <!-- TAB 5: PHÒNG THAY ĐỒ 3D & ÁO ĐẤU -->
+    <section id="tab-locker-room" class="tab-content">
+      <div class="locker-room-container">
+        <!-- Top Toolbar -->
+        <div class="locker-room-header">
+          <div class="section-title-group">
+            <h2 class="section-title">👕 Phòng Thay Đồ & Áo Đấu 3D (360°)</h2>
+            <p class="section-subtitle">Xoay 3D xem chi tiết áo sân nhà & sân khách, thử in tên số áo cầu thủ trước giờ ra sân</p>
+          </div>
+          <div id="locker-kit-selector"></div>
+        </div>
+
+        <!-- 3D Stage Area -->
+        <div class="locker-stage-wrapper">
+          <!-- Control bar -->
+          <div class="locker-controls-bar">
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.flipFront()">
+                👕 Mặt Trước
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.flipBack()">
+                🔢 Mặt Sau (In Số)
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="locker-auto-spin-btn" onclick="window.lockerRoomModule.toggleAutoRotate()">
+                🔄 Tự Động Xoay 360°
+              </button>
+            </div>
+
+            <!-- Player Jersey Picker -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex-wrap: wrap;">
+              <label for="locker-player-select" style="font-size: 0.85rem; font-weight: 700; color: var(--accent-gold);">
+                👤 In Áo Cầu Thủ:
+              </label>
+              <select id="locker-player-select" class="form-control" style="width: auto; min-width: 200px; padding: 0.35rem 0.75rem; font-size: 0.85rem;"></select>
+            </div>
+          </div>
+
+          <!-- 3D Stage Canvas Area -->
+          <div class="locker-3d-stage" id="locker-3d-stage" title="Kéo chuột hoặc vuốt ngón tay để xoay áo 360 độ">
+            <!-- Neon Lighting Spots -->
+            <div class="locker-spotlight left"></div>
+            <div class="locker-spotlight right"></div>
+            <div class="locker-hanger-hook">
+              <div class="hanger-bar"></div>
+            </div>
+
+            <!-- 3D Rotating Card -->
+            <div class="locker-jersey-3d-card" id="locker-jersey-3d-card">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Floor 3D Pedestal & Shadow -->
+            <div class="locker-floor-pedestal">
+              <div class="pedestal-glow"></div>
+            </div>
+
+            <!-- Drag hint -->
+            <div class="locker-drag-hint">
+              <span>👆 Rê chuột hoặc vuốt ngón tay để xoay 360°</span>
+            </div>
+          </div>
+
+          <!-- Kit Info Footer Box -->
+          <div class="locker-kit-info-box" id="locker-kit-info-desc"></div>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -595,6 +666,89 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- MODAL: CHỈNH SỬA / TÙY BIẾN ÁO ĐẤU 3D      -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="kit-edit-modal">
+    <div class="modal-container" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ Tùy Chỉnh Mẫu Áo Đấu</h3>
+        <button class="modal-close-btn" onclick="window.lockerRoomModule.closeKitModal()">&times;</button>
+      </div>
+      <form id="kit-edit-form">
+        <div class="modal-body" style="padding: 1.25rem;">
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label class="form-label">Tên Bộ Áo</label>
+              <input type="text" class="form-control" id="kit-name-input" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">Loại Áo</label>
+              <select class="form-control" id="kit-type-select">
+                <option value="home">Sân Nhà</option>
+                <option value="away">Sân Khách</option>
+                <option value="third">Áo Thứ 3</option>
+                <option value="gk">Thủ Môn</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mùa Giải</label>
+              <input type="text" class="form-control" id="kit-season-input" value="2025 - 2026">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nhà Tài Trợ / Ngực Áo</label>
+              <input type="text" class="form-control" id="kit-sponsor-input" value="FC NTN">
+            </div>
+          </div>
+
+          <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.75rem;">Màu Chính</label>
+              <input type="color" class="form-control" id="kit-primary-color" style="height: 40px; padding: 2px; cursor: pointer;">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.75rem;">Màu Viền</label>
+              <input type="color" class="form-control" id="kit-secondary-color" style="height: 40px; padding: 2px; cursor: pointer;">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.75rem;">Màu Chữ Tên</label>
+              <input type="color" class="form-control" id="kit-text-color" style="height: 40px; padding: 2px; cursor: pointer;">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.75rem;">Màu Số Áo</label>
+              <input type="color" class="form-control" id="kit-number-color" style="height: 40px; padding: 2px; cursor: pointer;">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 0.5rem;">
+            <label class="form-label">Ảnh Mặt Trước Áo Thực Tế (Tùy chọn chụp từ máy)</label>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <input type="file" id="kit-front-file" accept="image/*" class="form-control" style="font-size: 0.8rem; flex: 1;">
+              <img id="kit-front-preview" src="" style="width: 46px; height: 46px; object-fit: contain; background: #000; border-radius: 6px; border: 1px solid var(--border-subtle);" onerror="this.style.display='none'" onload="this.style.display='block'">
+            </div>
+            <input type="hidden" id="kit-front-image">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ảnh Mặt Sau Áo Thực Tế (Tùy chọn)</label>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <input type="file" id="kit-back-file" accept="image/*" class="form-control" style="font-size: 0.8rem; flex: 1;">
+              <img id="kit-back-preview" src="" style="width: 46px; height: 46px; object-fit: contain; background: #000; border-radius: 6px; border: 1px solid var(--border-subtle);" onerror="this.style.display='none'" onload="this.style.display='block'">
+            </div>
+            <input type="hidden" id="kit-back-image">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.lockerRoomModule.closeKitModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary">💾 Lưu Cấu Hình Áo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Global Avatar Quick Upload Input -->
   <input type="file" id="global-player-avatar-file" accept="image/*" style="display: none;">
 
@@ -606,6 +760,7 @@
   <script src="js/players.js"></script>
   <script src="js/matches.js"></script>
   <script src="js/awards.js"></script>
+  <script src="js/lockerRoom.js"></script>
   <script src="js/app.js"></script>
 </body>
 

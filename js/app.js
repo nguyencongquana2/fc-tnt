@@ -17,6 +17,7 @@ window.appModule = {
     if (window.playersModule) window.playersModule.init();
     if (window.matchesModule) window.matchesModule.init();
     if (window.awardsModule) window.awardsModule.init();
+    if (window.lockerRoomModule) window.lockerRoomModule.init();
 
     // Re-render when state updates
     window.stateManager.subscribe(() => {
@@ -25,6 +26,11 @@ window.appModule = {
       if (window.playersModule) window.playersModule.renderPlayers();
       if (window.matchesModule) window.matchesModule.renderMatches();
       if (window.awardsModule) window.awardsModule.renderAwards();
+      if (window.lockerRoomModule) {
+        window.lockerRoomModule.renderKitSelector();
+        window.lockerRoomModule.renderPlayerSelector();
+        window.lockerRoomModule.render3DStage();
+      }
     });
   },
 

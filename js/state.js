@@ -24,15 +24,47 @@ const OFFICIAL_PLAYERS = [
   { id: 'p_15', name: 'Sỹ Nam', nickname: 'Sỹ Nam', number: 12, position: 'GK', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', joinDate: '2025-01-01', note: 'Thủ môn phản xạ' }
 ];
 
+const OFFICIAL_KITS = [
+  {
+    id: 'kit_home',
+    name: 'Áo Sân Nhà (Home Kit)',
+    type: 'home',
+    season: '2025 - 2026',
+    primaryColor: '#dc2626',
+    secondaryColor: '#ffffff',
+    textColor: '#ffffff',
+    numberColor: '#fbbf24',
+    frontImage: '',
+    backImage: '',
+    sponsor: 'FC NTN',
+    description: 'Trang phục thi đấu sân nhà sắc đỏ nhiệt huyết và kiên cường'
+  },
+  {
+    id: 'kit_away',
+    name: 'Áo Sân Khách (Away Kit)',
+    type: 'away',
+    season: '2025 - 2026',
+    primaryColor: '#f8fafc',
+    secondaryColor: '#0ea5e9',
+    textColor: '#0f172a',
+    numberColor: '#0284c7',
+    frontImage: '',
+    backImage: '',
+    sponsor: 'FC NTN',
+    description: 'Trang phục thi đấu sân khách sắc trắng thanh lịch và tốc độ'
+  }
+];
+
 const DEFAULT_DATA = {
   teamInfo: {
-    name: 'FC ANH EM PHỦI',
+    name: 'FC NTN',
     slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
     badge: '⚽',
     formation: '3-1-2'
   },
   players: OFFICIAL_PLAYERS,
-  matches: []
+  matches: [],
+  kits: OFFICIAL_KITS
 };
 
 const ADMIN_AUTH_KEY = 'fc_tnt_admin_token';
@@ -329,6 +361,83 @@ class StateManager {
           'x-admin-token': this.getAdminToken()
         }
       }).catch(err => console.warn('Sync clearAllMatches error:', err));
+    } catch (e) { }
+  }
+
+  // --- KITS (ÁO ĐẤU 3D) CRUD ---
+  getKits() {
+    if (!this.data.kits || this.data.kits.length === 0) {
+      this.data.kits = JSON.parse(JSON.stringify(OFFICIAL_KITS));
+    }
+    return this.data.kits;
+  }
+
+  getKitById(id) {
+    return this.getKits().find(k => k.id === id);
+  }
+
+  async addKit(kit) {
+    const newKit = {
+      ...kit,
+      id: kit.id || ('kit_' + Date.now())
+    };
+    if (!this.data.kits) this.data.kits = [];
+    this.data.kits.push(newKit);
+    this.saveData();
+
+    // Gửi API lên server MongoDB
+    try {
+      fetch(`${API_BASE}/kits`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        },
+        body: JSON.stringify(newKit)
+      }).catch(err => console.warn('Sync addKit error:', err));
+    } catch (e) { }
+
+    return newKit;
+  }
+
+  async updateKit(id, updatedFields) {
+    if (!this.data.kits) this.data.kits = JSON.parse(JSON.stringify(OFFICIAL_KITS));
+    const index = this.data.kits.findIndex(k => k.id === id);
+    if (index !== -1) {
+      this.data.kits[index] = { ...this.data.kits[index], ...updatedFields };
+      this.saveData();
+
+      // Gửi API cập nhật lên server MongoDB
+      try {
+        fetch(`${API_BASE}/kits/${id}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-token': this.getAdminToken()
+          },
+          body: JSON.stringify(this.data.kits[index])
+        }).catch(err => console.warn('Sync updateKit error:', err));
+      } catch (e) { }
+
+      return this.data.kits[index];
+    }
+    return null;
+  }
+
+  async deleteKit(id) {
+    if (!this.data.kits) return;
+    this.data.kits = this.data.kits.filter(k => k.id !== id);
+    this.saveData();
+
+    // Gửi API xóa lên server MongoDB
+    try {
+      fetch(`${API_BASE}/kits/${id}`, {
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        }
+      }).catch(err => console.warn('Sync deleteKit error:', err));
     } catch (e) { }
   }
 

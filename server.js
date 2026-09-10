@@ -20,6 +20,7 @@ const fs = require('fs');
 const Player = require('./models/Player');
 const Match = require('./models/Match');
 const Team = require('./models/Team');
+const Kit = require('./models/Kit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +50,38 @@ const OFFICIAL_PLAYERS = [
   { id: 'p_15', name: 'Sỹ Nam', nickname: 'Sỹ Nam', number: 12, position: 'GK', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Thủ môn phản xạ' }
 ];
 
+// 2 Bộ Áo đấu chính thức của đội bóng (Sân nhà & Sân khách)
+const OFFICIAL_KITS = [
+  {
+    id: 'kit_home',
+    name: 'Áo Sân Nhà (Home Kit)',
+    type: 'home',
+    season: '2025 - 2026',
+    primaryColor: '#dc2626',
+    secondaryColor: '#ffffff',
+    textColor: '#ffffff',
+    numberColor: '#fbbf24',
+    frontImage: '',
+    backImage: '',
+    sponsor: 'FC NTN',
+    description: 'Trang phục thi đấu sân nhà sắc đỏ nhiệt huyết và kiên cường'
+  },
+  {
+    id: 'kit_away',
+    name: 'Áo Sân Khách (Away Kit)',
+    type: 'away',
+    season: '2025 - 2026',
+    primaryColor: '#f8fafc',
+    secondaryColor: '#0ea5e9',
+    textColor: '#0f172a',
+    numberColor: '#0284c7',
+    frontImage: '',
+    backImage: '',
+    sponsor: 'FC NTN',
+    description: 'Trang phục thi đấu sân khách sắc trắng thanh lịch và tốc độ'
+  }
+];
+
 let isMongoConnected = false;
 
 // Fallback in-memory storage if MongoDB is connecting or unavailable
@@ -60,7 +93,8 @@ let fallbackData = {
     formation: '3-1-2'
   },
   players: [...OFFICIAL_PLAYERS],
-  matches: []
+  matches: [],
+  kits: [...OFFICIAL_KITS]
 };
 
 // Seed initial database
@@ -71,6 +105,13 @@ async function seedInitialData() {
       console.log('🌱 Seeding 15 official players to MongoDB...');
       await Player.insertMany(OFFICIAL_PLAYERS);
       console.log('✅ Seeded 15 players successfully!');
+    }
+
+    const kitCount = await Kit.countDocuments();
+    if (kitCount === 0) {
+      console.log('🌱 Seeding 2 official kits to MongoDB...');
+      await Kit.insertMany(OFFICIAL_KITS);
+      console.log('✅ Seeded 2 kits successfully!');
     }
 
     const teamCount = await Team.countDocuments();
@@ -215,10 +256,11 @@ app.get('/api/data', async (req, res) => {
     if (isMongoConnected) {
       let team = await Team.findOne();
       if (!team) {
-        team = { name: 'FC ANH EM PHỦI', slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống', logo: '⚽' };
+        team = { name: 'FC NTN', slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống', logo: '⚽' };
       }
       const players = await Player.find().sort({ number: 1 });
       const matches = await Match.find().sort({ createdAt: -1 });
+      const kits = await Kit.find().sort({ createdAt: 1 });
 
       return res.json({
         teamInfo: {
@@ -228,7 +270,8 @@ app.get('/api/data', async (req, res) => {
           formation: '3-1-2'
         },
         players,
-        matches
+        matches,
+        kits: kits.length > 0 ? kits : OFFICIAL_KITS
       });
     }
 
@@ -477,6 +520,73 @@ app.post('/api/backup/restore', requireAdmin, async (req, res) => {
     if (matches) fallbackData.matches = matches;
 
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= KITS (ÁO ĐẤU 3D) API =================
+app.get('/api/kits', async (req, res) => {
+  try {
+    if (isMongoConnected) {
+      const kits = await Kit.find().sort({ createdAt: 1 });
+      return res.json(kits.length > 0 ? kits : OFFICIAL_KITS);
+    }
+    res.json(fallbackData.kits || OFFICIAL_KITS);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/kits', requireAdmin, async (req, res) => {
+  try {
+    const kitData = req.body;
+    if (!kitData.id) kitData.id = 'kit_' + Date.now();
+
+    if (isMongoConnected) {
+      const newKit = await Kit.create(kitData);
+      return res.status(201).json(newKit);
+    }
+    fallbackData.kits = fallbackData.kits || [];
+    fallbackData.kits.push(kitData);
+    res.status(201).json(kitData);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/kits/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const kitData = req.body;
+
+    if (isMongoConnected) {
+      const updated = await Kit.findOneAndUpdate({ id }, kitData, { new: true, upsert: true });
+      return res.json(updated);
+    }
+    fallbackData.kits = fallbackData.kits || [];
+    const idx = fallbackData.kits.findIndex(k => k.id === id);
+    if (idx !== -1) {
+      fallbackData.kits[idx] = { ...fallbackData.kits[idx], ...kitData };
+      return res.json(fallbackData.kits[idx]);
+    } else {
+      fallbackData.kits.push(kitData);
+      return res.json(kitData);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/kits/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (isMongoConnected) {
+      await Kit.findOneAndDelete({ id });
+      return res.json({ success: true, message: 'Kit deleted' });
+    }
+    fallbackData.kits = (fallbackData.kits || []).filter(k => k.id !== id);
+    res.json({ success: true, message: 'Kit deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
