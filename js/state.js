@@ -73,13 +73,6 @@ class StateManager {
         return { success: false, error: data.error || 'Mã PIN không đúng!' };
       }
     } catch (err) {
-      // Fallback offline pin check
-      if (String(pin).trim() === '123456') {
-        this.isAdmin = true;
-        localStorage.setItem(ADMIN_AUTH_KEY, 'fc_tnt_admin_authenticated');
-        this.notify();
-        return { success: true, message: 'Đăng nhập Quản trị viên (Chế độ offline) thành công!' };
-      }
       return { success: false, error: 'Không thể kết nối máy chủ để xác thực!' };
     }
   }

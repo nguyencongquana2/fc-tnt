@@ -22,6 +22,9 @@ window.appModule = {
     window.stateManager.subscribe(() => {
       this.updateAuthUI();
       this.renderDashboard();
+      if (window.playersModule) window.playersModule.renderPlayers();
+      if (window.matchesModule) window.matchesModule.renderMatches();
+      if (window.awardsModule) window.awardsModule.renderAwards();
     });
   },
 

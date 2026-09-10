@@ -151,6 +151,7 @@ window.playersModule = {
     const container = document.getElementById('players-grid-container');
     if (!container) return;
 
+    const isAdmin = window.stateManager.isAdmin;
     const players = window.stateManager.getPlayers();
     const statsList = window.stateManager.getPlayerOverallStats();
     const statsMap = {};
@@ -162,7 +163,7 @@ window.playersModule = {
           <div style="font-size: 3rem; margin-bottom: 1rem;">🏃‍♂️</div>
           <h3>Chưa có cầu thủ nào trong đội</h3>
           <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Hãy thêm các thành viên trong đội bóng của bạn để bắt đầu tính điểm và trao thưởng.</p>
-          <button class="btn btn-primary" onclick="window.playersModule.openPlayerModal()">+ Thêm Cầu Thủ Đầu Tiên</button>
+          ${isAdmin ? `<button class="btn btn-primary" onclick="window.playersModule.openPlayerModal()">+ Thêm Cầu Thủ Đầu Tiên</button>` : ''}
         </div>
       `;
       return;
@@ -212,17 +213,28 @@ window.playersModule = {
             </div>
           </div>
 
-          <div class="player-card-footer" onclick="event.stopPropagation()">
-            <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới từ máy" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
-              📷 Đổi Ảnh
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openPlayerModal('${p.id}')" title="Chỉnh sửa thông tin" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
-              ✏️ Sửa
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="window.playersModule.deletePlayer('${p.id}')" title="Xóa" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
-              🗑️
-            </button>
-          </div>
+          ${isAdmin ? `
+            <div class="player-card-footer" onclick="event.stopPropagation()">
+              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới từ máy" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
+                📷 Đổi Ảnh
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openPlayerModal('${p.id}')" title="Chỉnh sửa thông tin" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
+                ✏️ Sửa
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="window.playersModule.deletePlayer('${p.id}')" title="Xóa" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
+                🗑️
+              </button>
+            </div>
+          ` : `
+            <div class="player-card-footer" onclick="event.stopPropagation()">
+              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới từ máy" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; flex: 1;">
+                📷 Đổi Ảnh
+              </button>
+              <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; flex: 1;" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
+                👁️ Chi Tiết
+              </button>
+            </div>
+          `}
         </div>
       `;
     }).join('');
@@ -237,6 +249,13 @@ window.playersModule = {
   },
 
   openPlayerModal(id = null) {
+    if (!window.stateManager.isAdmin) {
+      window.showToast('Vui lòng đăng nhập Quản trị viên để thêm/sửa cầu thủ!', 'error');
+      if (window.appModule && window.appModule.openAdminModal) {
+        window.appModule.openAdminModal();
+      }
+      return;
+    }
     this.currentEditId = id;
     const modal = document.getElementById('player-modal');
     const title = document.getElementById('player-modal-title');
@@ -281,6 +300,10 @@ window.playersModule = {
 
   handleSavePlayer(e) {
     e.preventDefault();
+    if (!window.stateManager.isAdmin) {
+      window.showToast('Vui lòng đăng nhập Quản trị viên để lưu thông tin!', 'error');
+      return;
+    }
     const name = document.getElementById('player-name').value.trim();
     if (!name) {
       window.showToast('Vui lòng nhập tên cầu thủ!', 'error');
@@ -312,6 +335,14 @@ window.playersModule = {
   },
 
   deletePlayer(id) {
+    if (!window.stateManager.isAdmin) {
+      window.showToast('Vui lòng đăng nhập Quản trị viên để xóa cầu thủ!', 'error');
+      if (window.appModule && window.appModule.openAdminModal) {
+        window.appModule.openAdminModal();
+      }
+      return;
+    }
+
     const player = window.stateManager.getPlayerById(id);
     if (!player) return;
 
@@ -340,6 +371,7 @@ window.playersModule = {
 
     const modal = document.getElementById('player-profile-modal');
     const content = document.getElementById('player-profile-content');
+    const isAdmin = window.stateManager.isAdmin;
 
     content.innerHTML = `
       <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
@@ -356,7 +388,7 @@ window.playersModule = {
             <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; margin-left: 0.5rem;">
               📷 Đổi Ảnh
             </button>
-            ${window.stateManager.isAdmin ? `
+            ${isAdmin ? `
               <button class="btn btn-secondary btn-sm" onclick="window.playersModule.closeProfileModal(); window.playersModule.openPlayerModal('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
                 ✏️ Sửa Thông Tin
               </button>

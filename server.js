@@ -23,7 +23,7 @@ const Team = require('./models/Team');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fc_stats_master';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fc_ntn';
 
 // Middleware
 app.use(cors());
@@ -54,7 +54,7 @@ let isMongoConnected = false;
 // Fallback in-memory storage if MongoDB is connecting or unavailable
 let fallbackData = {
   teamInfo: {
-    name: 'FC ANH EM PHỦI',
+    name: 'FC NTN',
     slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
     badge: '⚽',
     formation: '3-1-2'
@@ -76,7 +76,7 @@ async function seedInitialData() {
     const teamCount = await Team.countDocuments();
     if (teamCount === 0) {
       await Team.create({
-        name: 'FC ANH EM PHỦI',
+        name: 'FC NTN',
         slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
         logo: '⚽'
       });
@@ -99,27 +99,25 @@ mongoose.connect(MONGODB_URI, {
   isMongoConnected = false;
 });
 
-// Hàm lấy mã PIN Quản trị viên hiện tại (từ Database MongoDB hoặc file .env hoặc mặc định 123456)
+// Hàm lấy mã PIN Quản trị viên hiện tại (ưu tiên biến môi trường ADMIN_PIN trên Render / .env)
 async function getValidAdminPins() {
   const pins = new Set();
-  
-  // 1. Mã từ .env
-  if (process.env.ADMIN_PIN) {
+
+  // 1. Mã từ biến môi trường Render / .env (Ưu tiên tuyệt đối)
+  if (process.env.ADMIN_PIN && String(process.env.ADMIN_PIN).trim()) {
     pins.add(String(process.env.ADMIN_PIN).trim());
+    return Array.from(pins);
   }
 
-  // 2. Mã từ MongoDB Database
+  // 2. Mã từ MongoDB Database (nếu có và khác 123456)
   if (isMongoConnected) {
     try {
       const team = await Team.findOne();
-      if (team && team.adminPin) {
+      if (team && team.adminPin && team.adminPin !== '123456') {
         pins.add(String(team.adminPin).trim());
       }
     } catch (e) { }
   }
-
-  // 3. Fallback mặc định
-  pins.add('123456');
 
   return Array.from(pins);
 }
@@ -132,9 +130,9 @@ const requireAdmin = (req, res, next) => {
   if (token && (token === ADMIN_STATIC_TOKEN || token.startsWith('fc_tnt_admin_'))) {
     return next();
   }
-  return res.status(401).json({ 
+  return res.status(401).json({
     error: 'Yêu cầu quyền Quản trị viên! Vui lòng đăng nhập mã PIN để thực hiện thao tác này.',
-    requireAuth: true 
+    requireAuth: true
   });
 };
 
