@@ -372,13 +372,53 @@ window.lockerRoomModule = {
     document.getElementById('kit-text-color').value = kit.textColor || '#ffffff';
     document.getElementById('kit-number-color').value = kit.numberColor || '#fbbf24';
 
-    document.getElementById('kit-front-image').value = kit.frontImage || '';
-    document.getElementById('kit-front-preview').src = kit.frontImage || 'https://via.placeholder.com/200x240/162032/34d399?text=Mặt+Trước';
+    const frontImg = kit.frontImage || '';
+    document.getElementById('kit-front-image').value = frontImg;
+    const frontPreview = document.getElementById('kit-front-preview');
+    if (frontPreview) {
+      frontPreview.src = frontImg;
+      frontPreview.style.display = frontImg ? 'block' : 'none';
+    }
+    const frontFile = document.getElementById('kit-front-file');
+    if (frontFile) frontFile.value = '';
 
-    document.getElementById('kit-back-image').value = kit.backImage || '';
-    document.getElementById('kit-back-preview').src = kit.backImage || 'https://via.placeholder.com/200x240/162032/34d399?text=Mặt+Sau';
+    const backImg = kit.backImage || '';
+    document.getElementById('kit-back-image').value = backImg;
+    const backPreview = document.getElementById('kit-back-preview');
+    if (backPreview) {
+      backPreview.src = backImg;
+      backPreview.style.display = backImg ? 'block' : 'none';
+    }
+    const backFile = document.getElementById('kit-back-file');
+    if (backFile) backFile.value = '';
 
     modal.classList.add('active');
+  },
+
+  clearFrontImage() {
+    const input = document.getElementById('kit-front-image');
+    if (input) input.value = '';
+    const preview = document.getElementById('kit-front-preview');
+    if (preview) {
+      preview.src = '';
+      preview.style.display = 'none';
+    }
+    const file = document.getElementById('kit-front-file');
+    if (file) file.value = '';
+    window.showToast('🗑️ Đã xóa ảnh mặt trước');
+  },
+
+  clearBackImage() {
+    const input = document.getElementById('kit-back-image');
+    if (input) input.value = '';
+    const preview = document.getElementById('kit-back-preview');
+    if (preview) {
+      preview.src = '';
+      preview.style.display = 'none';
+    }
+    const file = document.getElementById('kit-back-file');
+    if (file) file.value = '';
+    window.showToast('🗑️ Đã xóa ảnh mặt sau');
   },
 
   closeKitModal() {

@@ -27,17 +27,17 @@ const OFFICIAL_PLAYERS = [
 const OFFICIAL_KITS = [
   {
     id: 'kit_home',
-    name: 'Áo Sân Nhà (Black Blue Floral Edition)',
+    name: 'Áo Sân Nhà (Home Kit)',
     type: 'home',
     season: '2025 - 2026',
     primaryColor: '#0a0e17',
     secondaryColor: '#38bdf8',
     textColor: '#ffffff',
     numberColor: '#38bdf8',
-    frontImage: '/assets/kits/kit_home_front.jpg',
-    backImage: '/assets/kits/kit_home_back.jpg',
+    frontImage: '',
+    backImage: '',
     sponsor: 'FC NTN',
-    description: 'Trang phục thi đấu sân nhà hoa văn xanh dạ quang nghệ thuật trên nền đen huyền bí'
+    description: 'Trang phục thi đấu sân nhà sắc đen & xanh hoàng gia - Có thể tự tải ảnh thật của đội'
   },
   {
     id: 'kit_away',
@@ -122,8 +122,14 @@ class StateManager {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.players && parsed.players.length > 0) {
-          if (!parsed.kits || parsed.kits.length === 0 || !parsed.kits[0].frontImage) {
+          if (!parsed.kits || parsed.kits.length === 0) {
             parsed.kits = JSON.parse(JSON.stringify(OFFICIAL_KITS));
+          } else {
+            // Dọn sạch ảnh hardcode cũ nếu có để người dùng tự tải ảnh
+            parsed.kits.forEach(k => {
+              if (k.frontImage && k.frontImage.startsWith('/assets/kits/')) k.frontImage = '';
+              if (k.backImage && k.backImage.startsWith('/assets/kits/')) k.backImage = '';
+            });
           }
           return parsed;
         }
