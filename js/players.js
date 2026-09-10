@@ -172,6 +172,7 @@ window.playersModule = {
     container.innerHTML = players.map(p => {
       const stats = statsMap[p.id] || { matchesPlayed: 0, avgRating: 0, totalGoals: 0, totalAssists: 0, motmCount: 0 };
       const posClass = `pos-${p.position.toLowerCase()}`;
+      const hasUniqueNickname = p.nickname && p.nickname.trim() && p.nickname.trim().toLowerCase() !== p.name.trim().toLowerCase();
       
       return `
         <div class="player-fifa-card" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
@@ -186,7 +187,7 @@ window.playersModule = {
             </div>
             
             <div class="player-card-header-nickname">
-              ${p.nickname ? `<span class="player-nickname-pill" title="Biệt danh: ${p.nickname}">"${p.nickname}"</span>` : ''}
+              ${hasUniqueNickname ? `<span class="player-nickname-pill" title="Biệt danh: ${p.nickname}">"${p.nickname}"</span>` : ''}
             </div>
 
             <div style="position: relative; cursor: pointer;" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Bấm để tải ảnh đại diện từ điện thoại/máy tính">
@@ -401,7 +402,7 @@ window.playersModule = {
               </button>
             ` : ''}
           </div>
-          <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">#${player.number} ${player.nickname ? `• "${player.nickname}"` : ''}</p>
+          <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">#${player.number} ${player.nickname && player.nickname.trim().toLowerCase() !== player.name.trim().toLowerCase() ? `• "${player.nickname}"` : ''}</p>
           <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem;">${player.note || 'Chưa có ghi chú đặc biệt'}</p>
         </div>
       </div>
