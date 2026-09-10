@@ -260,10 +260,12 @@ window.lockerRoomModule = {
       position: 'DF'
     };
 
-    const teamInfo = window.stateManager.getTeamInfo();
-    const teamName = teamInfo?.name || 'FC NTN';
+    const teamInfo = (window.stateManager && typeof window.stateManager.getTeamInfo === 'function')
+      ? window.stateManager.getTeamInfo()
+      : (window.stateManager?.data?.teamInfo || { name: 'FC TNT' });
+    const teamName = teamInfo?.name || 'FC TNT';
 
-    const playerName = (player.name || 'FC NTN').toUpperCase();
+    const playerName = (player.name || 'FC TNT').toUpperCase();
     const playerNumber = player.number !== undefined && player.number !== null ? player.number : 10;
 
     // Mặt trước

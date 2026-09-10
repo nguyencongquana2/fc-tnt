@@ -591,6 +591,14 @@ class StateManager {
     };
   }
 
+  getTeamInfo() {
+    return this.data.teamInfo || {
+      name: 'FC TNT',
+      slogan: 'Đam Mê Bất Tận - Gắn Kết Anh Em',
+      badge: '⚽'
+    };
+  }
+
   async updateTeamInfo(info) {
     this.data.teamInfo = { ...this.data.teamInfo, ...info };
     this.saveData();
