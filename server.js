@@ -99,14 +99,37 @@ mongoose.connect(MONGODB_URI, {
   isMongoConnected = false;
 });
 
-// Cấu hình mã PIN Quản trị viên (Mặc định 123456, có thể đổi trong .env)
-const ADMIN_PIN = process.env.ADMIN_PIN || '123456';
-const ADMIN_TOKEN = 'fc_tnt_admin_' + Buffer.from(ADMIN_PIN).toString('base64');
+// Hàm lấy mã PIN Quản trị viên hiện tại (từ Database MongoDB hoặc file .env hoặc mặc định 123456)
+async function getValidAdminPins() {
+  const pins = new Set();
+  
+  // 1. Mã từ .env
+  if (process.env.ADMIN_PIN) {
+    pins.add(String(process.env.ADMIN_PIN).trim());
+  }
+
+  // 2. Mã từ MongoDB Database
+  if (isMongoConnected) {
+    try {
+      const team = await Team.findOne();
+      if (team && team.adminPin) {
+        pins.add(String(team.adminPin).trim());
+      }
+    } catch (e) { }
+  }
+
+  // 3. Fallback mặc định
+  pins.add('123456');
+
+  return Array.from(pins);
+}
+
+const ADMIN_STATIC_TOKEN = 'fc_tnt_admin_authenticated';
 
 // Middleware xác thực quyền Admin cho các thao tác thêm / sửa / xóa dữ liệu
 const requireAdmin = (req, res, next) => {
   const token = req.headers['x-admin-token'];
-  if (token === ADMIN_TOKEN || token === 'fc_tnt_admin_authenticated') {
+  if (token && (token === ADMIN_STATIC_TOKEN || token.startsWith('fc_tnt_admin_'))) {
     return next();
   }
   return res.status(401).json({ 
@@ -129,29 +152,62 @@ app.get('/api/status', (req, res) => {
 });
 
 // Auth endpoints
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { pin } = req.body;
   if (!pin) {
     return res.status(400).json({ success: false, error: 'Vui lòng nhập mã PIN!' });
   }
 
-  if (String(pin).trim() === String(ADMIN_PIN).trim()) {
+  const inputPin = String(pin).trim();
+  const validPins = await getValidAdminPins();
+
+  if (validPins.includes(inputPin)) {
     return res.json({
       success: true,
-      token: ADMIN_TOKEN,
+      token: 'fc_tnt_admin_' + Buffer.from(inputPin).toString('base64'),
       message: 'Đăng nhập Quản trị viên thành công!'
     });
   }
 
   return res.status(401).json({
     success: false,
-    error: 'Mã PIN Quản trị không chính xác! Vui lòng thử lại.'
+    error: 'Mã PIN không chính xác! Vui lòng kiểm tra lại.'
   });
+});
+
+// Đổi mã PIN Quản trị viên (Chỉ Admin mới đổi được)
+app.post('/api/auth/change-pin', requireAdmin, async (req, res) => {
+  try {
+    const { newPin } = req.body;
+    if (!newPin || String(newPin).trim().length < 4) {
+      return res.status(400).json({ success: false, error: 'Mã PIN mới phải có ít nhất 4 ký tự!' });
+    }
+
+    const cleanPin = String(newPin).trim();
+    if (isMongoConnected) {
+      let team = await Team.findOne();
+      if (!team) {
+        team = await Team.create({ adminPin: cleanPin });
+      } else {
+        team.adminPin = cleanPin;
+        await team.save();
+      }
+    }
+
+    process.env.ADMIN_PIN = cleanPin;
+
+    return res.json({
+      success: true,
+      message: `Đã đổi mã PIN Quản trị thành công sang: ${cleanPin}`
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.get('/api/auth/check', (req, res) => {
   const token = req.headers['x-admin-token'];
-  const isValid = token === ADMIN_TOKEN || token === 'fc_tnt_admin_authenticated';
+  const isValid = token && (token === ADMIN_STATIC_TOKEN || token.startsWith('fc_tnt_admin_'));
   res.json({ isAdmin: isValid });
 });
 

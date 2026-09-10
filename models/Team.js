@@ -12,6 +12,10 @@ const teamSchema = new mongoose.Schema({
   logo: {
     type: String,
     default: '⚽'
+  },
+  adminPin: {
+    type: String,
+    default: '123456'
   }
 }, {
   timestamps: true
