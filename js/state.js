@@ -122,6 +122,9 @@ class StateManager {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.players && parsed.players.length > 0) {
+          if (!parsed.kits || parsed.kits.length === 0 || !parsed.kits[0].frontImage) {
+            parsed.kits = JSON.parse(JSON.stringify(OFFICIAL_KITS));
+          }
           return parsed;
         }
       }

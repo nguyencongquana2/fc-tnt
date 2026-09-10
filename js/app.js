@@ -192,6 +192,11 @@ window.appModule = {
     if (tabName === 'awards' && window.awardsModule) window.awardsModule.renderAwards();
     if (tabName === 'matches' && window.matchesModule) window.matchesModule.renderMatches();
     if (tabName === 'players' && window.playersModule) window.playersModule.renderPlayers();
+    if (tabName === 'locker-room' && window.lockerRoomModule) {
+      window.lockerRoomModule.renderKitSelector();
+      window.lockerRoomModule.renderPlayerSelector();
+      window.lockerRoomModule.render3DStage();
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },

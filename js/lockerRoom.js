@@ -268,7 +268,8 @@ window.lockerRoomModule = {
 
     // Mặt trước
     const frontHTML = kit.frontImage ? `
-      <div class="jersey-face jersey-front custom-image" style="background-image: url('${kit.frontImage}');">
+      <div class="jersey-face jersey-front custom-image">
+        <img src="${kit.frontImage}" alt="${kit.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 26px 26px 10px 10px; display: block;">
         <div class="jersey-lighting-overlay"></div>
       </div>
     ` : `
@@ -297,7 +298,8 @@ window.lockerRoomModule = {
 
     // Mặt sau
     const backHTML = kit.backImage ? `
-      <div class="jersey-face jersey-back custom-image" style="background-image: url('${kit.backImage}');">
+      <div class="jersey-face jersey-back custom-image">
+        <img src="${kit.backImage}" alt="${kit.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 26px 26px 10px 10px; display: block;">
         <div class="jersey-back-print-overlay">
           <div class="jersey-back-name" style="color: ${kit.textColor};">${playerName}</div>
           <div class="jersey-back-number" style="color: ${kit.numberColor};">${playerNumber}</div>
