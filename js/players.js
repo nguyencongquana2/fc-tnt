@@ -1,5 +1,5 @@
 /**
- * Players Module - FC Stats Master
+ * Players Module - FC TNT
  */
 
 window.playersModule = {

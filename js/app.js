@@ -17,6 +17,7 @@ window.appModule = {
     if (window.playersModule) window.playersModule.init();
     if (window.matchesModule) window.matchesModule.init();
     if (window.awardsModule) window.awardsModule.init();
+    if (window.posterModule) window.posterModule.init();
 
     // Re-render when state updates
     window.stateManager.subscribe(() => {

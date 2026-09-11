@@ -76,7 +76,7 @@
         <div class="hero-team-info">
           <div class="team-badge-large">⚽</div>
           <div>
-            <h1 class="hero-team-name" id="hero-team-name-text">FC PHỦI BROTHERS</h1>
+            <h1 class="hero-team-name" id="hero-team-name-text">FC TNT</h1>
             <p class="hero-team-slogan" id="hero-team-slogan-text">"Đá hết mình - Thắng cùng mừng, Thua cùng uống"</p>
           </div>
         </div>
@@ -544,7 +544,7 @@
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">Tên Đội Bóng</label>
-            <input type="text" class="form-control" id="team-name-input" placeholder="Vd: FC ANH EM PHỦI" required>
+            <input type="text" class="form-control" id="team-name-input" placeholder="Vd: FC TNT" required>
           </div>
           <div class="form-group">
             <label class="form-label">Khẩu Hiệu / Slogan</label>
@@ -595,6 +595,100 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- MODAL: XUẤT POSTER TRẬN ĐẤU (MATCH CARD)   -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="poster-generator-modal">
+    <div class="modal-container poster-modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">🎨 Xuất Poster Ảnh Khoe Mạng Xã Hội</h3>
+        <button class="modal-close-btn" onclick="window.posterModule.closePosterModal()">&times;</button>
+      </div>
+      <div class="modal-body poster-modal-body">
+        <div class="poster-preview-panel">
+          <div class="poster-canvas-wrapper">
+            <canvas id="poster-canvas"></canvas>
+          </div>
+        </div>
+        <div class="poster-controls-panel">
+          <!-- Ratio Selection -->
+          <div class="poster-control-group">
+            <label class="poster-control-label">📐 Tỉ Lệ Khung Hình</label>
+            <div class="poster-button-grid">
+              <button type="button" class="btn btn-secondary poster-ratio-btn active" data-ratio="1:1">
+                🔲 1:1 Vuông (FB / Zalo Feed)
+              </button>
+              <button type="button" class="btn btn-secondary poster-ratio-btn" data-ratio="9:16">
+                📱 9:16 Dọc (Story / Reels / TikTok)
+              </button>
+            </div>
+          </div>
+
+          <!-- Theme Selection -->
+          <div class="poster-control-group">
+            <label class="poster-control-label">🎨 Phong Cách Đồ Họa</label>
+            <div class="poster-theme-grid">
+              <button type="button" class="poster-theme-btn active" data-theme="cyber">
+                🌌 Cyber Neon
+              </button>
+              <button type="button" class="poster-theme-btn" data-theme="gold">
+                🏆 Gold Champion
+              </button>
+              <button type="button" class="poster-theme-btn" data-theme="emerald">
+                🌿 Emerald Pitch
+              </button>
+              <button type="button" class="poster-theme-btn" data-theme="fire">
+                🔥 Crimson Fire
+              </button>
+            </div>
+          </div>
+
+          <!-- Content Options -->
+          <div class="poster-control-group">
+            <label class="poster-control-label">⚙️ Tùy Chọn Hiển Thị</label>
+            <div class="poster-checkbox-list">
+              <label class="poster-checkbox-item">
+                <input type="checkbox" id="poster-opt-showMotm" checked>
+                <span>👑 Cầu thủ xuất sắc nhất (MOTM / MVP)</span>
+              </label>
+              <label class="poster-checkbox-item">
+                <input type="checkbox" id="poster-opt-showScorers" checked>
+                <span>⚽ Danh sách ghi bàn</span>
+              </label>
+              <label class="poster-checkbox-item">
+                <input type="checkbox" id="poster-opt-showAssists" checked>
+                <span>👟 Danh sách kiến tạo</span>
+              </label>
+              <label class="poster-checkbox-item">
+                <input type="checkbox" id="poster-opt-showLineup" checked>
+                <span>👥 Đội hình ra sân (Cho dạng Story 9:16)</span>
+              </label>
+              <label class="poster-checkbox-item">
+                <input type="checkbox" id="poster-opt-showSlogan" checked>
+                <span>💬 Khẩu hiệu đội bóng FC TNT</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="poster-action-buttons">
+            <button type="button" class="btn btn-gold btn-lg" style="width: 100%; justify-content: center;" onclick="window.posterModule.downloadPoster()">
+              📥 Tải Ảnh Chuẩn Nét HD (.PNG)
+            </button>
+            <div style="display: flex; gap: 0.5rem; width: 100%;">
+              <button type="button" class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.posterModule.copyPosterToClipboard()">
+                📋 Sao Chép Ảnh
+              </button>
+              <button type="button" class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.posterModule.sharePoster()">
+                📤 Chia Sẻ
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Global Avatar Quick Upload Input -->
   <input type="file" id="global-player-avatar-file" accept="image/*" style="display: none;">
 
@@ -606,6 +700,7 @@
   <script src="js/players.js"></script>
   <script src="js/matches.js"></script>
   <script src="js/awards.js"></script>
+  <script src="js/poster.js"></script>
   <script src="js/app.js"></script>
 </body>
 

@@ -1,7 +1,7 @@
 {
-  "name": "fc-stats-master",
+  "name": "fc-tnt",
   "version": "1.0.0",
-  "description": "FC Stats Master - Quản lý đội bóng phủi, sơ đồ sân 7 (3-1-2) và bảng vinh danh với Node.js & MongoDB",
+  "description": "FC TNT - Quản lý đội bóng phủi, sơ đồ sân 7 (3-1-2) và bảng vinh danh với Node.js & MongoDB",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -20,6 +20,6 @@
     "express",
     "sofascore-pitch"
   ],
-  "author": "FC Anh Em Phủi",
+  "author": "FC TNT",
   "license": "ISC"
 }

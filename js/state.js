@@ -3,7 +3,7 @@
  * Đồng bộ hóa dữ liệu 2 chiều với Backend Node.js & MongoDB Server
  */
 
-const STORAGE_KEY = 'fc_stats_master_data_v4';
+const STORAGE_KEY = 'fc_tnt_data_v4';
 const API_BASE = '/api';
 
 const OFFICIAL_PLAYERS = [
@@ -26,7 +26,7 @@ const OFFICIAL_PLAYERS = [
 
 const DEFAULT_DATA = {
   teamInfo: {
-    name: 'FC ANH EM PHỦI',
+    name: 'FC TNT',
     slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
     badge: '⚽',
     formation: '3-1-2'
@@ -86,7 +86,7 @@ class StateManager {
 
   loadData() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('fc_stats_master_data_v4');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.players && parsed.players.length > 0) {
@@ -465,7 +465,7 @@ class StateManager {
     const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
 
     return {
-      teamName: this.data.teamInfo?.name || 'FC ANH EM PHỦI',
+      teamName: this.data.teamInfo?.name || 'FC TNT',
       slogan: this.data.teamInfo?.slogan || 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
       totalPlayers: players.length,
       totalMatches,

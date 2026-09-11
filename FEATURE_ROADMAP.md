@@ -32,11 +32,13 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 
 ---
 
-## 🎨 4. Tự Động Xuất Poster "Ảnh Khoe Mạng Xã Hội" (Shareable Match Cards)
+## 🎨 4. Tự Động Xuất Poster "Ảnh Khoe Mạng Xã Hội" (Shareable Match Cards) ✅ *(Đã hoàn thiện)*
 * **Mục đích**: Giúp anh em có ảnh đẹp, xịn xò để đăng Facebook, Zalo, Story khoe thành tích và chiến thắng.
 * **Tính năng chi tiết**:
   - **Tạo poster 1 chạm (Canvas Generator)**: Tự động ghép logo FC TNT, tỉ số chung cuộc, tên đối thủ, ảnh cầu thủ ghi bàn / kiến tạo / MVP thành một bức ảnh đồ họa cực đẹp.
-  - **Tải ảnh độ phân giải cao**: Tải trực tiếp về điện thoại/máy tính dưới dạng file ảnh `.png` hoặc `.jpg` chuẩn tỉ lệ 1:1 hoặc 9:16 (Story).
+  - **Tải ảnh độ phân giải cao**: Tải trực tiếp về điện thoại/máy tính dưới dạng file ảnh `.png` chuẩn tỉ lệ 1:1 (Feed FB/Zalo) hoặc 9:16 (Story/TikTok/Reels).
+  - **Hỗ trợ 4 phong cách**: Cyber Neon, Gold Champion, Emerald Pitch, Crimson Fire.
+  - **1 chạm sao chép**: Copy ảnh thẳng vào Clipboard để paste vào Zalo/Messenger/Facebook siêu nhanh.
 
 ---
 

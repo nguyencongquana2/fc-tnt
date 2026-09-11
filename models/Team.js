@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const teamSchema = new mongoose.Schema({
   name: {
     type: String,
-    default: 'FC ANH EM PHỦI'
+    default: 'FC TNT'
   },
   slogan: {
     type: String,

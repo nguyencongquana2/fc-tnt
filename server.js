@@ -1,5 +1,5 @@
 /**
- * FC Stats Master - Backend Server
+ * FC TNT - Backend Server
  * Node.js + Express + MongoDB
  */
 
@@ -215,7 +215,7 @@ app.get('/api/data', async (req, res) => {
     if (isMongoConnected) {
       let team = await Team.findOne();
       if (!team) {
-        team = { name: 'FC ANH EM PHỦI', slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống', logo: '⚽' };
+        team = { name: 'FC TNT', slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống', logo: '⚽' };
       }
       const players = await Player.find().sort({ number: 1 });
       const matches = await Match.find().sort({ createdAt: -1 });
@@ -493,7 +493,7 @@ app.get('*', (req, res) => {
 // Khởi động server
 app.listen(PORT, () => {
   console.log(`=================================================`);
-  console.log(`🚀 FC Stats Master Server is running!`);
+  console.log(`🚀 FC TNT Server is running!`);
   console.log(`🌐 Local URL: http://localhost:${PORT}`);
   console.log(`🌿 Database: ${MONGODB_URI}`);
   console.log(`=================================================`);

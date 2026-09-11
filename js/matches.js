@@ -1,5 +1,5 @@
 /**
- * Matches & Sofascore Pitch Module - FC Stats Master
+ * Matches & Sofascore Pitch Module - FC TNT
  * Quản lý trận đấu, xóa từng trận nhanh trực tiếp ngoài thẻ, xóa tất cả trận đấu
  */
 
@@ -78,6 +78,9 @@ window.matchesModule = {
             </div>
             
             <div style="display: flex; align-items: center; gap: 0.5rem;" onclick="event.stopPropagation()">
+              <button class="btn btn-secondary btn-sm" onclick="window.posterModule.openPosterModal('${m.id}')" title="Xuất Poster Ảnh Khoe Mạng Xã Hội" style="padding: 0.25rem 0.6rem; color: var(--accent-gold); border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1);">
+                🎨 Poster
+              </button>
               <span class="match-result-badge ${resultClass}">${resultText}</span>
               ${window.stateManager.isAdmin ? `
                 <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.openCreateMatchModal('${m.id}')" title="Sửa trận" style="padding: 0.25rem 0.6rem;">
@@ -92,7 +95,7 @@ window.matchesModule = {
 
           <div class="match-scoreboard">
             <div class="team-box home">
-              <span class="team-title">${teamInfo?.name || 'FC ANH EM'}</span>
+              <span class="team-title">${teamInfo?.name || 'FC TNT'}</span>
               <div class="brand-icon-box" style="width:36px; height:36px; font-size:1.1rem;">⚽</div>
             </div>
 
@@ -323,7 +326,10 @@ window.matchesModule = {
           </div>
           ${m.note ? `<div style="font-size: 0.82rem; color: var(--accent-gold); margin-top: 0.25rem;">💬 ${m.note}</div>` : ''}
         </div>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-gold btn-sm" onclick="window.posterModule.openPosterModal('${m.id}')" title="Xuất Poster Ảnh Khoe Mạng Xã Hội">
+            🎨 Xuất Poster Match Card
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.toggleViewMode()">
             ${this.activeViewMode === 'pitch' ? '📋 Xem Dạng Bảng Kéo' : '🏟️ Xem Sơ Đồ 3-1-2'}
           </button>
