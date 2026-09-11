@@ -2248,53 +2248,42 @@ body {
 }
 
 /* ==========================================================================
-   3D REALISTIC FOOTBALL JERSEY & LOCKER ROOM STAGE (VIDEO 3D SHOWCASE)
+   3D REALISTIC FOOTBALL JERSEY & LOCKER ROOM STAGE (SEAMLESS 3D SHOWCASE)
    ========================================================================== */
 
-/* 3D Video Showcase Container */
+/* 3D Video Showcase Container (Seamless Floating Cutout) */
 .locker-video-box {
   position: relative;
   width: 100%;
-  max-width: 440px;
-  height: 480px;
-  border-radius: 24px;
-  overflow: hidden;
-  background: #020617;
-  border: 2px solid rgba(56, 189, 248, 0.35);
-  box-shadow: 
-    0 25px 60px rgba(0, 0, 0, 0.9), 
-    0 0 40px rgba(56, 189, 248, 0.2),
-    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  max-width: 480px;
+  height: 500px;
+  border-radius: 20px;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   z-index: 5;
   margin: 0 auto;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.locker-video-box:hover {
-  border-color: rgba(56, 189, 248, 0.7);
-  box-shadow: 
-    0 30px 70px rgba(0, 0, 0, 0.95), 
-    0 0 50px rgba(56, 189, 248, 0.35),
-    inset 0 1px 2px rgba(255, 255, 255, 0.5);
-  transform: translateY(-3px);
-}
-
 .locker-3d-video-player {
   width: 100%;
   height: 100%;
+  max-height: 480px;
   object-fit: contain;
-  background: #000;
+  background: transparent;
   display: block;
+  filter: drop-shadow(0 20px 35px rgba(0, 0, 0, 0.95));
+  /* Cắt bỏ viền vuông thô, làm mờ êm dịu rìa ngoài video hòa vào nền phòng thay đồ */
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 0) 99%);
+  mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 0) 99%);
 }
 
 .video-ambient-glow {
-  position: absolute;
-  inset: 0;
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.85);
-  pointer-events: none;
+  display: none;
 }
 
 /* 3D Rotating Stage & Card (Fallback) */
