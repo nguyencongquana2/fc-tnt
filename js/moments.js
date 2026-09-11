@@ -99,6 +99,9 @@ window.momentsModule = {
 
     const moments = window.stateManager.getMoments(this.currentCategory);
     const userKey = localStorage.getItem('fc_user_guid') || '';
+    const allPlayers = window.stateManager.getPlayers();
+    const savedPlayerId = localStorage.getItem('fc_commenter_player_id') || '';
+    const savedCommenterName = localStorage.getItem('fc_commenter_name') || '';
 
     if (moments.length === 0) {
       container.innerHTML = `
@@ -129,6 +132,15 @@ window.momentsModule = {
       const hasFootball = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'football');
       const hasBeer = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'beer');
       const hasFire = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'fire');
+
+      // Member options list
+      const playerOptionsHtml = allPlayers.map(p => {
+        const isSelected = (savedPlayerId && savedPlayerId === p.id) || (!savedPlayerId && savedCommenterName && (savedCommenterName.toLowerCase() === p.name.toLowerCase() || (p.nickname && savedCommenterName.toLowerCase() === p.nickname.toLowerCase())));
+        const numPrefix = p.number ? `#${p.number} - ` : '';
+        const nickSuffix = p.nickname ? ` (${p.nickname})` : '';
+        return `<option value="${p.id}" ${isSelected ? 'selected' : ''}>${numPrefix}${this.escapeHtml(p.name)}${nickSuffix}</option>`;
+      }).join('');
+      const isGuestSelected = savedPlayerId === 'guest' || savedCommenterName === 'Khách / CĐV';
 
       return `
         <article class="moment-card" id="moment-card-${m.id}">
@@ -235,7 +247,11 @@ window.momentsModule = {
             <!-- Comment Input Box -->
             <form class="moment-comment-form" onsubmit="window.momentsModule.handleCommentSubmit(event, '${m.id}')">
               <div class="comment-inputs-row">
-                <input type="text" class="form-control comment-author-input" id="comment-author-${m.id}" placeholder="Tên bạn (Vd: Quân Kun)" value="${this.escapeHtml(localStorage.getItem('fc_commenter_name') || '')}" required>
+                <select class="form-control comment-author-select" id="comment-author-${m.id}" required>
+                  <option value="" disabled ${!savedPlayerId && !savedCommenterName ? 'selected' : ''}>-- Chọn người gửi --</option>
+                  ${playerOptionsHtml}
+                  <option value="guest" ${isGuestSelected ? 'selected' : ''}>🌟 Khách / CĐV FC TNT</option>
+                </select>
                 <input type="text" class="form-control comment-content-input" id="comment-content-${m.id}" placeholder="Viết bình luận, chém gió..." required autocomplete="off">
                 <button type="submit" class="btn btn-primary btn-sm comment-submit-btn">Gửi 💬</button>
               </div>
@@ -357,21 +373,38 @@ window.momentsModule = {
   // Comment submission
   async handleCommentSubmit(e, momentId) {
     e.preventDefault();
-    const authorInput = document.getElementById(`comment-author-${momentId}`);
+    const authorSelect = document.getElementById(`comment-author-${momentId}`);
     const contentInput = document.getElementById(`comment-content-${momentId}`);
 
-    if (!authorInput || !contentInput) return;
-    const authorName = authorInput.value.trim();
+    if (!authorSelect || !contentInput) return;
+    const selectedValue = authorSelect.value;
     const content = contentInput.value.trim();
 
-    if (!authorName || !content) return;
+    if (!selectedValue || !content) {
+      if (window.appModule && window.appModule.showToast) {
+        window.appModule.showToast('Vui lòng chọn người gửi bình luận!', 'warning');
+      }
+      return;
+    }
 
-    localStorage.setItem('fc_commenter_name', authorName);
+    let authorName = 'Thành viên FC TNT';
+    let avatar = '';
 
-    // Get matching player avatar if user matches a squad member name
-    const allPlayers = window.stateManager.getPlayers();
-    const matchedPlayer = allPlayers.find(p => p.name.toLowerCase() === authorName.toLowerCase() || (p.nickname && p.nickname.toLowerCase() === authorName.toLowerCase()));
-    const avatar = matchedPlayer ? matchedPlayer.avatar : '';
+    if (selectedValue === 'guest') {
+      authorName = 'Khách / CĐV';
+      avatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+      localStorage.setItem('fc_commenter_player_id', 'guest');
+      localStorage.setItem('fc_commenter_name', authorName);
+    } else {
+      const allPlayers = window.stateManager.getPlayers();
+      const player = allPlayers.find(p => p.id === selectedValue);
+      if (player) {
+        authorName = player.name;
+        avatar = player.avatar || '';
+        localStorage.setItem('fc_commenter_player_id', player.id);
+        localStorage.setItem('fc_commenter_name', player.name);
+      }
+    }
 
     await window.stateManager.addComment(momentId, authorName, content, avatar);
     contentInput.value = '';

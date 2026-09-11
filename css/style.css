@@ -2756,8 +2756,24 @@ body {
 
 .comment-inputs-row {
   display: grid;
-  grid-template-columns: 160px 1fr auto;
+  grid-template-columns: 210px 1fr auto;
   gap: 0.5rem;
+}
+
+.comment-author-select {
+  cursor: pointer;
+  background-color: var(--bg-input);
+  color: #fff;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.comment-author-select option {
+  background-color: var(--bg-card, #131b2e);
+  color: #fff;
+  padding: 0.5rem;
 }
 
 .comment-submit-btn {
