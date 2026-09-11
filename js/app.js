@@ -18,6 +18,7 @@ window.appModule = {
     if (window.matchesModule) window.matchesModule.init();
     if (window.awardsModule) window.awardsModule.init();
     if (window.posterModule) window.posterModule.init();
+    if (window.momentsModule) window.momentsModule.init();
 
     // Re-render when state updates
     window.stateManager.subscribe(() => {
@@ -26,6 +27,7 @@ window.appModule = {
       if (window.playersModule) window.playersModule.renderPlayers();
       if (window.matchesModule) window.matchesModule.renderMatches();
       if (window.awardsModule) window.awardsModule.renderAwards();
+      if (window.momentsModule) window.momentsModule.renderMoments();
     });
   },
 
@@ -187,6 +189,7 @@ window.appModule = {
     if (tabName === 'awards' && window.awardsModule) window.awardsModule.renderAwards();
     if (tabName === 'matches' && window.matchesModule) window.matchesModule.renderMatches();
     if (tabName === 'players' && window.playersModule) window.playersModule.renderPlayers();
+    if (tabName === 'moments' && window.momentsModule) window.momentsModule.renderMoments();
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },

@@ -37,6 +37,9 @@
         <button class="tab-btn" data-tab="matches" id="tab-btn-matches" title="Lịch sử trận đấu">
           ⚽ <span>Trận Đấu & Chấm Điểm</span>
         </button>
+        <button class="tab-btn" data-tab="moments" id="tab-btn-moments" title="Khoảnh khắc & Kỷ niệm đội bóng">
+          📸 <span>Khoảnh Khắc</span>
+        </button>
         <button class="tab-btn" data-tab="players" id="tab-btn-players" title="Danh sách cầu thủ">
           👥 <span>Đội Hình</span>
         </button>
@@ -292,6 +295,44 @@
       </div>
 
       <div id="players-grid-container" class="players-grid"></div>
+    </section>
+
+    <!-- TAB 5: KHOẢNH KHẮC & KỶ NIỆM (FC TNT MOMENTS) -->
+    <section id="tab-moments" class="tab-content">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">📸 Khoảnh Khắc & Kỷ Niệm Đội Bóng</h2>
+          <p class="section-subtitle">Lưu giữ những bữa tiệc ăn nhậu 🍻, du đấu 🚗, sinh nhật 🎂 và khoảnh khắc đẹp của FC TNT</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.momentsModule.openCreateMomentModal()">
+          📸 + Đăng Khoảnh Khắc Mới
+        </button>
+      </div>
+
+      <!-- Moments Category Filter Pills -->
+      <div class="moments-category-bar">
+        <button class="moment-category-pill active" data-category="all">
+          🌟 Tất Cả
+        </button>
+        <button class="moment-category-pill" data-category="party">
+          🍻 Ăn Nhậu / Liên Hoan
+        </button>
+        <button class="moment-category-pill" data-category="match">
+          ⚽ Sau Trận Đấu
+        </button>
+        <button class="moment-category-pill" data-category="trip">
+          🚗 Du Đấu / Du Lịch
+        </button>
+        <button class="moment-category-pill" data-category="jersey">
+          👕 Áo Đấu Mới
+        </button>
+        <button class="moment-category-pill" data-category="birthday">
+          🎂 Sinh Nhật
+        </button>
+      </div>
+
+      <!-- Moments Feed Container -->
+      <div id="moments-feed-container" class="moments-feed-container"></div>
     </section>
 
   </main>
@@ -689,6 +730,129 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- MODAL: ĐĂNG / SỬA KHOẢNH KHẮC KỶ NIỆM      -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="moment-form-modal">
+    <div class="modal-container modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="moment-form-title">📸 Đăng Khoảnh Khắc / Kỷ Niệm Mới</h3>
+        <button class="modal-close-btn" onclick="window.momentsModule.closeCreateMomentModal()">&times;</button>
+      </div>
+      <form id="moment-form">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label class="form-label">Tiêu đề kỷ niệm *</label>
+              <input type="text" class="form-control" id="moment-input-title" placeholder="Vd: Liên hoan tất niên thắng trận 5-2..." required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">Thể loại</label>
+              <select class="form-control" id="moment-input-category">
+                <option value="party">🍻 Ăn Nhậu / Liên Hoan</option>
+                <option value="match">⚽ Sau Trận Đấu</option>
+                <option value="trip">🚗 Du Đấu / Du Lịch</option>
+                <option value="jersey">👕 Áo Đấu Mới</option>
+                <option value="birthday">🎂 Sinh Nhật</option>
+                <option value="other">🌟 Kỷ Niệm Khác</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">📅 Ngày diễn ra *</label>
+              <input type="date" class="form-control" id="moment-input-date" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">📍 Địa điểm</label>
+              <input type="text" class="form-control" id="moment-input-location" placeholder="Vd: Quán Lẩu 79, Sân PVV...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">📝 Câu chuyện / Cảm nghĩ / Lời chúc</label>
+            <textarea class="form-control" id="moment-input-description" rows="3" placeholder="Chia sẻ cảm xúc, những pha bóng vui, chém gió về buổi liên hoan..."></textarea>
+          </div>
+
+          <!-- Photo Upload Section -->
+          <div class="form-group">
+            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>🖼️ Album Ảnh Kỷ Niệm (Tải nhiều ảnh)</span>
+              <span style="font-size: 0.75rem; color: var(--accent-emerald);">Chọn file từ máy hoặc dán link</span>
+            </label>
+
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+              <input type="file" id="moment-img-file-input" accept="image/*" multiple style="display: none;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('moment-img-file-input').click()">
+                📁 Tải Ảnh Lên Từ Máy Tính / ĐT
+              </button>
+              <div style="display: flex; gap: 0.4rem; flex: 1; min-width: 260px;">
+                <input type="url" class="form-control form-control-sm" id="moment-img-url-input" placeholder="Hoặc dán URL ảnh online...">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.momentsModule.addImageUrlManual()">+ Thêm</button>
+              </div>
+            </div>
+
+            <!-- Image preview strip -->
+            <div id="moment-images-preview-list" class="moment-images-preview-grid"></div>
+          </div>
+
+          <!-- Video Section (Upload from Device or Link) -->
+          <div class="form-group">
+            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>🎬 Video / Clip Kỷ Niệm (Tải video hoặc dán link)</span>
+              <span id="moment-video-status" style="font-size: 0.75rem; color: var(--accent-cyan);"></span>
+            </label>
+
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+              <input type="file" id="moment-video-file-input" accept="video/*" style="display: none;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('moment-video-file-input').click()">
+                📁 Tải Video Lên Từ Máy / ĐT
+              </button>
+              <div style="display: flex; gap: 0.4rem; flex: 1; min-width: 260px;">
+                <input type="url" class="form-control form-control-sm" id="moment-input-video" placeholder="Hoặc dán link YouTube / TikTok / Facebook / MP4...">
+              </div>
+            </div>
+
+            <!-- Video Preview Container in Modal -->
+            <div id="moment-video-preview-box" class="moment-video-preview-box" style="display: none;">
+              <div class="video-preview-header">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan);">🎥 Video đã chọn:</span>
+                <button type="button" class="remove-video-btn" onclick="window.momentsModule.removeVideo()">&times; Bỏ video</button>
+              </div>
+              <video id="moment-video-preview-player" controls preload="metadata" style="max-height: 200px; width: 100%; border-radius: var(--radius-sm); background: #000;"></video>
+            </div>
+          </div>
+
+          <!-- Tagged Players -->
+          <div class="form-group">
+            <label class="form-label">👥 Gắn thẻ anh em cùng tham gia</label>
+            <div id="moment-tagged-players-select" class="tag-players-selection-grid"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.momentsModule.closeCreateMomentModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary">📸 Lưu & Đăng Khoảnh Khắc</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: LIGHTBOX XEM ẢNH FULL HD            -->
+  <!-- ========================================== -->
+  <div class="modal-overlay lightbox-overlay" id="moment-lightbox-modal">
+    <div class="lightbox-wrapper">
+      <button class="lightbox-close-btn" onclick="window.momentsModule.closeLightbox()">&times;</button>
+      <button class="lightbox-nav-btn prev" onclick="window.momentsModule.prevLightbox()">&#10094;</button>
+      <div class="lightbox-content">
+        <img id="lightbox-current-img" src="" alt="Ảnh phóng to HD">
+        <div class="lightbox-counter-badge" id="lightbox-counter">1 / 1</div>
+      </div>
+      <button class="lightbox-nav-btn next" onclick="window.momentsModule.nextLightbox()">&#10095;</button>
+    </div>
+  </div>
+
   <!-- Global Avatar Quick Upload Input -->
   <input type="file" id="global-player-avatar-file" accept="image/*" style="display: none;">
 
@@ -701,6 +865,7 @@
   <script src="js/matches.js"></script>
   <script src="js/awards.js"></script>
   <script src="js/poster.js"></script>
+  <script src="js/moments.js"></script>
   <script src="js/app.js"></script>
 </body>
 

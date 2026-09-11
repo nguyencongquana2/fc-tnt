@@ -20,6 +20,7 @@ const fs = require('fs');
 const Player = require('./models/Player');
 const Match = require('./models/Match');
 const Team = require('./models/Team');
+const Moment = require('./models/Moment');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,18 +50,90 @@ const OFFICIAL_PLAYERS = [
   { id: 'p_15', name: 'Sỹ Nam', nickname: 'Sỹ Nam', number: 12, position: 'GK', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Thủ môn phản xạ' }
 ];
 
+const INITIAL_MOMENTS = [
+  {
+    id: 'moment_1',
+    title: 'Liên hoan tất niên & Chúc mừng chuỗi trận bất bại',
+    date: '2026-09-08',
+    location: 'Nhà hàng Lẩu Nướng 79 - Cầu Giấy, Hà Nội',
+    category: 'party',
+    description: 'Bữa tiệc liên hoan ấm cúng cùng toàn thể anh em FC TNT sau chuỗi trận thi đấu cống hiến hết mình. Thắng cùng mừng, thua cùng uống, tinh thần anh em là số 1!',
+    images: [
+      'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&auto=format&fit=crop&q=80'
+    ],
+    videoUrl: '',
+    taggedPlayerIds: ['p_1', 'p_2', 'p_3', 'p_4', 'p_6'],
+    reactions: {
+      heart: 8,
+      football: 5,
+      beer: 15,
+      fire: 10,
+      userReactions: []
+    },
+    comments: [
+      {
+        id: 'c_1',
+        authorName: 'Quân Kun',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        content: 'Hôm đấy vui quá anh em ơi, bia vào chân đá lại càng dẻo! 🍻🔥',
+        createdAt: new Date('2026-09-08T22:30:00')
+      },
+      {
+        id: 'c_2',
+        authorName: 'Tài Thọ',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+        content: 'Trận sau cứ thắng 3 bàn trở lên lại làm bữa nữa nhé đội trưởng! ⚽💪',
+        createdAt: new Date('2026-09-08T23:15:00')
+      }
+    ]
+  },
+  {
+    id: 'moment_2',
+    title: 'Ra mắt mẫu áo đấu sân nhà mùa giải mới',
+    date: '2026-09-01',
+    location: 'Sân bóng PVV - Trần Thái Tông',
+    category: 'jersey',
+    description: 'Chính thức trình làng bộ trang phục thi đấu mới cực chiến của FC TNT. Chúc toàn đội luôn giữ vững phong độ và tinh thần đoàn kết!',
+    images: [
+      'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=80'
+    ],
+    videoUrl: '',
+    taggedPlayerIds: ['p_1', 'p_2', 'p_4', 'p_5', 'p_7', 'p_12'],
+    reactions: {
+      heart: 12,
+      football: 18,
+      beer: 6,
+      fire: 20,
+      userReactions: []
+    },
+    comments: [
+      {
+        id: 'c_3',
+        authorName: 'Vinh Lê',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        content: 'Áo mặc vào tôn dáng cực kỳ, chất vải thoáng mát đá bao sướng! 👕⭐',
+        createdAt: new Date('2026-09-01T18:00:00')
+      }
+    ]
+  }
+];
+
 let isMongoConnected = false;
 
 // Fallback in-memory storage if MongoDB is connecting or unavailable
 let fallbackData = {
   teamInfo: {
-    name: 'FC NTN',
+    name: 'FC TNT',
     slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
     badge: '⚽',
     formation: '3-1-2'
   },
   players: [...OFFICIAL_PLAYERS],
-  matches: []
+  matches: [],
+  moments: [...INITIAL_MOMENTS]
 };
 
 // Seed initial database
@@ -76,11 +149,18 @@ async function seedInitialData() {
     const teamCount = await Team.countDocuments();
     if (teamCount === 0) {
       await Team.create({
-        name: 'FC NTN',
+        name: 'FC TNT',
         slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống',
         logo: '⚽'
       });
       console.log('✅ Seeded default team info successfully!');
+    }
+
+    const momentCount = await Moment.countDocuments();
+    if (momentCount === 0) {
+      console.log('🌱 Seeding initial moments to MongoDB...');
+      await Moment.insertMany(INITIAL_MOMENTS);
+      console.log('✅ Seeded initial moments successfully!');
     }
   } catch (err) {
     console.error('Error during database seeding:', err);
@@ -219,6 +299,7 @@ app.get('/api/data', async (req, res) => {
       }
       const players = await Player.find().sort({ number: 1 });
       const matches = await Match.find().sort({ createdAt: -1 });
+      const moments = await Moment.find().sort({ date: -1, createdAt: -1 });
 
       return res.json({
         teamInfo: {
@@ -228,7 +309,8 @@ app.get('/api/data', async (req, res) => {
           formation: '3-1-2'
         },
         players,
-        matches
+        matches,
+        moments
       });
     }
 
@@ -440,10 +522,218 @@ app.put('/api/team', requireAdmin, async (req, res) => {
   }
 });
 
+// ================= MOMENTS (KHOẢNH KHẮC) API =================
+app.get('/api/moments', async (req, res) => {
+  try {
+    if (isMongoConnected) {
+      const moments = await Moment.find().sort({ date: -1, createdAt: -1 });
+      return res.json(moments);
+    }
+    const sorted = [...(fallbackData.moments || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+    res.json(sorted);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/moments', async (req, res) => {
+  try {
+    const momentData = req.body;
+    if (!momentData.id) {
+      momentData.id = 'moment_' + Date.now();
+    }
+    if (!momentData.reactions) {
+      momentData.reactions = { heart: 0, football: 0, beer: 0, fire: 0, userReactions: [] };
+    }
+    if (!momentData.comments) {
+      momentData.comments = [];
+    }
+
+    if (isMongoConnected) {
+      const newMoment = await Moment.create(momentData);
+      return res.status(201).json(newMoment);
+    }
+
+    fallbackData.moments = fallbackData.moments || [];
+    fallbackData.moments.unshift(momentData);
+    res.status(201).json(momentData);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/moments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    if (isMongoConnected) {
+      const updated = await Moment.findOneAndUpdate({ id }, updateData, { new: true });
+      if (!updated) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+      return res.json(updated);
+    }
+
+    fallbackData.moments = fallbackData.moments || [];
+    const idx = fallbackData.moments.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      fallbackData.moments[idx] = { ...fallbackData.moments[idx], ...updateData };
+      return res.json(fallbackData.moments[idx]);
+    }
+    res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/moments/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isMongoConnected) {
+      const deleted = await Moment.findOneAndDelete({ id });
+      if (!deleted) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc để xóa' });
+      return res.json({ success: true, id });
+    }
+
+    fallbackData.moments = fallbackData.moments || [];
+    fallbackData.moments = fallbackData.moments.filter(m => m.id !== id);
+    res.json({ success: true, id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Thả / Bỏ cảm xúc (Reactions: heart, football, beer, fire)
+app.post('/api/moments/:id/react', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reactionType, userKey = 'anonymous' } = req.body; // 'heart' | 'football' | 'beer' | 'fire'
+
+    const validTypes = ['heart', 'football', 'beer', 'fire'];
+    if (!validTypes.includes(reactionType)) {
+      return res.status(400).json({ error: 'Loại cảm xúc không hợp lệ!' });
+    }
+
+    if (isMongoConnected) {
+      const moment = await Moment.findOne({ id });
+      if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+
+      if (!moment.reactions) {
+        moment.reactions = { heart: 0, football: 0, beer: 0, fire: 0, userReactions: [] };
+      }
+
+      // Check if user already reacted with this type
+      const existingIdx = (moment.reactions.userReactions || []).findIndex(
+        ur => ur.userKey === userKey && ur.reactionType === reactionType
+      );
+
+      if (existingIdx !== -1) {
+        // Toggle OFF
+        moment.reactions.userReactions.splice(existingIdx, 1);
+        moment.reactions[reactionType] = Math.max(0, (moment.reactions[reactionType] || 1) - 1);
+      } else {
+        // Toggle ON
+        moment.reactions.userReactions.push({ userKey, reactionType });
+        moment.reactions[reactionType] = (moment.reactions[reactionType] || 0) + 1;
+      }
+
+      await moment.save();
+      return res.json({ success: true, reactions: moment.reactions });
+    }
+
+    fallbackData.moments = fallbackData.moments || [];
+    const moment = fallbackData.moments.find(m => m.id === id);
+    if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+
+    if (!moment.reactions) {
+      moment.reactions = { heart: 0, football: 0, beer: 0, fire: 0, userReactions: [] };
+    }
+    const existingIdx = (moment.reactions.userReactions || []).findIndex(
+      ur => ur.userKey === userKey && ur.reactionType === reactionType
+    );
+
+    if (existingIdx !== -1) {
+      moment.reactions.userReactions.splice(existingIdx, 1);
+      moment.reactions[reactionType] = Math.max(0, (moment.reactions[reactionType] || 1) - 1);
+    } else {
+      moment.reactions.userReactions.push({ userKey, reactionType });
+      moment.reactions[reactionType] = (moment.reactions[reactionType] || 0) + 1;
+    }
+
+    res.json({ success: true, reactions: moment.reactions });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Thêm bình luận (Chém gió)
+app.post('/api/moments/:id/comments', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { authorName, avatar = '', content } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Nội dung bình luận không được để trống!' });
+    }
+
+    const newComment = {
+      id: 'c_' + Date.now(),
+      authorName: authorName && authorName.trim() ? authorName.trim() : 'Anh Em Phủi',
+      avatar,
+      content: content.trim(),
+      createdAt: new Date()
+    };
+
+    if (isMongoConnected) {
+      const moment = await Moment.findOne({ id });
+      if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+
+      moment.comments.push(newComment);
+      await moment.save();
+      return res.status(201).json({ success: true, comment: newComment, comments: moment.comments });
+    }
+
+    fallbackData.moments = fallbackData.moments || [];
+    const moment = fallbackData.moments.find(m => m.id === id);
+    if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+
+    moment.comments = moment.comments || [];
+    moment.comments.push(newComment);
+    res.status(201).json({ success: true, comment: newComment, comments: moment.comments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Xóa bình luận
+app.delete('/api/moments/:id/comments/:commentId', async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+
+    if (isMongoConnected) {
+      const moment = await Moment.findOne({ id });
+      if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+
+      moment.comments = moment.comments.filter(c => c.id !== commentId);
+      await moment.save();
+      return res.json({ success: true, comments: moment.comments });
+    }
+
+    fallbackData.moments = fallbackData.moments || [];
+    const moment = fallbackData.moments.find(m => m.id === id);
+    if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+
+    moment.comments = (moment.comments || []).filter(c => c.id !== commentId);
+    res.json({ success: true, comments: moment.comments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Khôi phục toàn bộ từ file Backup JSON
 app.post('/api/backup/restore', requireAdmin, async (req, res) => {
   try {
-    const { teamInfo, players, matches } = req.body;
+    const { teamInfo, players, matches, moments } = req.body;
 
     if (isMongoConnected) {
       if (players && Array.isArray(players) && players.length > 0) {
@@ -455,6 +745,13 @@ app.post('/api/backup/restore', requireAdmin, async (req, res) => {
         await Match.deleteMany({});
         if (matches.length > 0) {
           await Match.insertMany(matches);
+        }
+      }
+
+      if (moments && Array.isArray(moments)) {
+        await Moment.deleteMany({});
+        if (moments.length > 0) {
+          await Moment.insertMany(moments);
         }
       }
 
@@ -475,6 +772,7 @@ app.post('/api/backup/restore', requireAdmin, async (req, res) => {
     if (teamInfo) fallbackData.teamInfo = teamInfo;
     if (players) fallbackData.players = players;
     if (matches) fallbackData.matches = matches;
+    if (moments) fallbackData.moments = moments;
 
     res.json({ success: true });
   } catch (err) {

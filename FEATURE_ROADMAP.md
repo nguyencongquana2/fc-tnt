@@ -4,13 +4,13 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 
 ---
 
-## 📸 1. Khoảnh Khắc & Kỷ Niệm Đội Bóng (FC TNT Moments) *(Ý tưởng của bạn)*
+## 📸 1. Khoảnh Khắc & Kỷ Niệm Đội Bóng (FC TNT Moments) ✅ *(Đã hoàn thiện)*
 * **Mục đích**: Lưu giữ những kỷ niệm, tình cảm gắn kết của anh em ngoài sân cỏ (ăn uống, liên hoan, du đấu, đặt áo đấu mới, sinh nhật thành viên...).
 * **Tính năng chi tiết**:
   - **Dòng thời gian (Timeline / Feed mini)**: Hiển thị các sự kiện theo ngày tháng, tiêu đề và địa điểm.
-  - **Đa phương tiện**: Hỗ trợ đăng Album nhiều ảnh (carousel kéo lướt) và nhúng Video / Vlog kỷ niệm.
-  - **Gắn thẻ (Tag) cầu thủ**: Gắn tên các thành viên có mặt trong buổi kỷ niệm để hiển thị trực tiếp trên hồ sơ cầu thủ.
-  - **Tương tác**: Thả cảm xúc (❤️, ⚽, 🍻, 🔥) và bình luận "chém gió", troll vui vẻ giữa các thành viên.
+  - **Đa phương tiện**: Hỗ trợ đăng Album nhiều ảnh (grid ảnh Facebook & Lightbox phóng to HD) và nhúng Video / Vlog kỷ niệm.
+  - **Gắn thẻ (Tag) cầu thủ**: Gắn tên và avatar các thành viên có mặt trong buổi kỷ niệm.
+  - **Tương tác**: Thả cảm xúc bia/tim/bóng/lửa (🍻, ❤️, ⚽, 🔥) và khung bình luận "chém gió", troll vui vẻ giữa các thành viên.
 
 ---
 

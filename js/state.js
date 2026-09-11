@@ -32,7 +32,8 @@ const DEFAULT_DATA = {
     formation: '3-1-2'
   },
   players: OFFICIAL_PLAYERS,
-  matches: []
+  matches: [],
+  moments: []
 };
 
 const ADMIN_AUTH_KEY = 'fc_tnt_admin_token';
@@ -90,6 +91,7 @@ class StateManager {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.players && parsed.players.length > 0) {
+          if (!parsed.moments) parsed.moments = [];
           return parsed;
         }
       }
@@ -115,12 +117,13 @@ class StateManager {
       if (res.ok) {
         const serverData = await res.json();
         if (serverData && serverData.players && serverData.players.length > 0) {
+          if (!serverData.moments) serverData.moments = [];
           this.data = serverData;
           this.isServerSynced = true;
           this.saveData(this.data);
           this.notify();
-          console.log('🌿 Đã đồng bộ dữ liệu thành công từ MongoDB Server!');
         }
+        console.log('🌿 Đã đồng bộ dữ liệu thành công từ MongoDB Server!');
       }
     } catch (err) {
       console.warn('Backend API offline or unreachable, using local storage cache.');
@@ -477,6 +480,162 @@ class StateManager {
       goalDifference: goalsFor - goalsAgainst,
       winRate
     };
+  }
+
+  // --- MOMENTS (KHOẢNH KHẮC) MANAGEMENT ---
+  getMoments(filterCategory = 'all') {
+    const list = this.data.moments || [];
+    const sorted = [...list].sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+    if (filterCategory === 'all') return sorted;
+    return sorted.filter(m => m.category === filterCategory);
+  }
+
+  getMomentById(id) {
+    return (this.data.moments || []).find(m => m.id === id) || null;
+  }
+
+  async addMoment(moment) {
+    if (!moment.id) moment.id = 'moment_' + Date.now();
+    if (!moment.reactions) moment.reactions = { heart: 0, football: 0, beer: 0, fire: 0, userReactions: [] };
+    if (!moment.comments) moment.comments = [];
+    if (!this.data.moments) this.data.moments = [];
+
+    this.data.moments.unshift(moment);
+    this.saveData();
+
+    try {
+      fetch(`${API_BASE}/moments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        },
+        body: JSON.stringify(moment)
+      }).catch(err => console.warn('Sync addMoment error:', err));
+    } catch (e) { }
+
+    return moment;
+  }
+
+  async updateMoment(id, updateData) {
+    if (!this.data.moments) this.data.moments = [];
+    const idx = this.data.moments.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      this.data.moments[idx] = { ...this.data.moments[idx], ...updateData };
+      this.saveData();
+
+      try {
+        fetch(`${API_BASE}/moments/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': this.getAdminToken()
+          },
+          body: JSON.stringify(updateData)
+        }).catch(err => console.warn('Sync updateMoment error:', err));
+      } catch (e) { }
+
+      return this.data.moments[idx];
+    }
+    return null;
+  }
+
+  async deleteMoment(id) {
+    if (!this.data.moments) this.data.moments = [];
+    this.data.moments = this.data.moments.filter(m => m.id !== id);
+    this.saveData();
+
+    try {
+      fetch(`${API_BASE}/moments/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin-token': this.getAdminToken()
+        }
+      }).catch(err => console.warn('Sync deleteMoment error:', err));
+    } catch (e) { }
+
+    return true;
+  }
+
+  async toggleReaction(momentId, reactionType, userKey = 'viewer_' + (localStorage.getItem('fc_user_guid') || Math.random().toString(36).substring(2, 9))) {
+    localStorage.setItem('fc_user_guid', userKey);
+    const moment = this.getMomentById(momentId);
+    if (!moment) return null;
+
+    if (!moment.reactions) {
+      moment.reactions = { heart: 0, football: 0, beer: 0, fire: 0, userReactions: [] };
+    }
+    if (!moment.reactions.userReactions) moment.reactions.userReactions = [];
+
+    const existingIdx = moment.reactions.userReactions.findIndex(
+      ur => ur.userKey === userKey && ur.reactionType === reactionType
+    );
+
+    if (existingIdx !== -1) {
+      // Bỏ thả
+      moment.reactions.userReactions.splice(existingIdx, 1);
+      moment.reactions[reactionType] = Math.max(0, (moment.reactions[reactionType] || 1) - 1);
+    } else {
+      // Thả mới
+      moment.reactions.userReactions.push({ userKey, reactionType });
+      moment.reactions[reactionType] = (moment.reactions[reactionType] || 0) + 1;
+    }
+
+    this.saveData();
+
+    try {
+      fetch(`${API_BASE}/moments/${momentId}/react`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reactionType, userKey })
+      }).catch(err => console.warn('Sync toggleReaction error:', err));
+    } catch (e) { }
+
+    return moment.reactions;
+  }
+
+  async addComment(momentId, authorName, content, avatar = '') {
+    const moment = this.getMomentById(momentId);
+    if (!moment) return null;
+
+    if (!moment.comments) moment.comments = [];
+    const newComment = {
+      id: 'c_' + Date.now(),
+      authorName: authorName && authorName.trim() ? authorName.trim() : 'Anh Em Phủi',
+      avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      content: content.trim(),
+      createdAt: new Date()
+    };
+
+    moment.comments.push(newComment);
+    this.saveData();
+
+    try {
+      fetch(`${API_BASE}/moments/${momentId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authorName, content, avatar })
+      }).catch(err => console.warn('Sync addComment error:', err));
+    } catch (e) { }
+
+    return newComment;
+  }
+
+  async deleteComment(momentId, commentId) {
+    const moment = this.getMomentById(momentId);
+    if (!moment || !moment.comments) return false;
+
+    moment.comments = moment.comments.filter(c => c.id !== commentId);
+    this.saveData();
+
+    try {
+      fetch(`${API_BASE}/moments/${momentId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-token': this.getAdminToken() }
+      }).catch(err => console.warn('Sync deleteComment error:', err));
+    } catch (e) { }
+
+    return true;
   }
 
   async updateTeamInfo(info) {
