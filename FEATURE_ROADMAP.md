@@ -82,4 +82,21 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 
 ---
 
+## 📱 8. Tích Hợp Bot Gửi Tin Nhắn Zalo / Telegram Tự Động (Auto Notification Bot & Webhook) 💡 *(Ý tưởng mới)*
+* **Mục đích**: Tự động đồng bộ các thông báo quan trọng từ Website thẳng vào Nhóm Zalo của FC TNT để toàn bộ anh em nắm thông tin tức thì mà không cần phải vào web kiểm tra thường xuyên.
+* **Tính năng chi tiết**:
+  - ⚽ **Thông báo Kèo Đấu Mới & Kêu Gọi Điểm Danh**:
+    - Khi Admin tạo lịch thi đấu mới -> Bot tự động gửi tin nhắn vào nhóm Zalo:
+      > *"📢 [FC TNT - LỊCH ĐẤU MỚI] ⚽*\n*• Thời gian: 19:30 - Thứ 6 (12/09)*\n*• Sân: Sân bóng Tân Triều*\n*• Đối thủ: FC Bạn Hữu*\n*👉 Anh em truy cập web bấm Điểm danh gấp nhé: https://fc-tnt.vercel.app"*
+  - ⏱️ **Nhắc nhở tự động trước giờ bóng lăn (24h & 4h)**:
+    - Báo cáo số lượng anh em đã bấm "Đi được", "Đi muộn" hoặc "Vắng" để chốt quân số kịp thời.
+  - 🏆 **Báo cáo Kết quả & Chia sẻ Poster Sau Trận**:
+    - Ngay sau khi cập nhật tỉ số -> Bot tự động gửi thông báo kết quả chung cuộc, Cầu thủ xuất sắc nhất (MOM), kèm link tải ảnh Poster để anh em tải về khoe Facebook/Story.
+  - 💰 **Thông báo Thu Chi Quỹ Đội Minh Bạch**:
+    - Khi có giao dịch đóng quỹ hoặc chi tiêu lớn (mua bóng, in áo đấu, liên hoan) -> Bot thông báo công khai số dư quỹ hiện tại.
+  - 🎂 **Tự Động Chúc Mừng Sinh Nhật Thành Viên**:
+    - Đúng 08:00 sáng ngày sinh nhật của cầu thủ -> Bot tự động gửi lời chúc mừng sinh nhật kèm hình ảnh/avatar cầu thủ vào nhóm Zalo để anh em cùng chúc mừng.
+
+---
+
 *📅 Ngày cập nhật: 11/09/2026 • Đội bóng: FC TNT*
