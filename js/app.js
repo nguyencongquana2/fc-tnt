@@ -17,7 +17,6 @@ window.appModule = {
     if (window.playersModule) window.playersModule.init();
     if (window.matchesModule) window.matchesModule.init();
     if (window.awardsModule) window.awardsModule.init();
-    if (window.lockerRoomModule) window.lockerRoomModule.init();
 
     // Re-render when state updates
     window.stateManager.subscribe(() => {
@@ -26,10 +25,6 @@ window.appModule = {
       if (window.playersModule) window.playersModule.renderPlayers();
       if (window.matchesModule) window.matchesModule.renderMatches();
       if (window.awardsModule) window.awardsModule.renderAwards();
-      if (window.lockerRoomModule) {
-        if (typeof window.lockerRoomModule.renderKitSelector === 'function') window.lockerRoomModule.renderKitSelector();
-        if (typeof window.lockerRoomModule.render3DStage === 'function') window.lockerRoomModule.render3DStage();
-      }
     });
   },
 
@@ -191,10 +186,6 @@ window.appModule = {
     if (tabName === 'awards' && window.awardsModule) window.awardsModule.renderAwards();
     if (tabName === 'matches' && window.matchesModule) window.matchesModule.renderMatches();
     if (tabName === 'players' && window.playersModule) window.playersModule.renderPlayers();
-    if (tabName === 'locker-room' && window.lockerRoomModule) {
-      if (typeof window.lockerRoomModule.renderKitSelector === 'function') window.lockerRoomModule.renderKitSelector();
-      if (typeof window.lockerRoomModule.render3DStage === 'function') window.lockerRoomModule.render3DStage();
-    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
