@@ -27,9 +27,8 @@ window.appModule = {
       if (window.matchesModule) window.matchesModule.renderMatches();
       if (window.awardsModule) window.awardsModule.renderAwards();
       if (window.lockerRoomModule) {
-        window.lockerRoomModule.renderKitSelector();
-        window.lockerRoomModule.renderPlayerSelector();
-        window.lockerRoomModule.render3DStage();
+        if (typeof window.lockerRoomModule.renderKitSelector === 'function') window.lockerRoomModule.renderKitSelector();
+        if (typeof window.lockerRoomModule.render3DStage === 'function') window.lockerRoomModule.render3DStage();
       }
     });
   },
@@ -193,9 +192,8 @@ window.appModule = {
     if (tabName === 'matches' && window.matchesModule) window.matchesModule.renderMatches();
     if (tabName === 'players' && window.playersModule) window.playersModule.renderPlayers();
     if (tabName === 'locker-room' && window.lockerRoomModule) {
-      window.lockerRoomModule.renderKitSelector();
-      window.lockerRoomModule.renderPlayerSelector();
-      window.lockerRoomModule.render3DStage();
+      if (typeof window.lockerRoomModule.renderKitSelector === 'function') window.lockerRoomModule.renderKitSelector();
+      if (typeof window.lockerRoomModule.render3DStage === 'function') window.lockerRoomModule.render3DStage();
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });

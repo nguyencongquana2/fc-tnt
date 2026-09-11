@@ -27,7 +27,7 @@ const OFFICIAL_PLAYERS = [
 const OFFICIAL_KITS = [
   {
     id: 'kit_home',
-    name: 'Áo Sân Nhà (Home Kit)',
+    name: 'Áo Sân Nhà (Home Kit - 3D Showcase)',
     type: 'home',
     season: '2025 - 2026',
     primaryColor: '#0a0e17',
@@ -36,8 +36,9 @@ const OFFICIAL_KITS = [
     numberColor: '#38bdf8',
     frontImage: '',
     backImage: '',
+    videoUrl: '/assets/videos/kit_3d_home.mp4',
     sponsor: 'FC NTN',
-    description: 'Trang phục thi đấu sân nhà sắc đen & xanh hoàng gia - Có thể tự tải ảnh thật của đội'
+    description: 'Trang phục thi đấu sân nhà sắc đen & xanh hoàng gia - Trình chiếu Video 3D xoay 360 độ chính thức'
   },
   {
     id: 'kit_away',
@@ -50,6 +51,7 @@ const OFFICIAL_KITS = [
     numberColor: '#0284c7',
     frontImage: '',
     backImage: '',
+    videoUrl: '',
     sponsor: 'FC NTN',
     description: 'Trang phục thi đấu sân khách sắc trắng thanh lịch và tốc độ'
   }
@@ -125,11 +127,11 @@ class StateManager {
           if (!parsed.kits || parsed.kits.length === 0) {
             parsed.kits = JSON.parse(JSON.stringify(OFFICIAL_KITS));
           } else {
-            // Dọn sạch ảnh hardcode cũ nếu có để người dùng tự tải ảnh
-            parsed.kits.forEach(k => {
-              if (k.frontImage && k.frontImage.startsWith('/assets/kits/')) k.frontImage = '';
-              if (k.backImage && k.backImage.startsWith('/assets/kits/')) k.backImage = '';
-            });
+            // Cập nhật video 3D cho kit_home nếu chưa có
+            const homeKit = parsed.kits.find(k => k.id === 'kit_home');
+            if (homeKit && !homeKit.videoUrl) {
+              homeKit.videoUrl = '/assets/videos/kit_3d_home.mp4';
+            }
           }
           return parsed;
         }

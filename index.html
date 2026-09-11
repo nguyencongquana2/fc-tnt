@@ -300,14 +300,14 @@
       <div id="players-grid-container" class="players-grid"></div>
     </section>
 
-    <!-- TAB 5: PHÒNG THAY ĐỒ 3D & ÁO ĐẤU -->
+    <!-- TAB 5: PHÒNG TRƯNG BÀY & ÁO ĐẤU 3D -->
     <section id="tab-locker-room" class="tab-content">
       <div class="locker-room-container">
         <!-- Top Toolbar -->
         <div class="locker-room-header">
           <div class="section-title-group">
-            <h2 class="section-title">👕 Phòng Thay Đồ & Áo Đấu 3D (360°)</h2>
-            <p class="section-subtitle">Xoay 3D xem chi tiết áo sân nhà & sân khách, thử in tên số áo cầu thủ trước giờ ra sân</p>
+            <h2 class="section-title">👕 Phòng Trưng Bày & Áo Đấu 3D (360°)</h2>
+            <p class="section-subtitle">Trình chiếu Video 3D xoay 360° chân thực của bộ trang phục thi đấu chính thức FC TNT</p>
           </div>
           <div id="locker-kit-selector"></div>
         </div>
@@ -317,48 +317,46 @@
           <!-- Control bar -->
           <div class="locker-controls-bar">
             <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.flipFront()">
-                👕 Mặt Trước
+              <button type="button" class="btn btn-secondary btn-sm" id="video-play-btn" onclick="window.lockerRoomModule.togglePlayPause()">
+                ⏸️ Tạm Dừng
               </button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.flipBack()">
-                🔢 Mặt Sau (In Số)
+              <button type="button" class="btn btn-secondary btn-sm" id="video-sound-btn" onclick="window.lockerRoomModule.toggleSound()">
+                🔇 Tắt Tiếng
               </button>
-              <button type="button" class="btn btn-secondary btn-sm" id="locker-auto-spin-btn" onclick="window.lockerRoomModule.toggleAutoRotate()">
-                🔄 Tự Động Xoay 360°
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.changeSpeed()">
+                ⚡ Tốc Độ: <span id="video-speed-label">1.0x</span>
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.restartVideo()">
+                🔄 Xem Lại
               </button>
             </div>
 
-            <!-- Player Jersey Picker -->
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex-wrap: wrap;">
-              <label for="locker-player-select" style="font-size: 0.85rem; font-weight: 700; color: var(--accent-gold);">
-                👤 In Áo Cầu Thủ:
-              </label>
-              <select id="locker-player-select" class="form-control" style="width: auto; min-width: 200px; padding: 0.35rem 0.75rem; font-size: 0.85rem;"></select>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.toggleFullscreen()">
+                ⛶ Toàn Màn Hình
+              </button>
             </div>
           </div>
 
-          <!-- 3D Stage Canvas Area -->
-          <div class="locker-3d-stage" id="locker-3d-stage" title="Kéo chuột hoặc vuốt ngón tay để xoay áo 360 độ">
+          <!-- 3D Stage Canvas Area with Video Player -->
+          <div class="locker-3d-stage" id="locker-3d-stage" style="min-height: 520px; display: flex; align-items: center; justify-content: center; position: relative;">
             <!-- Neon Lighting Spots -->
             <div class="locker-spotlight left"></div>
             <div class="locker-spotlight right"></div>
-            <div class="locker-hanger-hook">
-              <div class="hanger-bar"></div>
-            </div>
 
-            <!-- 3D Rotating Card -->
-            <div class="locker-jersey-3d-card" id="locker-jersey-3d-card">
-              <!-- Rendered via JS -->
+            <!-- 3D Video Showcase Box -->
+            <div class="locker-video-box" id="locker-video-box">
+              <video id="locker-3d-video" class="locker-3d-video-player" loop autoplay muted playsinline poster="">
+                <source src="assets/videos/kit_3d_home.mp4" type="video/mp4">
+                <source src="3d.mp4" type="video/mp4">
+                Trình duyệt của bạn không hỗ trợ phát video HTML5.
+              </video>
+              <div class="video-ambient-glow"></div>
             </div>
 
             <!-- Floor 3D Pedestal & Shadow -->
             <div class="locker-floor-pedestal">
               <div class="pedestal-glow"></div>
-            </div>
-
-            <!-- Drag hint -->
-            <div class="locker-drag-hint">
-              <span>👆 Rê chuột hoặc vuốt ngón tay để xoay 360°</span>
             </div>
           </div>
 
@@ -707,85 +705,33 @@
             </div>
           </div>
 
-          <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="form-row">
             <div class="form-group">
-              <label class="form-label" style="font-size: 0.75rem;">Màu Chính</label>
+              <label class="form-label">Màu Chủ Đạo</label>
               <input type="color" class="form-control" id="kit-primary-color" style="height: 40px; padding: 2px; cursor: pointer;">
             </div>
             <div class="form-group">
-              <label class="form-label" style="font-size: 0.75rem;">Màu Viền</label>
+              <label class="form-label">Màu Phối / Viền</label>
               <input type="color" class="form-control" id="kit-secondary-color" style="height: 40px; padding: 2px; cursor: pointer;">
             </div>
-            <div class="form-group">
-              <label class="form-label" style="font-size: 0.75rem;">Màu Chữ Tên</label>
-              <input type="color" class="form-control" id="kit-text-color" style="height: 40px; padding: 2px; cursor: pointer;">
-            </div>
-            <div class="form-group">
-              <label class="form-label" style="font-size: 0.75rem;">Màu Số Áo</label>
-              <input type="color" class="form-control" id="kit-number-color" style="height: 40px; padding: 2px; cursor: pointer;">
-            </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Kiểu Cổ Áo</label>
-              <select class="form-control" id="kit-collar-style">
-                <option value="vneck">Cổ Chữ V Thể Thao (V-Neck)</option>
-                <option value="round">Cổ Tròn Bo Dệt (Crew Neck)</option>
-                <option value="polo">Cổ Bẻ (Polo Collar)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Họa Tiết Kỹ Thuật Số</label>
-              <select class="form-control" id="kit-pattern-style">
-                <option value="floral">Hoa Văn Dạ Quang Hoàng Gia (Baroque Floral)</option>
-                <option value="stripes">Sọc Dọc Thi Đấu (Vertical Stripes)</option>
-                <option value="chevron">Họa Tiết Mũi Tên Đan Xen (Chevron Vector)</option>
-                <option value="plain">Trơn Tinh Tế (Clean Minimalist)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Font Số Thi Đấu</label>
-              <select class="form-control" id="kit-number-font">
-                <option value="bebas">Premier League (Bebas Bold)</option>
-                <option value="rajdhani">Champions League (Rajdhani Cut)</option>
-                <option value="classic">Classic Athletic (Impact Block)</option>
-              </select>
-            </div>
-            <div class="form-group" style="display: flex; align-items: center; margin-top: 1.5rem;">
-              <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #fff; cursor: pointer;">
-                <input type="checkbox" id="kit-enable-overlay" checked style="width: 18px; height: 18px; accent-color: var(--accent-emerald);">
-                <span>In Tên & Số Đè Lên Mặt Sau</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="form-group" style="margin-top: 0.5rem;">
-            <label class="form-label" style="display: flex; justify-content: space-between;">
-              <span>📸 Ảnh Mặt Trước Áo (Tùy chọn tải ảnh chụp thực tế)</span>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.clearFrontImage()" style="padding: 2px 8px; font-size: 0.72rem; color: #ef4444;">🗑️ Xóa ảnh</button>
+          <!-- Video 3D File Upload -->
+          <div class="form-group" style="margin-top: 0.5rem; background: rgba(16, 185, 129, 0.06); padding: 0.85rem; border-radius: var(--radius-md); border: 1px dashed var(--accent-emerald);">
+            <label class="form-label" style="color: var(--accent-emerald); font-weight: 700; display: flex; justify-content: space-between;">
+              <span>🎬 Video 3D Xoay 360° (MP4 / WebM)</span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.clearVideo()" style="padding: 2px 8px; font-size: 0.72rem; color: #ef4444;">🗑️ Xóa video</button>
             </label>
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
-              <input type="file" id="kit-front-file" accept="image/*" class="form-control" style="font-size: 0.8rem; flex: 1;">
-              <img id="kit-front-preview" src="" style="width: 48px; height: 48px; object-fit: contain; background: #0b1120; border-radius: 8px; border: 1px solid var(--border-subtle); display: none;" onerror="this.style.display='none'" onload="this.style.display='block'">
+            <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.25rem;">
+              <input type="file" id="kit-video-file" accept="video/mp4,video/webm" class="form-control" style="font-size: 0.8rem; flex: 1;">
             </div>
-            <input type="hidden" id="kit-front-image">
+            <input type="hidden" id="kit-video-url" value="/assets/videos/kit_3d_home.mp4">
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 6px;">* Tải lên video MP4 áo xoay 360 độ độ nét cao (như file 3d.mp4).</small>
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="display: flex; justify-content: space-between;">
-              <span>📸 Ảnh Mặt Sau Áo (Tùy chọn tải ảnh chụp thực tế)</span>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.clearBackImage()" style="padding: 2px 8px; font-size: 0.72rem; color: #ef4444;">🗑️ Xóa ảnh</button>
-            </label>
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
-              <input type="file" id="kit-back-file" accept="image/*" class="form-control" style="font-size: 0.8rem; flex: 1;">
-              <img id="kit-back-preview" src="" style="width: 48px; height: 48px; object-fit: contain; background: #0b1120; border-radius: 8px; border: 1px solid var(--border-subtle); display: none;" onerror="this.style.display='none'" onload="this.style.display='block'">
-            </div>
-            <input type="hidden" id="kit-back-image">
-            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;">* Mẹo: Nếu ảnh tải lên đã có in sẵn tên số thì có thể bỏ tick ô "In Tên & Số Đè Lên" để áo hiển thị đúng ảnh gốc!</small>
+            <label class="form-label">Mô Tả Bộ Áo</label>
+            <textarea class="form-control" id="kit-desc-input" rows="2" placeholder="Vd: Trang phục thi đấu chính thức mùa giải 2025/2026..."></textarea>
           </div>
         </div>
         <div class="modal-footer">

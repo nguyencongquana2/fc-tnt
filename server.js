@@ -54,7 +54,7 @@ const OFFICIAL_PLAYERS = [
 const OFFICIAL_KITS = [
   {
     id: 'kit_home',
-    name: 'Áo Sân Nhà (Home Kit)',
+    name: 'Áo Sân Nhà (Home Kit - 3D Showcase)',
     type: 'home',
     season: '2025 - 2026',
     primaryColor: '#0a0e17',
@@ -63,8 +63,9 @@ const OFFICIAL_KITS = [
     numberColor: '#38bdf8',
     frontImage: '',
     backImage: '',
+    videoUrl: '/assets/videos/kit_3d_home.mp4',
     sponsor: 'FC NTN',
-    description: 'Trang phục thi đấu sân nhà sắc đen & xanh hoàng gia - Có thể tự tải ảnh thật của đội'
+    description: 'Trang phục thi đấu sân nhà sắc đen & xanh hoàng gia - Trình chiếu Video 3D xoay 360 độ chính thức'
   },
   {
     id: 'kit_away',
@@ -77,6 +78,7 @@ const OFFICIAL_KITS = [
     numberColor: '#0284c7',
     frontImage: '',
     backImage: '',
+    videoUrl: '',
     sponsor: 'FC NTN',
     description: 'Trang phục thi đấu sân khách sắc trắng thanh lịch và tốc độ'
   }
@@ -107,15 +109,15 @@ async function seedInitialData() {
       console.log('✅ Seeded 15 players successfully!');
     }
 
-    // Luôn cập nhật hoặc khởi tạo mẫu áo chính thức sạch sẽ
+    // Luôn cập nhật hoặc khởi tạo mẫu áo chính thức với video 3D
     for (const kit of OFFICIAL_KITS) {
       const existing = await Kit.findOne({ id: kit.id });
       if (!existing) {
         await Kit.create(kit);
-      } else if (existing.frontImage?.startsWith('/assets/kits/') || existing.backImage?.startsWith('/assets/kits/')) {
+      } else {
         await Kit.findOneAndUpdate(
           { id: kit.id },
-          { frontImage: '', backImage: '', name: kit.name, description: kit.description }
+          { videoUrl: kit.videoUrl, name: kit.name, description: kit.description }
         );
       }
     }

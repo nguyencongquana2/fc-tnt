@@ -1,81 +1,36 @@
 /**
- * 3D Locker Room & Kit Viewer Module - FC NTN
- * Hỗ trợ xoay 360 độ tương tác, đổi áo Sân Nhà / Sân Khách,
- * in tên & số áo cầu thủ theo thời gian thực và lưu trữ MongoDB.
+ * 3D Locker Room & Official Kit Video Showcase Module - FC TNT
+ * Trình chiếu video 3D xoay 360 độ chân thực của bộ trang phục thi đấu chính thức.
  */
 
 window.lockerRoomModule = {
   activeKitId: 'kit_home',
-  selectedPlayerId: 'p_1',
-  rotationY: 0,
-  rotationX: -5,
-  isDragging: false,
-  startX: 0,
-  startY: 0,
-  autoRotate: false,
-  autoRotateInterval: null,
+  currentSpeedIndex: 1,
+  speeds: [0.75, 1.0, 1.25, 1.5],
   currentEditKitId: null,
 
   init() {
     this.bindEvents();
     this.renderKitSelector();
-    this.renderPlayerSelector();
     this.render3DStage();
   },
 
   bindEvents() {
-    const stage = document.getElementById('locker-3d-stage');
-    if (stage) {
-      // Chuột trên PC
-      stage.addEventListener('mousedown', (e) => this.onDragStart(e.clientX, e.clientY));
-      window.addEventListener('mousemove', (e) => {
-        if (this.isDragging) this.onDragMove(e.clientX, e.clientY);
-      });
-      window.addEventListener('mouseup', () => this.onDragEnd());
-
-      // Cảm ứng vuốt trên Mobile / Tablet
-      stage.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) {
-          this.onDragStart(e.touches[0].clientX, e.touches[0].clientY);
-        }
-      }, { passive: true });
-
-      window.addEventListener('touchmove', (e) => {
-        if (this.isDragging && e.touches.length === 1) {
-          this.onDragMove(e.touches[0].clientX, e.touches[0].clientY);
-        }
-      }, { passive: true });
-
-      window.addEventListener('touchend', () => this.onDragEnd());
-    }
-
     // Modal form submit
     const kitForm = document.getElementById('kit-edit-form');
     if (kitForm) {
       kitForm.addEventListener('submit', (e) => this.handleSaveKit(e));
     }
 
-    // File input preview for front and back images
-    const frontFileInput = document.getElementById('kit-front-file');
-    if (frontFileInput) {
-      frontFileInput.addEventListener('change', async (e) => {
+    // Video file upload preview
+    const videoFileInput = document.getElementById('kit-video-file');
+    if (videoFileInput) {
+      videoFileInput.addEventListener('change', async (e) => {
         const file = e.target.files && e.target.files[0];
         if (file) {
           const b64 = await this.fileToBase64(file);
-          document.getElementById('kit-front-image').value = b64;
-          document.getElementById('kit-front-preview').src = b64;
-        }
-      });
-    }
-
-    const backFileInput = document.getElementById('kit-back-file');
-    if (backFileInput) {
-      backFileInput.addEventListener('change', async (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (file) {
-          const b64 = await this.fileToBase64(file);
-          document.getElementById('kit-back-image').value = b64;
-          document.getElementById('kit-back-preview').src = b64;
+          document.getElementById('kit-video-url').value = b64;
+          window.showToast('🎬 Đã tải video 3D mới lên bộ nhớ tạm!');
         }
       });
     }
@@ -90,113 +45,26 @@ window.lockerRoomModule = {
     });
   },
 
-  onDragStart(x, y) {
-    this.isDragging = true;
-    this.startX = x;
-    this.startY = y;
-    if (this.autoRotate) this.stopAutoRotate();
-  },
-
-  onDragMove(x, y) {
-    const deltaX = x - this.startX;
-    const deltaY = y - this.startY;
-
-    this.rotationY += deltaX * 0.8;
-    this.rotationX -= deltaY * 0.3;
-
-    // Giới hạn góc nghiêng lên xuống để không bị lật ngược
-    this.rotationX = Math.max(-25, Math.min(25, this.rotationX));
-
-    this.startX = x;
-    this.startY = y;
-
-    this.apply3DRotation();
-  },
-
-  onDragEnd() {
-    this.isDragging = false;
-  },
-
-  apply3DRotation() {
-    const card = document.getElementById('locker-jersey-3d-card');
-    if (card) {
-      card.style.transform = `rotateX(${this.rotationX}deg) rotateY(${this.rotationY}deg)`;
-    }
-  },
-
-  flipFront() {
-    if (this.autoRotate) this.stopAutoRotate();
-    this.rotationY = 0;
-    this.rotationX = -5;
-    this.apply3DRotation();
-    window.showToast('👕 Đã lật xem Mặt Trước Áo Đấu', 'info');
-  },
-
-  flipBack() {
-    if (this.autoRotate) this.stopAutoRotate();
-    this.rotationY = 180;
-    this.rotationX = -5;
-    this.apply3DRotation();
-    window.showToast('🔢 Đã lật xem Mặt Sau (Tên & Số Áo)', 'info');
-  },
-
-  toggleAutoRotate() {
-    if (this.autoRotate) {
-      this.stopAutoRotate();
-    } else {
-      this.startAutoRotate();
-    }
-  },
-
-  startAutoRotate() {
-    this.autoRotate = true;
-    const btn = document.getElementById('locker-auto-spin-btn');
-    if (btn) {
-      btn.classList.add('active');
-      btn.innerHTML = '⏸️ Dừng Xoay';
-    }
-
-    if (this.autoRotateInterval) clearInterval(this.autoRotateInterval);
-    this.autoRotateInterval = setInterval(() => {
-      this.rotationY = (this.rotationY + 1.2) % 360;
-      this.apply3DRotation();
-    }, 25);
-  },
-
-  stopAutoRotate() {
-    this.autoRotate = false;
-    const btn = document.getElementById('locker-auto-spin-btn');
-    if (btn) {
-      btn.classList.remove('active');
-      btn.innerHTML = '🔄 Tự Động Xoay 360°';
-    }
-    if (this.autoRotateInterval) {
-      clearInterval(this.autoRotateInterval);
-      this.autoRotateInterval = null;
-    }
+  getActiveKit() {
+    const kits = window.stateManager.getKits();
+    return kits.find(k => k.id === this.activeKitId) || kits[0] || {
+      id: 'kit_home',
+      name: 'Áo Sân Nhà (Home Kit - 3D Showcase)',
+      type: 'home',
+      season: '2025 - 2026',
+      primaryColor: '#0a0e17',
+      secondaryColor: '#38bdf8',
+      videoUrl: '/assets/videos/kit_3d_home.mp4',
+      sponsor: 'FC NTN',
+      description: 'Trang phục thi đấu sân nhà hoa văn hoàng gia 3D xoay 360 độ chính thức'
+    };
   },
 
   switchKit(kitId) {
     this.activeKitId = kitId;
     this.renderKitSelector();
     this.render3DStage();
-    window.showToast(`👕 Đã chuyển sang: ${this.getActiveKit()?.name || 'Mẫu áo'}`);
-  },
-
-  getActiveKit() {
-    const kits = window.stateManager.getKits();
-    return kits.find(k => k.id === this.activeKitId) || kits[0] || {
-      id: 'kit_home',
-      name: 'Áo Sân Nhà (Home Kit)',
-      type: 'home',
-      season: '2025 - 2026',
-      primaryColor: '#dc2626',
-      secondaryColor: '#ffffff',
-      textColor: '#ffffff',
-      numberColor: '#fbbf24',
-      sponsor: 'FC NTN',
-      description: 'Trang phục thi đấu sân nhà chính thức'
-    };
+    window.showToast(`👕 Đang xem: ${this.getActiveKit()?.name || 'Mẫu áo'}`);
   },
 
   renderKitSelector() {
@@ -221,209 +89,129 @@ window.lockerRoomModule = {
 
         ${isAdmin ? `
           <button class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.openKitModal('${this.activeKitId}')" style="margin-left: auto;">
-            ⚙️ Tùy Chỉnh / Tải Ảnh Áo Này
+            ⚙️ Tùy Chỉnh / Tải Video Áo
           </button>
         ` : ''}
       </div>
     `;
   },
 
-  renderPlayerSelector() {
-    const select = document.getElementById('locker-player-select');
-    if (!select) return;
-
-    const players = window.stateManager.getPlayers();
-    select.innerHTML = players.map(p => `
-      <option value="${p.id}" ${p.id === this.selectedPlayerId ? 'selected' : ''}>
-        #${p.number} ${p.name} ${p.nickname ? `("${p.nickname}")` : ''} - [${p.position}]
-      </option>
-    `).join('');
-
-    select.onchange = (e) => {
-      this.selectedPlayerId = e.target.value;
-      this.render3DStage();
-      const p = window.stateManager.getPlayerById(this.selectedPlayerId);
-      if (p) {
-        window.showToast(`👕 Đã in tên #${p.number} ${p.name.toUpperCase()} lên lưng áo!`);
-      }
-    };
-  },
-
   render3DStage() {
-    const card = document.getElementById('locker-jersey-3d-card');
-    if (!card) return;
-
+    const videoEl = document.getElementById('locker-3d-video');
     const kit = this.getActiveKit();
-    const player = window.stateManager.getPlayerById(this.selectedPlayerId) || {
-      name: 'QUÂN KUN',
-      number: 5,
-      position: 'DF'
-    };
+    const videoSrc = kit.videoUrl || '/assets/videos/kit_3d_home.mp4';
 
-    const teamInfo = (window.stateManager && typeof window.stateManager.getTeamInfo === 'function')
-      ? window.stateManager.getTeamInfo()
-      : (window.stateManager?.data?.teamInfo || { name: 'FC TNT' });
-    const teamName = teamInfo?.name || 'FC TNT';
+    if (videoEl) {
+      if (videoEl.src !== videoSrc && !videoEl.src.endsWith(videoSrc)) {
+        videoEl.src = videoSrc;
+        videoEl.load();
+        videoEl.play().catch(() => {
+          // Autoplay policy fallback: mute and play
+          videoEl.muted = true;
+          videoEl.play().catch(e => console.log('Video play deferred:', e));
+        });
+      }
+    }
 
-    const playerName = (player.name || 'FC TNT').toUpperCase();
-    const playerNumber = player.number !== undefined && player.number !== null ? player.number : 10;
-    const enableOverlay = kit.enableOverlay !== false; // Default true
-    const numberFont = kit.numberFont === 'rajdhani' ? "'Rajdhani', sans-serif" : (kit.numberFont === 'classic' ? 'Impact, sans-serif' : "'Bebas Neue', sans-serif");
-
-    // Mặt trước
-    const frontHTML = kit.frontImage ? `
-      <div class="jersey-face jersey-front custom-image" style="--border-color: ${kit.secondaryColor};">
-        <img src="${kit.frontImage}" alt="${kit.name}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-        <div class="jersey-collar-wrap">
-          <div class="jersey-collar-rib">
-            <span class="jersey-size-tag">FC TNT • L</span>
-          </div>
-        </div>
-        <div class="jersey-sleeve-cuff-left"></div>
-        <div class="jersey-sleeve-cuff-right"></div>
-        <div class="jersey-texture-mesh"></div>
-        <div class="jersey-lighting-overlay"></div>
-      </div>
-    ` : `
-      <div class="jersey-face jersey-front" style="background: radial-gradient(circle at 50% 30%, ${kit.primaryColor} 0%, #030712 100%); --border-color: ${kit.secondaryColor};">
-        ${kit.patternStyle === 'floral' || !kit.patternStyle ? '<div class="jersey-pattern-floral"></div>' : ''}
-        
-        <div class="jersey-collar-wrap">
-          <div class="jersey-collar-rib" style="border-color: ${kit.secondaryColor};">
-            <span class="jersey-size-tag">FC TNT • DRI-FIT ADV</span>
-          </div>
-        </div>
-
-        <div class="jersey-shoulder-stripes">
-          <div class="stripe-group stripe-left">
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-          </div>
-          <div class="stripe-group stripe-right">
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-          </div>
-        </div>
-
-        <div class="jersey-sleeve-cuff-left" style="background: ${kit.secondaryColor};"></div>
-        <div class="jersey-sleeve-cuff-right" style="background: ${kit.secondaryColor};"></div>
-
-        <div class="jersey-chest-row">
-          <div class="jersey-chest-logo" style="color: ${kit.secondaryColor};">⚡</div>
-          <div class="jersey-team-crest">
-            <span class="crest-icon">⚽</span>
-            <span class="crest-text">${teamName}</span>
-          </div>
-        </div>
-
-        <div class="jersey-sponsor-box">
-          <div class="jersey-sponsor-logo" style="color: #ffffff;">✦ ${kit.sponsor || teamName} ✦</div>
-          <div class="jersey-sponsor-sub">OFFICIAL MATCHWEAR • ${kit.season || '2025/2026'}</div>
-        </div>
-
-        <div class="jersey-bottom-tag">AUTHENTIC FOOTBALL GEAR • DRY-FIT</div>
-        <div class="jersey-texture-mesh"></div>
-        <div class="jersey-lighting-overlay"></div>
-      </div>
-    `;
-
-    // Mặt sau
-    const backHTML = kit.backImage ? `
-      <div class="jersey-face jersey-back custom-image" style="--border-color: ${kit.secondaryColor};">
-        <img src="${kit.backImage}" alt="${kit.name}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-        <div class="jersey-collar-wrap">
-          <div class="jersey-collar-rib">
-            <span class="jersey-size-tag">FC TNT</span>
-          </div>
-        </div>
-        <div class="jersey-sleeve-cuff-left"></div>
-        <div class="jersey-sleeve-cuff-right"></div>
-        
-        ${enableOverlay ? `
-          <div class="jersey-back-print-overlay">
-            <div class="jersey-back-name" style="color: ${kit.textColor}; font-family: ${numberFont};">${playerName}</div>
-            <div class="jersey-back-number" style="color: ${kit.numberColor}; font-family: ${numberFont};">${playerNumber}</div>
-            <div class="jersey-back-team-slug" style="color: ${kit.textColor}; opacity: 0.9;">${teamName}</div>
-          </div>
-        ` : ''}
-
-        <div class="jersey-texture-mesh"></div>
-        <div class="jersey-lighting-overlay"></div>
-      </div>
-    ` : `
-      <div class="jersey-face jersey-back" style="background: radial-gradient(circle at 50% 30%, ${kit.primaryColor} 0%, #030712 100%); --border-color: ${kit.secondaryColor};">
-        ${kit.patternStyle === 'floral' || !kit.patternStyle ? '<div class="jersey-pattern-floral"></div>' : ''}
-        
-        <div class="jersey-collar-wrap">
-          <div class="jersey-collar-rib" style="border-color: ${kit.secondaryColor};">
-            <span class="jersey-size-tag">FC TNT</span>
-          </div>
-        </div>
-
-        <div class="jersey-shoulder-stripes">
-          <div class="stripe-group stripe-left">
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-          </div>
-          <div class="stripe-group stripe-right">
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-            <div class="stripe" style="background: ${kit.secondaryColor};"></div>
-          </div>
-        </div>
-
-        <div class="jersey-sleeve-cuff-left" style="background: ${kit.secondaryColor};"></div>
-        <div class="jersey-sleeve-cuff-right" style="background: ${kit.secondaryColor};"></div>
-        
-        <div class="jersey-back-print-area">
-          <div class="jersey-back-name" style="color: ${kit.textColor}; font-family: ${numberFont};">${playerName}</div>
-          <div class="jersey-back-number" style="color: ${kit.numberColor}; font-family: ${numberFont};">${playerNumber}</div>
-          <div class="jersey-back-team-slug" style="color: ${kit.textColor}; opacity: 0.9;">${teamName}</div>
-        </div>
-
-        <div class="jersey-bottom-tag">#${playerNumber} • ${player.position || 'FW'}</div>
-        <div class="jersey-texture-mesh"></div>
-        <div class="jersey-lighting-overlay"></div>
-      </div>
-    `;
-
-    card.innerHTML = frontHTML + backHTML;
-    this.apply3DRotation();
-
-    // Cập nhật thông tin chi tiết dưới stage
+    // Cập nhật thẻ thông tin chi tiết áo đấu
     const descEl = document.getElementById('locker-kit-info-desc');
     if (descEl) {
       descEl.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <div>
-            <h3 style="color: #fff; font-size: 1.25rem; font-weight: 800; margin-bottom: 0.25rem;">${kit.name}</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem;">Mùa giải ${kit.season} • Nhà tài trợ: <strong style="color: var(--accent-emerald);">${kit.sponsor}</strong></p>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+              <span class="kit-color-dot" style="background: ${kit.primaryColor}; border: 2px solid ${kit.secondaryColor}; width: 14px; height: 14px;"></span>
+              <h3 style="color: #fff; font-size: 1.25rem; font-weight: 800; margin: 0;">${kit.name}</h3>
+              <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px;">3D SHOWCASE</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">
+              Mùa giải: <strong style="color: #fff;">${kit.season || '2025 - 2026'}</strong> • Nhà tài trợ: <strong style="color: var(--accent-emerald);">${kit.sponsor || 'FC TNT'}</strong>
+            </p>
+            <p style="color: var(--text-dim); font-size: 0.82rem; margin-top: 0.25rem;">${kit.description || 'Bộ trang phục thi đấu chính thức chất liệu cao cấp thoáng khí'}</p>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <button class="btn btn-secondary btn-sm" onclick="window.lockerRoomModule.toggleOverlay()" style="font-size: 0.78rem;">
-              ${enableOverlay ? '🔲 In Tên/Số: ĐANG BẬT' : '🔘 In Tên/Số: ĐÃ TẮT'}
-            </button>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Đang in cho:</span>
-            <span style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-emerald); color: #34d399; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.85rem;">
-              #${playerNumber} ${playerName}
-            </span>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <a href="${videoSrc}" download="FC_TNT_Official_Kit_3D.mp4" class="btn btn-secondary btn-sm" style="font-size: 0.8rem;">
+              📥 Tải Video 3D Về Máy
+            </a>
           </div>
         </div>
       `;
     }
   },
 
-  async toggleOverlay() {
-    const kit = this.getActiveKit();
-    kit.enableOverlay = kit.enableOverlay === false ? true : false;
-    await window.stateManager.updateKit(kit.id, { enableOverlay: kit.enableOverlay });
-    window.showToast(`👕 Đã ${kit.enableOverlay ? 'BẬT' : 'TẮT'} in tên số đè lên lưng áo!`);
-    this.render3DStage();
+  // Video Playback Controls
+  togglePlayPause() {
+    const video = document.getElementById('locker-3d-video');
+    const btn = document.getElementById('video-play-btn');
+    if (!video || !btn) return;
+
+    if (video.paused) {
+      video.play();
+      btn.innerHTML = '⏸️ Tạm Dừng';
+      window.showToast('▶️ Đang phát video 3D');
+    } else {
+      video.pause();
+      btn.innerHTML = '▶️ Tiếp Tục';
+      window.showToast('⏸️ Đã tạm dừng video 3D');
+    }
   },
 
+  toggleSound() {
+    const video = document.getElementById('locker-3d-video');
+    const btn = document.getElementById('video-sound-btn');
+    if (!video || !btn) return;
+
+    video.muted = !video.muted;
+    if (video.muted) {
+      btn.innerHTML = '🔇 Tắt Tiếng';
+      window.showToast('🔇 Đã tắt tiếng');
+    } else {
+      btn.innerHTML = '🔊 Bật Tiếng';
+      window.showToast('🔊 Đã bật âm thanh');
+    }
+  },
+
+  changeSpeed() {
+    const video = document.getElementById('locker-3d-video');
+    const label = document.getElementById('video-speed-label');
+    if (!video || !label) return;
+
+    this.currentSpeedIndex = (this.currentSpeedIndex + 1) % this.speeds.length;
+    const speed = this.speeds[this.currentSpeedIndex];
+    video.playbackRate = speed;
+    label.innerText = `${speed.toFixed(1)}x`;
+    window.showToast(`⚡ Tốc độ xoay video: ${speed.toFixed(1)}x`);
+  },
+
+  restartVideo() {
+    const video = document.getElementById('locker-3d-video');
+    if (!video) return;
+    video.currentTime = 0;
+    video.play();
+    window.showToast('🔄 Bắt đầu lại video từ đầu');
+  },
+
+  toggleFullscreen() {
+    const box = document.getElementById('locker-video-box');
+    const video = document.getElementById('locker-3d-video');
+    const target = box || video;
+    if (!target) return;
+
+    if (!document.fullscreenElement) {
+      if (target.requestFullscreen) {
+        target.requestFullscreen();
+      } else if (target.webkitRequestFullscreen) {
+        target.webkitRequestFullscreen();
+      }
+      window.showToast('⛶ Đã mở chế độ toàn màn hình');
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  },
+
+  // Modal Management
   openKitModal(kitId) {
     if (!window.stateManager.isAdmin) {
       window.showToast('Vui lòng đăng nhập Quản trị viên để chỉnh sửa áo đấu!', 'error');
@@ -442,68 +230,21 @@ window.lockerRoomModule = {
     document.getElementById('kit-sponsor-input').value = kit.sponsor || 'FC NTN';
     document.getElementById('kit-primary-color').value = kit.primaryColor || '#0a0e17';
     document.getElementById('kit-secondary-color').value = kit.secondaryColor || '#38bdf8';
-    document.getElementById('kit-text-color').value = kit.textColor || '#ffffff';
-    document.getElementById('kit-number-color').value = kit.numberColor || '#38bdf8';
+    document.getElementById('kit-video-url').value = kit.videoUrl || '/assets/videos/kit_3d_home.mp4';
+    document.getElementById('kit-desc-input').value = kit.description || '';
 
-    const collarEl = document.getElementById('kit-collar-style');
-    if (collarEl) collarEl.value = kit.collarStyle || 'vneck';
-
-    const patternEl = document.getElementById('kit-pattern-style');
-    if (patternEl) patternEl.value = kit.patternStyle || 'floral';
-
-    const fontEl = document.getElementById('kit-number-font');
-    if (fontEl) fontEl.value = kit.numberFont || 'bebas';
-
-    const overlayEl = document.getElementById('kit-enable-overlay');
-    if (overlayEl) overlayEl.checked = kit.enableOverlay !== false;
-
-    const frontImg = kit.frontImage || '';
-    document.getElementById('kit-front-image').value = frontImg;
-    const frontPreview = document.getElementById('kit-front-preview');
-    if (frontPreview) {
-      frontPreview.src = frontImg;
-      frontPreview.style.display = frontImg ? 'block' : 'none';
-    }
-    const frontFile = document.getElementById('kit-front-file');
-    if (frontFile) frontFile.value = '';
-
-    const backImg = kit.backImage || '';
-    document.getElementById('kit-back-image').value = backImg;
-    const backPreview = document.getElementById('kit-back-preview');
-    if (backPreview) {
-      backPreview.src = backImg;
-      backPreview.style.display = backImg ? 'block' : 'none';
-    }
-    const backFile = document.getElementById('kit-back-file');
-    if (backFile) backFile.value = '';
+    const videoFileInput = document.getElementById('kit-video-file');
+    if (videoFileInput) videoFileInput.value = '';
 
     modal.classList.add('active');
   },
 
-  clearFrontImage() {
-    const input = document.getElementById('kit-front-image');
+  clearVideo() {
+    const input = document.getElementById('kit-video-url');
     if (input) input.value = '';
-    const preview = document.getElementById('kit-front-preview');
-    if (preview) {
-      preview.src = '';
-      preview.style.display = 'none';
-    }
-    const file = document.getElementById('kit-front-file');
+    const file = document.getElementById('kit-video-file');
     if (file) file.value = '';
-    window.showToast('🗑️ Đã xóa ảnh mặt trước');
-  },
-
-  clearBackImage() {
-    const input = document.getElementById('kit-back-image');
-    if (input) input.value = '';
-    const preview = document.getElementById('kit-back-preview');
-    if (preview) {
-      preview.src = '';
-      preview.style.display = 'none';
-    }
-    const file = document.getElementById('kit-back-file');
-    if (file) file.value = '';
-    window.showToast('🗑️ Đã xóa ảnh mặt sau');
+    window.showToast('🗑️ Đã xóa liên kết video');
   },
 
   closeKitModal() {
@@ -527,14 +268,8 @@ window.lockerRoomModule = {
       sponsor: document.getElementById('kit-sponsor-input').value.trim() || 'FC NTN',
       primaryColor: document.getElementById('kit-primary-color').value,
       secondaryColor: document.getElementById('kit-secondary-color').value,
-      textColor: document.getElementById('kit-text-color').value,
-      numberColor: document.getElementById('kit-number-color').value,
-      collarStyle: document.getElementById('kit-collar-style')?.value || 'vneck',
-      patternStyle: document.getElementById('kit-pattern-style')?.value || 'floral',
-      numberFont: document.getElementById('kit-number-font')?.value || 'bebas',
-      enableOverlay: document.getElementById('kit-enable-overlay')?.checked ?? true,
-      frontImage: document.getElementById('kit-front-image').value.trim(),
-      backImage: document.getElementById('kit-back-image').value.trim()
+      videoUrl: document.getElementById('kit-video-url').value.trim() || '/assets/videos/kit_3d_home.mp4',
+      description: document.getElementById('kit-desc-input').value.trim()
     };
 
     await window.stateManager.updateKit(kitId, kitData);
@@ -544,3 +279,4 @@ window.lockerRoomModule = {
     this.render3DStage();
   }
 };
+

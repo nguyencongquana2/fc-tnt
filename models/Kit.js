@@ -44,6 +44,10 @@ const kitSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  videoUrl: {
+    type: String,
+    default: ''
+  },
   sponsor: {
     type: String,
     default: 'FC NTN'
