@@ -201,22 +201,11 @@ window.momentsModule = {
 
           <!-- Reactions & Interaction Bar -->
           <div class="moment-interaction-bar">
-            <div class="reaction-buttons-group">
-              <button class="reaction-btn ${hasBeer ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${m.id}', 'beer')" title="Cạn ly bia">
-                🍻 <span class="reaction-count">${reactions.beer || 0}</span>
-              </button>
-              <button class="reaction-btn ${hasHeart ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${m.id}', 'heart')" title="Thả tim">
-                ❤️ <span class="reaction-count">${reactions.heart || 0}</span>
-              </button>
-              <button class="reaction-btn ${hasFootball ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${m.id}', 'football')" title="Đam mê bóng đá">
-                ⚽ <span class="reaction-count">${reactions.football || 0}</span>
-              </button>
-              <button class="reaction-btn ${hasFire ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${m.id}', 'fire')" title="Rực lửa">
-                🔥 <span class="reaction-count">${reactions.fire || 0}</span>
-              </button>
+            <div class="reaction-buttons-group" id="reaction-group-${m.id}">
+              ${this.renderReactionButtonsHtml(m.id, reactions, userKey)}
             </div>
 
-            <button class="toggle-comments-btn" onclick="window.momentsModule.toggleComments('${m.id}')">
+            <button class="toggle-comments-btn" id="toggle-comments-btn-${m.id}" onclick="window.momentsModule.toggleComments('${m.id}')">
               💬 <span>${comments.length} bình luận</span>
             </button>
           </div>
@@ -227,21 +216,7 @@ window.momentsModule = {
             <div class="moment-comments-list" id="comments-list-${m.id}">
               ${comments.length === 0 ? `
                 <div class="no-comments-text">Chưa có bình luận nào. Hãy là người đầu tiên "chém gió"! 👇</div>
-              ` : comments.map(c => `
-                <div class="moment-comment-item" id="comment-${c.id}">
-                  <img class="comment-avatar" src="${c.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}" alt="${c.authorName}">
-                  <div class="comment-bubble">
-                    <div class="comment-bubble-header">
-                      <span class="comment-author">${this.escapeHtml(c.authorName)}</span>
-                      <span class="comment-time">${this.formatRelativeTime(c.createdAt)}</span>
-                      ${window.stateManager.isAdmin ? `
-                        <button class="comment-delete-btn" onclick="window.momentsModule.deleteComment('${m.id}', '${c.id}')" title="Xóa bình luận">&times;</button>
-                      ` : ''}
-                    </div>
-                    <div class="comment-text">${this.escapeHtml(c.content)}</div>
-                  </div>
-                </div>
-              `).join('')}
+              ` : comments.map(c => this.renderSingleCommentHtml(m.id, c)).join('')}
             </div>
 
             <!-- Comment Input Box -->
@@ -347,14 +322,67 @@ window.momentsModule = {
     `;
   },
 
-  // Reaction Handler
+  renderReactionButtonsHtml(momentId, reactions, userKey) {
+    const userReactions = reactions.userReactions || [];
+    const hasHeart = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'heart');
+    const hasFootball = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'football');
+    const hasBeer = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'beer');
+    const hasFire = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'fire');
+
+    return `
+      <button class="reaction-btn ${hasBeer ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'beer')" title="Cạn ly bia">
+        🍻 <span class="reaction-count">${reactions.beer || 0}</span>
+      </button>
+      <button class="reaction-btn ${hasHeart ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'heart')" title="Thả tim">
+        ❤️ <span class="reaction-count">${reactions.heart || 0}</span>
+      </button>
+      <button class="reaction-btn ${hasFootball ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'football')" title="Đam mê bóng đá">
+        ⚽ <span class="reaction-count">${reactions.football || 0}</span>
+      </button>
+      <button class="reaction-btn ${hasFire ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'fire')" title="Rực lửa">
+        🔥 <span class="reaction-count">${reactions.fire || 0}</span>
+      </button>
+    `;
+  },
+
+  renderSingleCommentHtml(momentId, c) {
+    return `
+      <div class="moment-comment-item" id="comment-${c.id}">
+        <img class="comment-avatar" src="${c.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}" alt="${c.authorName}">
+        <div class="comment-bubble">
+          <div class="comment-bubble-header">
+            <span class="comment-author">${this.escapeHtml(c.authorName)}</span>
+            <span class="comment-time">${this.formatRelativeTime(c.createdAt)}</span>
+            ${window.stateManager.isAdmin ? `
+              <button class="comment-delete-btn" onclick="window.momentsModule.deleteComment('${momentId}', '${c.id}')" title="Xóa bình luận">&times;</button>
+            ` : ''}
+          </div>
+          <div class="comment-text">${this.escapeHtml(c.content)}</div>
+        </div>
+      </div>
+    `;
+  },
+
+  updateCommentCount(momentId) {
+    const moment = window.stateManager.getMomentById(momentId);
+    const count = (moment && moment.comments) ? moment.comments.length : 0;
+    const btn = document.getElementById(`toggle-comments-btn-${momentId}`);
+    if (btn) {
+      btn.innerHTML = `💬 <span>${count} bình luận</span>`;
+    }
+  },
+
+  // Reaction Handler (Cập nhật DOM cục bộ để không gián đoạn video đang phát)
   async handleReaction(momentId, reactionType) {
     const userKey = localStorage.getItem('fc_user_guid') || 'user_' + Math.random().toString(36).substring(2, 9);
     localStorage.setItem('fc_user_guid', userKey);
 
     const updatedReactions = await window.stateManager.toggleReaction(momentId, reactionType, userKey);
     if (updatedReactions) {
-      this.renderMoments();
+      const group = document.getElementById(`reaction-group-${momentId}`);
+      if (group) {
+        group.innerHTML = this.renderReactionButtonsHtml(momentId, updatedReactions, userKey);
+      }
       // Add fun burst effect sound/haptic if possible
       if (window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(50);
@@ -370,7 +398,7 @@ window.momentsModule = {
     }
   },
 
-  // Comment submission
+  // Comment submission (Thêm trực tiếp vào danh sách không reload bài viết)
   async handleCommentSubmit(e, momentId) {
     e.preventDefault();
     const authorSelect = document.getElementById(`comment-author-${momentId}`);
@@ -406,19 +434,39 @@ window.momentsModule = {
       }
     }
 
-    await window.stateManager.addComment(momentId, authorName, content, avatar);
+    const newComment = await window.stateManager.addComment(momentId, authorName, content, avatar);
     contentInput.value = '';
-    this.renderMoments();
 
-    // Reopen comments section after re-render
+    // Append directly to DOM
+    const listEl = document.getElementById(`comments-list-${momentId}`);
+    if (listEl && newComment) {
+      const noCommentsText = listEl.querySelector('.no-comments-text');
+      if (noCommentsText) noCommentsText.remove();
+      listEl.insertAdjacentHTML('beforeend', this.renderSingleCommentHtml(momentId, newComment));
+      listEl.scrollTop = listEl.scrollHeight;
+    }
+
+    this.updateCommentCount(momentId);
+
+    // Ensure comments section is active
     const sec = document.getElementById(`comments-section-${momentId}`);
-    if (sec) sec.classList.add('active');
+    if (sec && !sec.classList.contains('active')) {
+      sec.classList.add('active');
+    }
   },
 
   async deleteComment(momentId, commentId) {
     if (!confirm('Bạn có chắc chắn muốn xóa bình luận này?')) return;
     await window.stateManager.deleteComment(momentId, commentId);
-    this.renderMoments();
+    
+    const commentEl = document.getElementById(`comment-${commentId}`);
+    if (commentEl) commentEl.remove();
+
+    const listEl = document.getElementById(`comments-list-${momentId}`);
+    if (listEl && listEl.children.length === 0) {
+      listEl.innerHTML = '<div class="no-comments-text">Chưa có bình luận nào. Hãy là người đầu tiên "chém gió"! 👇</div>';
+    }
+    this.updateCommentCount(momentId);
   },
 
   // Open / Close Lightbox
