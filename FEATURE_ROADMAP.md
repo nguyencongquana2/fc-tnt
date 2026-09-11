@@ -54,4 +54,32 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 
 ---
 
-*📅 Ngày cập nhật: 10/09/2026 • Đội bóng: FC TNT*
+## 📚 6. Học Viện Kỹ Năng & Chiến Thuật (FC TNT Academy / Video Hub) 💡 *(Ý tưởng mới)*
+* **Mục đích**: Nâng tầm tư duy chơi bóng và kỹ năng cá nhân cho toàn đội. Là kho tàng video bài giảng, mẹo chiến thuật thực chiến sân 7 và sân 5 được tuyển chọn từ các nguồn uy tín trên Internet (YouTube, TikTok, Facebook).
+* **Phân loại danh mục (Categories)**:
+  - 🧠 **Chiến thuật sân 7 / sân 5**: Cách di chuyển không bóng, bài tập thoát pressing, bọc lót phòng ngự khu vực, các bài phối hợp cố định (đá biên, phạt góc, đá phạt hàng rào), bài chuyển trạng thái phản công nhanh.
+  - ⚽ **Kỹ năng cá nhân & Xử lý bóng (Skills)**: Kỹ thuật đỡ bước một (First Touch), rê dắt qua người, đảo chân, xoay compa (Roulette), che chắn cài đè tì người.
+  - 🎯 **Kỹ thuật sút & Chuyền bóng (Shooting & Passing)**: Sút mu chính diện, cứa lòng má trong, trivela má ngoài, chọc khe bổng/sệt, lốp bóng qua đầu thủ môn.
+  - 🧤 **Giáo án Thủ môn (Goalkeeping)**: Kỹ năng chọn vị trí, khép góc, cản phá 1v1, phát bóng bằng chân và ném bóng phản công chuẩn xác.
+  - 🏃 **Thể lực & Chống chấn thương (Fitness & Recovery)**: Các bài khởi động đúng cách, bài tập tăng tốc độ bứt tốc, giãn cơ sau trận và cách xử lý căng cơ, lật cổ chân.
+* **Tính năng chi tiết**:
+  - **Nhúng Video Đa Nguồn**: Dán link trực tiếp từ YouTube (Video & Shorts), TikTok, Facebook Reels, Google Drive hoặc tải video trực tiếp.
+  - **Ghi chú & Mẹo thực chiến (Coach's Pro Tips)**: Kèm lời dặn của Đội trưởng / HLV dưới mỗi video (VD: *"Anh em xem kỹ phút 01:20: Hậu vệ thòng luôn giữ cự ly, không được vào bóng vội"*).
+  - **Lọc theo vị trí thi đấu**: Tiền đạo (ST), Tiền vệ (MF), Hậu vệ (DF), Thủ môn (GK).
+  - **Đánh dấu yêu thích & Đã học**: Thành viên tự lưu video tâm đắc để xem lại trước giờ ra sân.
+  - **Thảo luận & Đặt câu hỏi**: Cho phép anh em bình luận, trao đổi ý kiến dưới từng bài học chiến thuật.
+
+---
+
+## 🤖 7. Hệ Thống Trí Tuệ Nhân Tạo (FC TNT AI Intelligence) 💡 *(Ý tưởng mới)*
+* **Mục đích**: Ứng dụng AI (Gemini / OpenAI) làm trợ lý ảo thông minh cho đội bóng, tăng tính chuyên nghiệp và tương tác giải trí.
+* **Tính năng chi tiết**:
+  - **AI Match Reporter**: Tự động sinh bài báo tổng thuật trận đấu siêu cuốn, giật tít hài hước theo phong cách BLV Tạ Biên Cương / VTV để chia sẻ lên nhóm Zalo/Facebook.
+  - **AI Team Balancer**: Tự động chia 2 đội hình đá tập nội bộ cân bằng sức mạnh và vị trí dựa trên danh sách điểm danh.
+  - **AI FIFA Rating & Card**: Tự động tính chỉ số cầu thủ (OVR, Sút, Chuyền, Thể lực...) dựa trên dữ liệu thi đấu thực tế.
+  - **AI Caption Generator**: Gợi ý caption, status siêu mặn khi đăng ảnh/video khoảnh khắc nhậu nhẹt, du đấu.
+  - **Chatbot TNT Assistant**: Hỏi đáp nhanh lịch thi đấu, tiền quỹ, đối đầu và tạo tin nhắn nhắc quỹ khéo léo.
+
+---
+
+*📅 Ngày cập nhật: 11/09/2026 • Đội bóng: FC TNT*
