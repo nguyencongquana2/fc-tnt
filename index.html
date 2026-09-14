@@ -7,7 +7,7 @@
   <title>FC TNT - Quản Lý Đội Bóng Phủi & Bảng Vinh Danh Trao Thưởng</title>
   <meta name="description"
     content="Ứng dụng quản lý đội bóng đá phong trào, lưu lịch sử trận đấu, chấm điểm phong độ cầu thủ thang điểm 10 và bảng xếp hạng trao giải Vua phá lưới, Vua kiến tạo, MVP.">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=2.2">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 </head>
@@ -353,6 +353,106 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="window.matchesModule.closeMatchDetailModal()">Hủy</button>
         <button class="btn btn-primary" id="save-match-ratings-btn">💾 Lưu Bảng Điểm & Thống Kê</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: AI CHẤM ĐIỂM & ĐÁNH GIÁ TRẬN ĐẤU   -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="ai-match-rating-modal">
+    <div class="modal-container modal-lg ai-modal-glass">
+      <div class="modal-header ai-modal-header">
+        <div class="ai-header-title-wrap">
+          <div class="ai-sparkle-badge">✨ AI SPORT ASSISTANT</div>
+          <h3 class="modal-title">🤖 Trợ Lý AI Chấm Điểm & Nhận Xét Trận Đấu</h3>
+        </div>
+        <button class="modal-close-btn" onclick="window.matchesModule.closeAiRatingModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Match Summary Pill -->
+        <div id="ai-match-context-pill" class="ai-context-pill"></div>
+
+        <!-- Step 1: Input Form -->
+        <div id="ai-rating-input-step">
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.5rem;">
+              <label style="font-weight: 700; color: #fff; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                ✍️ Nhập Diễn Biến & Phong Độ Thi Đấu:
+              </label>
+              <div class="ai-quick-samples">
+                <button type="button" class="btn-sample-tag" onclick="window.matchesModule.insertAiSample('win')">🔥 Mẫu Thắng Đậm</button>
+                <button type="button" class="btn-sample-tag" onclick="window.matchesModule.insertAiSample('comeback')">⚡ Mẫu Lội Ngược Dòng</button>
+                <button type="button" class="btn-sample-tag" onclick="window.matchesModule.insertAiSample('draw')">🤝 Mẫu Hòa Căng Thẳng</button>
+                <button type="button" class="btn-sample-tag" onclick="window.matchesModule.insertAiSample('clear')">🧹 Xóa</button>
+              </div>
+            </div>
+            <textarea id="ai-match-narration-input" class="form-control ai-textarea" rows="6" 
+              placeholder="Gõ hoặc dán diễn biến trận đấu và thể hiện của các cầu thủ...&#10;Ví dụ: ToDiu bắt rất chắc tay, cản phá 3 pha đối mặt mười mươi. Quân Kun leo biên dẻo có 1 kiến tạo và phòng ngự bọc lót chắc chắn. Vinh Lê làm chủ tuyến giữa, phân phối bóng đỉnh cao 2 kiến tạo. Tài Thọ bứt tốc lập cú đúp siêu phẩm. Hùng Sứt vào sân ghi bàn ấn định tỉ số..."></textarea>
+            <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.35rem;">
+              💡 <em>Mẹo: Bạn có thể nhắc tên cầu thủ, số áo, số bàn thắng, kiến tạo, pha cứu thua, thẻ phạt hoặc lỗi ngớ ngẩn. AI sẽ tự động phân tích và quy đổi ra điểm số Sofascore!</em>
+            </div>
+          </div>
+
+          <!-- Advanced AI Key Toggle -->
+          <div class="ai-key-accordion">
+            <details>
+              <summary style="font-size: 0.8rem; color: var(--accent-cyan); cursor: pointer; user-select: none;">
+                ⚙️ Cấu hình Gemini API Key (Tùy chọn)
+              </summary>
+              <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                <input type="password" id="ai-user-gemini-key" class="form-control form-control-sm" placeholder="Nhập Google Gemini API Key của bạn (nếu có)..." style="font-size: 0.8rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.matchesModule.saveGeminiKey()">Lưu Key</button>
+              </div>
+              <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">
+                Hệ thống đã có sẵn bộ giải thuật phân tích Smart NLP nội bộ. Nhập API Key để kích hoạt thêm trí tuệ nhân tạo Gemini 1.5 Flash cao cấp.
+              </div>
+            </details>
+          </div>
+
+          <div style="margin-top: 1.25rem; text-align: center;">
+            <button type="button" class="btn btn-primary btn-ai-action" id="btn-run-ai-rating" onclick="window.matchesModule.executeAiRating()">
+              ✨ BẮT ĐẦU PHÂN TÍCH & CHẤM ĐIỂM BẰNG AI
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="ai-rating-loading-state" style="display: none; text-align: center; padding: 2.5rem 1rem;">
+          <div class="ai-pulsing-orb">
+            <span style="font-size: 2.5rem;">🤖</span>
+          </div>
+          <h4 style="color: #fff; margin-top: 1rem; font-size: 1.15rem;">Đang phân tích dữ liệu trận đấu...</h4>
+          <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 400px; margin: 0.3rem auto 0;">
+            AI đang đối chiếu diễn biến, tính toán bàn thắng, kiến tạo, vị trí thi đấu và chuẩn hóa điểm Sofascore cho 15 cầu thủ...
+          </p>
+        </div>
+
+        <!-- Step 2: Result Preview -->
+        <div id="ai-rating-result-step" style="display: none;">
+          <div class="ai-result-headline-card">
+            <div class="ai-result-badge">🏆 TỔNG THUẬT & NHẬN ĐỊNH TRẬN ĐẤU</div>
+            <h4 id="ai-result-headline" style="color: #fff; font-size: 1.1rem; margin: 0.3rem 0;"></h4>
+            <p id="ai-result-summary" style="color: var(--text-main); font-size: 0.88rem; line-height: 1.45; margin: 0;"></p>
+            <div id="ai-result-motm-box" class="ai-motm-spotlight" style="margin-top: 0.75rem;"></div>
+          </div>
+
+          <div style="margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-weight: 700; color: #fff; font-size: 0.85rem;">📋 KẾT QUẢ CHẤM ĐIỂM DỰ KIẾN:</span>
+              <span id="ai-source-label" style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;"></span>
+            </div>
+            <div id="ai-rating-preview-list" class="ai-preview-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" id="ai-modal-footer">
+        <button class="btn btn-secondary" onclick="window.matchesModule.closeAiRatingModal()">Đóng</button>
+        <button class="btn btn-primary" id="btn-apply-ai-ratings" style="display: none;" onclick="window.matchesModule.applyAiRatingsToMatch()">
+          ✅ Áp Dụng Vào Sơ Đồ Sân 3-1-2
+        </button>
       </div>
     </div>
   </div>
@@ -860,13 +960,13 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Javascript Modules -->
-  <script src="js/state.js"></script>
-  <script src="js/players.js"></script>
-  <script src="js/matches.js"></script>
-  <script src="js/awards.js"></script>
-  <script src="js/poster.js"></script>
-  <script src="js/moments.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/state.js?v=2.2"></script>
+  <script src="js/players.js?v=2.2"></script>
+  <script src="js/matches.js?v=2.2"></script>
+  <script src="js/awards.js?v=2.2"></script>
+  <script src="js/poster.js?v=2.2"></script>
+  <script src="js/moments.js?v=2.2"></script>
+  <script src="js/app.js?v=2.2"></script>
 </body>
 
 </html>
