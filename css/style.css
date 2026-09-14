@@ -76,6 +76,13 @@ body {
   background-attachment: fixed;
 }
 
+/* Tự động tối ưu tỉ lệ thu nhỏ ~80-85% trên máy tính/laptop để giao diện cực kỳ gọn gàng, sắc nét */
+@media (min-width: 1024px) {
+  body {
+    zoom: 0.82;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
