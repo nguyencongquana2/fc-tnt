@@ -342,9 +342,6 @@ window.matchesModule = {
           <button class="btn btn-gold btn-sm" onclick="window.posterModule.openPosterModal('${m.id}')" title="Xuất Poster Ảnh Khoe Mạng Xã Hội">
             🎨 Xuất Poster Match Card
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.toggleViewMode()">
-            ${this.activeViewMode === 'pitch' ? '📋 Xem Dạng Bảng Kéo' : '🏟️ Xem Sơ Đồ 3-1-2'}
-          </button>
           ${window.stateManager.isAdmin ? `
             <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.openCreateMatchModal('${m.id}')">✏️ Sửa Tỉ Số/Đội</button>
             <button class="btn btn-danger btn-sm" onclick="window.matchesModule.deleteMatch('${m.id}')">🗑️ Xóa Trận</button>
@@ -355,11 +352,6 @@ window.matchesModule = {
 
     this.renderDetailBody();
     modal.classList.add('active');
-  },
-
-  toggleViewMode() {
-    this.activeViewMode = this.activeViewMode === 'pitch' ? 'list' : 'pitch';
-    this.openMatchDetailModal(this.currentMatchId);
   },
 
   renderDetailBody() {
@@ -390,10 +382,9 @@ window.matchesModule = {
       }
     });
 
-    if (this.activeViewMode === 'pitch') {
-      const allStats = [...playerStats];
-      const starters = allStats.filter(ps => ps.isStarter !== false);
-      const subs = allStats.filter(ps => ps.isStarter === false);
+    const allStats = [...playerStats];
+    const starters = allStats.filter(ps => ps.isStarter !== false);
+    const subs = allStats.filter(ps => ps.isStarter === false);
 
       // 7 vị trí chuẩn sơ đồ 3-1-2
       const slotDefs = [
@@ -646,76 +637,6 @@ window.matchesModule = {
           </div>
         </div>
       `;
-    } else {
-      body.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-          ${playerStats.map(ps => {
-            const p = window.stateManager.getPlayerById(ps.playerId);
-            if (!p) return '';
-            const rating = Number(ps.rating) || 7.0;
-            const goals = Number(ps.goals) || 0;
-            const assists = Number(ps.assists) || 0;
-            const yellow = Number(ps.yellowCards) || 0;
-            const red = Number(ps.redCards) || 0;
-            const note = ps.note || '';
-
-            return `
-              <div class="player-rating-row-item" data-player-id="${p.id}">
-                <div class="rating-item-header">
-                  <div class="rating-item-player">
-                    <img class="rating-item-avatar" src="${p.avatar}" alt="${p.name}">
-                    <div>
-                      <div class="rating-item-name">${p.name} #${p.number}</div>
-                      <div class="rating-item-pos">${p.position} ${p.nickname ? `• "${p.nickname}"` : ''}</div>
-                    </div>
-                  </div>
-
-                  <div class="rating-slider-section">
-                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700;">CHẤM ĐIỂM:</span>
-                    <input type="range" class="rating-slider" min="1.0" max="10.0" step="0.1" value="${rating}" 
-                      oninput="document.getElementById('rating-val-${p.id}').innerText = Number(this.value).toFixed(1)">
-                    <span class="rating-score-display" id="rating-val-${p.id}">${rating.toFixed(1)}</span>
-                    <span style="font-size: 0.85rem; color: var(--text-dim);">/10</span>
-                  </div>
-                </div>
-
-                <div class="rating-item-stats-controls">
-                  <div class="stat-stepper">
-                    <span class="stat-stepper-label">⚽ Bàn:</span>
-                    <button type="button" class="stat-stepper-btn" onclick="window.matchesModule.stepStat(this, -1)">-</button>
-                    <span class="stat-stepper-value goals-val" style="color: var(--accent-ruby);">${goals}</span>
-                    <button type="button" class="stat-stepper-btn" onclick="window.matchesModule.stepStat(this, 1)">+</button>
-                  </div>
-
-                  <div class="stat-stepper">
-                    <span class="stat-stepper-label">👟 Kiến tạo:</span>
-                    <button type="button" class="stat-stepper-btn" onclick="window.matchesModule.stepStat(this, -1)">-</button>
-                    <span class="stat-stepper-value assists-val" style="color: var(--accent-cyan);">${assists}</span>
-                    <button type="button" class="stat-stepper-btn" onclick="window.matchesModule.stepStat(this, 1)">+</button>
-                  </div>
-
-                  <div class="stat-stepper">
-                    <span class="stat-stepper-label">🟨 Thẻ vàng:</span>
-                    <button type="button" class="stat-stepper-btn" onclick="window.matchesModule.stepStat(this, -1)">-</button>
-                    <span class="stat-stepper-value yellow-val" style="color: #fbbf24;">${yellow}</span>
-                    <button type="button" class="stat-stepper-btn" onclick="window.matchesModule.stepStat(this, 1)">+</button>
-                  </div>
-
-                  <div class="stat-stepper">
-                    <span class="stat-stepper-label">🟥 Thẻ đỏ:</span>
-                    <button type="button" class="stat-stepper-btn" onclick="window.matchesModule.stepStat(this, -1)">-</button>
-                    <span class="stat-stepper-value red-val" style="color: #ef4444;">${red}</span>
-                    <button type="button" class="stat-stepper-btn" onclick="window.matchesModule.stepStat(this, 1)">+</button>
-                  </div>
-
-                  <input type="text" class="rating-note-input player-note-val" placeholder="Nhận xét màn trình diễn..." value="${note}">
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-    }
   },
 
   renderPitchSlot(slotId, roleLabel, ps, motmId) {
