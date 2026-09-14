@@ -650,6 +650,43 @@
               <input type="text" class="form-control" id="player-note" placeholder="Vd: Chân trái khéo, sút xa tốt...">
             </div>
           </div>
+
+          <!-- Bank Account Info for Split Bill -->
+          <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.8rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.5rem; text-transform: uppercase;">
+              💳 Tài Khoản Ngân Hàng (Tự tạo mã VietQR khi ứng tiền sân)
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ngân Hàng</label>
+                <select class="form-control" id="player-bank-code">
+                  <option value="">-- Chọn ngân hàng --</option>
+                  <option value="MB">MB Bank (Quân Đội)</option>
+                  <option value="VCB">Vietcombank</option>
+                  <option value="TCB">Techcombank</option>
+                  <option value="ICB">VietinBank</option>
+                  <option value="BIDV">BIDV</option>
+                  <option value="ACB">ACB</option>
+                  <option value="VPB">VPBank</option>
+                  <option value="TPB">TPBank</option>
+                  <option value="STB">Sacombank</option>
+                  <option value="VIB">VIB</option>
+                  <option value="SHB">SHB</option>
+                  <option value="LPB">LPBank</option>
+                  <option value="MSB">MSB</option>
+                  <option value="TIMO">Timo</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Số Tài Khoản</label>
+                <input type="text" class="form-control" id="player-bank-acc-number" placeholder="Vd: 0987654321">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Tên Chủ Tài Khoản (Không Dấu)</label>
+              <input type="text" class="form-control" id="player-bank-acc-name" placeholder="Vd: NGUYEN VAN A">
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="window.playersModule.closePlayerModal()">Hủy</button>
@@ -953,6 +990,21 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- MODAL: QUẢN LÝ TIỀN SÂN & CHIA TIỀN TRẬN   -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="match-finance-modal">
+    <div class="modal-container" style="max-width: 920px; width: 95%;">
+      <div class="modal-header">
+        <h3 class="modal-title">💰 Quản Lý Tiền Sân & Chia Tiền Đầu Người</h3>
+        <button class="modal-close-btn" onclick="window.financeModule.closeFinanceModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="match-finance-modal-body">
+        <!-- Rendered by window.financeModule.renderFinanceModal -->
+      </div>
+    </div>
+  </div>
+
   <!-- Global Avatar Quick Upload Input -->
   <input type="file" id="global-player-avatar-file" accept="image/*" style="display: none;">
 
@@ -960,13 +1012,14 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Javascript Modules -->
-  <script src="js/state.js?v=2.2"></script>
-  <script src="js/players.js?v=2.2"></script>
-  <script src="js/matches.js?v=2.2"></script>
-  <script src="js/awards.js?v=2.2"></script>
-  <script src="js/poster.js?v=2.2"></script>
-  <script src="js/moments.js?v=2.2"></script>
-  <script src="js/app.js?v=2.2"></script>
+  <script src="js/state.js?v=2.3"></script>
+  <script src="js/players.js?v=2.3"></script>
+  <script src="js/matches.js?v=2.3"></script>
+  <script src="js/finance.js?v=2.3"></script>
+  <script src="js/awards.js?v=2.3"></script>
+  <script src="js/poster.js?v=2.3"></script>
+  <script src="js/moments.js?v=2.3"></script>
+  <script src="js/app.js?v=2.3"></script>
 </body>
 
 </html>

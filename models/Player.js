@@ -33,6 +33,18 @@ const playerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  bankCode: {
+    type: String,
+    default: ''
+  },
+  bankAccountNumber: {
+    type: String,
+    default: ''
+  },
+  bankAccountName: {
+    type: String,
+    default: ''
+  },
   note: {
     type: String,
     default: ''

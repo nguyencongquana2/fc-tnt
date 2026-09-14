@@ -93,7 +93,28 @@ const matchSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  playerStats: [playerStatSubSchema]
+  playerStats: [playerStatSubSchema],
+  finance: {
+    totalAmount: { type: Number, default: 0 },
+    pitchFee: { type: Number, default: 0 },
+    waterFee: { type: Number, default: 0 },
+    otherFee: { type: Number, default: 0 },
+    payerPlayerId: { type: String, default: '' },
+    payerName: { type: String, default: '' },
+    payerBankCode: { type: String, default: 'MB' },
+    payerAccountNumber: { type: String, default: '' },
+    payerAccountName: { type: String, default: '' },
+    splitAmountPerPerson: { type: Number, default: 0 },
+    note: { type: String, default: '' },
+    payments: [{
+      playerId: { type: String, required: true },
+      playerName: { type: String, default: '' },
+      amount: { type: Number, default: 0 },
+      isPaid: { type: Boolean, default: false },
+      paidAt: { type: Date, default: null },
+      note: { type: String, default: '' }
+    }]
+  }
 }, {
   timestamps: true
 });

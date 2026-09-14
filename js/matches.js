@@ -77,7 +77,10 @@ window.matchesModule = {
               <span class="match-venue">📍 ${m.venue || 'Sân bóng'} (Sân 7 • 3-1-2)</span>
             </div>
             
-            <div style="display: flex; align-items: center; gap: 0.5rem;" onclick="event.stopPropagation()">
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;" onclick="event.stopPropagation()">
+              <button class="btn btn-secondary btn-sm" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.6rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
+                💰 Tiền Sân ${m.finance && m.finance.payments && m.finance.payments.length > 0 ? `(${m.finance.payments.filter(p => p.isPaid).length}/${m.finance.payments.length})` : ''}
+              </button>
               <button class="btn btn-secondary btn-sm" onclick="window.posterModule.openPosterModal('${m.id}')" title="Xuất Poster Ảnh Khoe Mạng Xã Hội" style="padding: 0.25rem 0.6rem; color: var(--accent-gold); border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1);">
                 🎨 Poster
               </button>
@@ -327,6 +330,9 @@ window.matchesModule = {
           ${m.note ? `<div style="font-size: 0.82rem; color: var(--accent-gold); margin-top: 0.25rem;">💬 ${m.note}</div>` : ''}
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
+            💰 Tiền Sân & Chia Tiền
+          </button>
           <button class="btn btn-ai-sparkle btn-sm" onclick="window.matchesModule.openAiRatingModal('${m.id}')" title="Tự động chấm điểm & viết nhận xét bằng AI">
             🤖 AI Chấm Điểm
           </button>

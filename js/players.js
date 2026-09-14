@@ -278,6 +278,9 @@ window.playersModule = {
         document.getElementById('player-avatar-custom').value = player.avatar || '';
         document.getElementById('player-phone').value = player.phone || '';
         document.getElementById('player-note').value = player.note || '';
+        document.getElementById('player-bank-code').value = player.bankCode || '';
+        document.getElementById('player-bank-acc-number').value = player.bankAccountNumber || '';
+        document.getElementById('player-bank-acc-name').value = player.bankAccountName || '';
         document.getElementById('player-avatar-preview').src = player.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
       }
     } else {
@@ -292,6 +295,9 @@ window.playersModule = {
       const randomAv = randomAvatars[Math.floor(Math.random() * randomAvatars.length)];
       document.getElementById('player-avatar-custom').value = randomAv;
       document.getElementById('player-avatar-preview').src = randomAv;
+      document.getElementById('player-bank-code').value = '';
+      document.getElementById('player-bank-acc-number').value = '';
+      document.getElementById('player-bank-acc-name').value = '';
     }
 
     modal.classList.add('active');
@@ -322,7 +328,10 @@ window.playersModule = {
       position: document.getElementById('player-position').value,
       avatar: document.getElementById('player-avatar-custom').value.trim() || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       phone: document.getElementById('player-phone').value.trim(),
-      note: document.getElementById('player-note').value.trim()
+      note: document.getElementById('player-note').value.trim(),
+      bankCode: document.getElementById('player-bank-code')?.value || '',
+      bankAccountNumber: document.getElementById('player-bank-acc-number')?.value.trim() || '',
+      bankAccountName: document.getElementById('player-bank-acc-name')?.value.trim() || ''
     };
 
     if (this.currentEditId) {
@@ -404,6 +413,11 @@ window.playersModule = {
           </div>
           <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">#${player.number} ${player.nickname && player.nickname.trim().toLowerCase() !== player.name.trim().toLowerCase() ? `• "${player.nickname}"` : ''}</p>
           <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem;">${player.note || 'Chưa có ghi chú đặc biệt'}</p>
+          ${player.bankAccountNumber ? `
+            <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 3px 8px; margin-top: 0.4rem; font-size: 0.8rem; color: var(--accent-gold);">
+              💳 <strong>${player.bankCode || 'NH'}:</strong> ${player.bankAccountNumber} ${player.bankAccountName ? `(${player.bankAccountName})` : ''}
+            </div>
+          ` : ''}
         </div>
       </div>
 

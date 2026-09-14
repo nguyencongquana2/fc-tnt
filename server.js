@@ -33,8 +33,8 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // 15 Cầu thủ chính thức của đội bóng
 const OFFICIAL_PLAYERS = [
-  { id: 'p_1', name: 'Quân Kun', nickname: 'Quân Kun', number: 5, position: 'DF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ cánh trái' },
-  { id: 'p_2', name: 'Vinh Lê', nickname: 'Vinh Lê', number: 6, position: 'MF', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền vệ trung tâm điều tiết' },
+  { id: 'p_1', name: 'Quân Kun', nickname: 'Quân Kun', number: 5, position: 'DF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', phone: '0987654321', bankCode: 'VCB', bankAccountNumber: '9392139587', bankAccountName: 'NGUYEN CONG QUAN', note: 'Hậu vệ cánh trái' },
+  { id: 'p_2', name: 'Vinh Lê', nickname: 'Vinh Lê', number: 6, position: 'MF', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', phone: '0912345678', bankCode: 'VCB', bankAccountNumber: '1012345678', bankAccountName: 'LE QUANG VINH', note: 'Tiền vệ trung tâm điều tiết' },
   { id: 'p_3', name: 'ToDiu', nickname: 'ToDiu', number: 24, position: 'GK', avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Thủ môn bắt chính' },
   { id: 'p_4', name: 'Tài Thọ', nickname: 'Tài Thọ', number: 7, position: 'FW', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền đạo cánh phải bứt tốc' },
   { id: 'p_5', name: 'ct', nickname: 'ct', number: 11, position: 'MF', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Kỹ thuật lắt léo' },
@@ -144,6 +144,18 @@ async function seedInitialData() {
       console.log('🌱 Seeding 15 official players to MongoDB...');
       await Player.insertMany(OFFICIAL_PLAYERS);
       console.log('✅ Seeded 15 players successfully!');
+    } else {
+      // Cập nhật thông tin ngân hàng cho Quân Kun nếu chưa có
+      await Player.findOneAndUpdate(
+        { id: 'p_1' },
+        { 
+          $set: { 
+            bankCode: 'VCB', 
+            bankAccountNumber: '9392139587', 
+            bankAccountName: 'NGUYEN CONG QUAN' 
+          } 
+        }
+      );
     }
 
     const teamCount = await Team.countDocuments();
@@ -476,6 +488,71 @@ app.delete('/api/matches/:id', requireAdmin, async (req, res) => {
 
     fallbackData.matches = fallbackData.matches.filter(m => m.id !== id);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Cập nhật cấu hình thu tiền / chia tiền trận đấu
+app.put('/api/matches/:id/finance', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const financeData = req.body;
+
+    if (isMongoConnected) {
+      const updated = await Match.findOneAndUpdate(
+        { id },
+        { $set: { finance: financeData } },
+        { new: true }
+      );
+      if (!updated) return res.status(404).json({ error: 'Match not found' });
+      return res.json(updated);
+    }
+
+    const idx = fallbackData.matches.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      fallbackData.matches[idx].finance = financeData;
+      return res.json(fallbackData.matches[idx]);
+    }
+    res.status(404).json({ error: 'Match not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Toggle trạng thái nộp tiền của 1 cầu thủ trong trận
+app.patch('/api/matches/:id/finance/toggle-payment', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { playerId, isPaid } = req.body;
+
+    if (isMongoConnected) {
+      const match = await Match.findOne({ id });
+      if (!match) return res.status(404).json({ error: 'Match not found' });
+      
+      if (!match.finance) match.finance = { payments: [] };
+      if (!match.finance.payments) match.finance.payments = [];
+      
+      const pIdx = match.finance.payments.findIndex(p => p.playerId === playerId);
+      if (pIdx !== -1) {
+        match.finance.payments[pIdx].isPaid = isPaid;
+        match.finance.payments[pIdx].paidAt = isPaid ? new Date() : null;
+      }
+      await match.save();
+      return res.json(match);
+    }
+
+    const idx = fallbackData.matches.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      if (!fallbackData.matches[idx].finance) fallbackData.matches[idx].finance = { payments: [] };
+      const pIdx = fallbackData.matches[idx].finance.payments.findIndex(p => p.playerId === playerId);
+      if (pIdx !== -1) {
+        fallbackData.matches[idx].finance.payments[pIdx].isPaid = isPaid;
+        fallbackData.matches[idx].finance.payments[pIdx].paidAt = isPaid ? new Date().toISOString() : null;
+      }
+      return res.json(fallbackData.matches[idx]);
+    }
+    res.status(404).json({ error: 'Match not found' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
