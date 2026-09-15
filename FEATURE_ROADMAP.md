@@ -58,10 +58,12 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 * **Mục đích**: Nâng tầm tư duy chơi bóng và kỹ năng cá nhân cho toàn đội. Là kho tàng video bài giảng, mẹo chiến thuật thực chiến sân 7 và sân 5 được tuyển chọn từ các nguồn uy tín trên Internet (YouTube, TikTok, Facebook).
 * **Phân loại danh mục (Categories)**:
   - 🧠 **Chiến thuật sân 7 / sân 5**: Cách di chuyển không bóng, bài tập thoát pressing, bọc lót phòng ngự khu vực, các bài phối hợp cố định (đá biên, phạt góc, đá phạt hàng rào), bài chuyển trạng thái phản công nhanh.
-  - ⚽ **Kỹ năng cá nhân & Xử lý bóng (Skills)**: Kỹ thuật đỡ bước một (First Touch), rê dắt qua người, đảo chân, xoay compa (Roulette), che chắn cài đè tì người.
-  - 🎯 **Kỹ thuật sút & Chuyền bóng (Shooting & Passing)**: Sút mu chính diện, cứa lòng má trong, trivela má ngoài, chọc khe bổng/sệt, lốp bóng qua đầu thủ môn.
-  - 🧤 **Giáo án Thủ môn (Goalkeeping)**: Kỹ năng chọn vị trí, khép góc, cản phá 1v1, phát bóng bằng chân và ném bóng phản công chuẩn xác.
-  - 🏃 **Thể lực & Chống chấn thương (Fitness & Recovery)**: Các bài khởi động đúng cách, bài tập tăng tốc độ bứt tốc, giãn cơ sau trận và cách xử lý căng cơ, lật cổ chân.
+  - ⚽ **Kỹ năng cá nhân theo vị trí**:
+    - *Tiền đạo (FW)*: Chạy chỗ phá bẫy việt vị, đỡ bóng 1 chạm mở góc sút, dứt điểm một chạm, tì đè giữ bóng.
+    - *Tiền vệ (MF)*: Quan sát xoay xở khi bị áp sát, chuyền bóng xuyên tuyến, tỉa bóng khe nách, điều tiết nhịp độ.
+    - *Hậu vệ (DF)*: Kỹ năng tranh chấp tay đôi, khép góc không phạm lỗi, bọc lót khi đồng đội dâng cao, chuyền bóng an toàn.
+    - *Thủ môn (GK)*: Khép góc đối mặt 1vs1, phản xạ bóng sệt, kỹ năng làm chủ vòng cấm và ném bóng phản công.
+  - 🏃 **Thể lực, Dinh dưỡng & Khởi động**: Các bài tập bổ trợ tim mạch (HIIT), chống căng cơ/chuột rút sau hiệp 2, chế độ ăn uống bổ sung nước/khoáng chất trước và sau trận đấu.
 * **Tính năng chi tiết**:
   - **Nhúng Video Đa Nguồn**: Dán link trực tiếp từ YouTube (Video & Shorts), TikTok, Facebook Reels, Google Drive hoặc tải video trực tiếp.
   - **Ghi chú & Mẹo thực chiến (Coach's Pro Tips)**: Kèm lời dặn của Đội trưởng / HLV dưới mỗi video (VD: *"Anh em xem kỹ phút 01:20: Hậu vệ thòng luôn giữ cự ly, không được vào bóng vội"*).
@@ -99,4 +101,17 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 
 ---
 
-*📅 Ngày cập nhật: 11/09/2026 • Đội bóng: FC TNT*
+## 🌦️ 9. Dự Báo Thời Tiết 7 Ngày & AI Thẩm Định Sân AKKA ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Giúp đội chọn ngày bắt đối và kiểm tra chính xác thời tiết tại **Sân bóng đá AKKA (68 Đại Lộ Chu Văn An, Thanh Liệt, Hà Nội)**.
+* **Tính năng chi tiết**:
+  - **Dự báo 7 ngày theo 2 Slot Vàng**: Lọc riêng biệt 2 khung giờ thi đấu **Slot 20:45 - 22:15** và **Slot 22:15 - 23:45** từ Open-Meteo API.
+  - **Chỉ số đá bóng (MPI Score)**: Đánh giá điểm 0 - 100%, phân loại Hoàn hảo 🟢, Cân nhắc 🟡, Cảnh báo mưa 🔴.
+  - **Radar diễn biến theo giờ (17:00 – 23:00)**: Theo dõi trực quan thời điểm mưa và thời điểm tạnh ráo để dự đoán độ ẩm sân cỏ nhân tạo.
+  - **Gợi ý chọn đinh giày (Boot Advisor)**: Tư vấn chọn giày đinh TF bám sân chống trượt xoạc hay TF mỏng tốc độ.
+  - **Trợ lý AI Thẩm Định Mặt Sân**: Tự động tính toán lượng mưa và thời gian róc nước của nền đá mi sân AKKA (30-45 phút sau mưa) để trả lời chi tiết mọi câu hỏi của anh em (kèm 4 quick chips 1-chạm).
+  - **Live Weather Widget trên Dashboard**: Huy hiệu thời tiết trực quan ngay tại trang chủ để cả đội nắm nhanh tình hình trận tối nay.
+
+---
+
+*📅 Ngày cập nhật: 15/09/2026 • Đội bóng: FC TNT*
+

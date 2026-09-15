@@ -7,7 +7,7 @@
   <title>FC TNT - Quản Lý Đội Bóng Phủi & Bảng Vinh Danh Trao Thưởng</title>
   <meta name="description"
     content="Ứng dụng quản lý đội bóng đá phong trào, lưu lịch sử trận đấu, chấm điểm phong độ cầu thủ thang điểm 10 và bảng xếp hạng trao giải Vua phá lưới, Vua kiến tạo, MVP.">
-  <link rel="stylesheet" href="css/style.css?v=2.3">
+  <link rel="stylesheet" href="css/style.css?v=2.4">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 </head>
@@ -36,6 +36,9 @@
         </button>
         <button class="tab-btn" data-tab="matches" id="tab-btn-matches" title="Lịch sử trận đấu">
           ⚽ <span>Trận Đấu & Chấm Điểm</span>
+        </button>
+        <button class="tab-btn" data-tab="weather" id="tab-btn-weather" title="Dự báo thời tiết 7 ngày & AI thẩm định mặt sân AKKA">
+          🌦️ <span>Thời Tiết Sân</span>
         </button>
         <button class="tab-btn" data-tab="moments" id="tab-btn-moments" title="Khoảnh khắc & Kỷ niệm đội bóng">
           📸 <span>Khoảnh Khắc</span>
@@ -90,6 +93,9 @@
           <button class="btn btn-gold" onclick="window.appModule.switchTab('awards')">🏆 Xem Bảng Trao Thưởng</button>
         </div>
       </div>
+
+      <!-- Live Match Weather Summary Widget -->
+      <div id="dash-weather-summary-widget" style="margin-bottom: 1.5rem;"></div>
 
       <!-- Stat Cards Grid -->
       <div class="stat-cards-grid">
@@ -333,6 +339,88 @@
 
       <!-- Moments Feed Container -->
       <div id="moments-feed-container" class="moments-feed-container"></div>
+    </section>
+
+    <!-- TAB 6: THỜI TIẾT SÂN AKKA & AI THẨM ĐỊNH MẶT SÂN -->
+    <section id="tab-weather" class="tab-content">
+      <!-- Venue & Status Header -->
+      <div class="section-header weather-section-header">
+        <div class="section-title-wrap">
+          <div class="weather-venue-badge">
+            <span class="venue-pulse-dot"></span>
+            <span>🏟️ SÂN BÓNG ĐÁ AKKA • 68 ĐẠI LỘ CHU VĂN AN, THANH LIỆT, HÀ NỘI</span>
+          </div>
+          <h2 class="section-title">🌦️ Dự Báo Thời Tiết 7 Ngày & Thẩm Định Sân Trận Đấu</h2>
+          <p class="section-subtitle">Soi chi tiết thời tiết 2 khung giờ vàng của FC TNT: <strong>Slot 20:45</strong> & <strong>Slot 22:15</strong> • Dự báo mưa, róc nước & độ trơn sân</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="btn btn-secondary btn-sm" id="weather-refresh-btn" title="Cập nhật radar thời tiết mới nhất">
+            🔄 Làm Mới Dữ Liệu
+          </button>
+        </div>
+      </div>
+
+      <!-- 7 Days Grid Cards -->
+      <div class="weather-7days-container">
+        <div class="weather-carousel-header">
+          <span class="weather-carousel-title">📅 Chọn ngày xem chi tiết (7 ngày tới):</span>
+          <span class="weather-carousel-hint">💡 Bấm vào từng ngày để xem radar giờ đá và lời khuyên mang giày</span>
+        </div>
+        <div id="weather-days-grid" class="weather-days-grid">
+          <!-- Rendered dynamically by js/weather.js -->
+        </div>
+      </div>
+
+      <!-- Selected Day Deep-Dive Detail Panel -->
+      <div id="weather-selected-day-detail" class="weather-selected-day-detail">
+        <!-- Rendered dynamically by js/weather.js -->
+      </div>
+
+      <!-- AI Pitch Advisor Chat Section -->
+      <div class="weather-ai-section">
+        <div class="weather-ai-card">
+          <div class="weather-ai-header">
+            <div class="weather-ai-title-wrap">
+              <div class="ai-sparkle-badge">🤖 AI PITCH ADVISOR</div>
+              <h3 class="weather-ai-title">Hỏi Đáp AI Thẩm Định Mặt Sân AKKA</h3>
+              <p class="weather-ai-subtitle">Hỏi AI về tình hình mưa, thời gian róc nước của cỏ nhân tạo, độ trơn và gợi ý chọn ngày đá tối ưu</p>
+            </div>
+          </div>
+
+          <!-- Quick Suggestion Prompt Chips -->
+          <div class="weather-quick-chips-wrapper">
+            <span class="quick-chip-label">⚡ Câu hỏi nhanh:</span>
+            <div class="quick-chips-list">
+              <button type="button" class="weather-quick-chip" data-question="Tối nay mưa nhỏ lúc 19h thì 22h15 có đá được không?">
+                🌧️ Mưa lúc 19h thì 22h15 róc nước chưa?
+              </button>
+              <button type="button" class="weather-quick-chip" data-question="Tuần này ngày nào đá slot 20h45 thời tiết đẹp nhất?">
+                🏆 Ngày nào tuần này đá 20h45 đẹp nhất?
+              </button>
+              <button type="button" class="weather-quick-chip" data-question="Mặt sân AKKA vừa mưa xong thì nên mang giày loại gì?">
+                👟 Sân vừa mưa xong nên mang giày gì?
+              </button>
+              <button type="button" class="weather-quick-chip" data-question="Tối nay slot 20h45 tại Sân AKKA có dông sét nguy hiểm không?">
+                ⚡ Tối nay có nguy cơ dông sét không?
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat Conversation Body -->
+          <div id="weather-ai-chat-body" class="weather-ai-chat-body">
+            <!-- Messages rendered dynamically by js/weather.js -->
+          </div>
+
+          <!-- Chat Input Bar -->
+          <form id="weather-ai-form" class="weather-ai-input-form">
+            <input type="text" id="weather-ai-input" class="form-control weather-ai-input" 
+              placeholder="Nhập câu hỏi về thời tiết sân bóng AKKA (vd: mưa lúc 18h thì 20h45 sân có ướt không)..." autocomplete="off" required>
+            <button type="submit" class="btn btn-primary weather-ai-send-btn">
+              <span>Gửi AI</span> 🚀
+            </button>
+          </form>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -1012,14 +1100,15 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Javascript Modules -->
-  <script src="js/state.js?v=2.3"></script>
-  <script src="js/players.js?v=2.3"></script>
-  <script src="js/matches.js?v=2.3"></script>
-  <script src="js/finance.js?v=2.3"></script>
-  <script src="js/awards.js?v=2.3"></script>
-  <script src="js/poster.js?v=2.3"></script>
-  <script src="js/moments.js?v=2.3"></script>
-  <script src="js/app.js?v=2.3"></script>
+  <script src="js/state.js?v=2.4"></script>
+  <script src="js/players.js?v=2.4"></script>
+  <script src="js/matches.js?v=2.4"></script>
+  <script src="js/finance.js?v=2.4"></script>
+  <script src="js/awards.js?v=2.4"></script>
+  <script src="js/poster.js?v=2.4"></script>
+  <script src="js/moments.js?v=2.4"></script>
+  <script src="js/weather.js?v=2.9"></script>
+  <script src="js/app.js?v=2.4"></script>
 </body>
 
 </html>
