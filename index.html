@@ -46,8 +46,15 @@
   }
   </script>
 
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FC TNT">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css?v=3.2">
   <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+  <link rel="apple-touch-icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 </head>
 
@@ -461,6 +468,33 @@
         </div>
       </div>
     </section>
+
+    <!-- SEO & Branding Site Footer -->
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div class="site-footer-brand">
+          <span class="site-footer-logo">⚽</span>
+          <span class="site-footer-title">FC TNT FOOTBALL CLUB</span>
+        </div>
+        <p class="site-footer-desc">
+          Trang chủ chính thức của <strong>Câu Lạc Bộ Bóng Đá Phong Trào FC TNT Hà Nội</strong>. Nền tảng quản lý trận đấu sân 7, chấm điểm phong độ cầu thủ thang điểm 10 Sofascore, vinh danh trao thưởng MVP - Vua phá lưới và dự báo thời tiết sân bóng.
+        </p>
+
+        <div class="site-footer-keywords">
+          <span class="footer-keyword-badge" onclick="window.appModule.switchTab('dashboard')">📊 Quản Lý Đội Bóng</span>
+          <span class="footer-keyword-badge" onclick="window.appModule.switchTab('awards')">🏆 Bảng Trao Thưởng & Vinh Danh</span>
+          <span class="footer-keyword-badge" onclick="window.appModule.switchTab('matches')">⚽ Lịch Sử Trận Đấu 3-1-2</span>
+          <span class="footer-keyword-badge" onclick="window.appModule.switchTab('weather')">🌦️ Dự Báo Thời Tiết Sân AKKA</span>
+          <span class="footer-keyword-badge" onclick="window.appModule.switchTab('moments')">📸 Khoảnh Khắc & Kỷ Niệm</span>
+          <span class="footer-keyword-badge" onclick="window.appModule.switchTab('players')">👥 Đội Hình 15 Cầu Thủ</span>
+        </div>
+
+        <div class="site-footer-bottom">
+          <div>© 2026 FC TNT. Slogan: <em>"Đá hết mình - Thắng cùng mừng, Thua cùng uống"</em></div>
+          <div>Website chính thức: <strong>fc-tnt.onrender.com</strong></div>
+        </div>
+      </div>
+    </footer>
 
   </main>
 

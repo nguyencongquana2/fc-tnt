@@ -1,0 +1,16 @@
+{
+  "name": "FC TNT - Quản Lý & Trao Thưởng Đội Bóng",
+  "short_name": "FC TNT",
+  "description": "Ứng dụng quản lý đội bóng đá phong trào FC TNT, lưu lịch sử thi đấu, chấm điểm phong độ và bảng trao thưởng",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
