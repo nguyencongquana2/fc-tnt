@@ -45,9 +45,10 @@ window.matchesModule = {
           <p style="color: var(--text-muted); margin-bottom: 1.5rem; max-width: 450px; margin-left: auto; margin-right: auto;">
             Danh sách 15 anh em trong đội đã sẵn sàng. Hãy bấm nút dưới đây để nhập trận đấu thực tế đầu tiên và chấm điểm!
           </p>
+          ${window.stateManager.isAdmin ? `
           <button class="btn btn-primary" onclick="window.matchesModule.openCreateMatchModal()" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
             ➕ Thêm Trận Đấu Đầu Tiên (Sân 7 • 3-1-2)
-          </button>
+          </button>` : ''}
         </div>
       `;
       return;
@@ -138,6 +139,10 @@ window.matchesModule = {
   },
 
   openCreateMatchModal(editId = null) {
+    if (!window.stateManager.isAdmin) {
+      window.showToast('Chỉ Quản trị viên mới có quyền thêm hoặc sửa trận đấu!', 'error');
+      return;
+    }
     this.currentEditMatchId = editId;
     const modal = document.getElementById('match-form-modal');
     const title = document.getElementById('match-form-title');

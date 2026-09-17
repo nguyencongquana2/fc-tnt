@@ -357,6 +357,10 @@ window.appModule = {
 
     if (editTeamBtn && teamModal) {
       editTeamBtn.addEventListener('click', () => {
+        if (!window.stateManager.isAdmin) {
+          window.showToast('Chỉ Quản trị viên mới có quyền đổi thông tin đội!', 'error');
+          return;
+        }
         const info = window.stateManager.data.teamInfo;
         document.getElementById('team-name-input').value = info.name || '';
         document.getElementById('team-slogan-input').value = info.slogan || '';
@@ -367,6 +371,10 @@ window.appModule = {
     if (teamForm) {
       teamForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        if (!window.stateManager.isAdmin) {
+          window.showToast('Chỉ Quản trị viên mới có quyền đổi thông tin đội!', 'error');
+          return;
+        }
         const name = document.getElementById('team-name-input').value.trim();
         const slogan = document.getElementById('team-slogan-input').value.trim();
         if (!name) {
