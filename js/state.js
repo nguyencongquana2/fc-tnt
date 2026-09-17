@@ -44,9 +44,64 @@ class StateManager {
     this.data = this.loadData();
     this.listeners = [];
     this.isServerSynced = false;
+    this.socket = null;
 
     // Tự động đồng bộ với backend MongoDB khi khởi chạy
     this.syncWithBackend();
+
+    // Khởi tạo kết nối Real-time WebSocket
+    this.initRealtimeSocket();
+  }
+
+  initRealtimeSocket() {
+    if (typeof io !== 'undefined') {
+      try {
+        this.socket = io({
+          transports: ['websocket', 'polling'],
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000
+        });
+
+        this.socket.on('connect', () => {
+          console.log('⚡ Real-time WebSocket connected:', this.socket.id);
+          this.updateRealtimeIndicator(true);
+        });
+
+        this.socket.on('disconnect', () => {
+          console.log('⚡ Real-time WebSocket disconnected');
+          this.updateRealtimeIndicator(false);
+        });
+
+        this.socket.on('data_updated', async (payload) => {
+          console.log('🔄 Tín hiệu cập nhật thời gian thực:', payload);
+          // Đồng bộ lại dữ liệu tức thì từ server
+          await this.syncWithBackend(true);
+
+          if (payload && payload.message) {
+            if (window.appModule && window.appModule.showToast) {
+              window.appModule.showToast(payload.message, 'info');
+            } else if (window.showToast) {
+              window.showToast(payload.message, 'info');
+            }
+          }
+        });
+      } catch (err) {
+        console.warn('Socket.io client init error:', err);
+      }
+    }
+  }
+
+  updateRealtimeIndicator(isOnline) {
+    const indicator = document.getElementById('realtime-live-indicator');
+    if (indicator) {
+      if (isOnline) {
+        indicator.classList.remove('offline');
+        indicator.title = '🟢 Đang đồng bộ thời gian thực (Real-time Live)';
+      } else {
+        indicator.classList.add('offline');
+        indicator.title = '⚪ Đang chạy chế độ ngoại tuyến (Offline cache)';
+      }
+    }
   }
 
   getAdminToken() {
@@ -111,7 +166,7 @@ class StateManager {
     }
   }
 
-  async syncWithBackend() {
+  async syncWithBackend(isSilent = false) {
     try {
       const res = await fetch(`${API_BASE}/data`);
       if (res.ok) {
@@ -123,7 +178,9 @@ class StateManager {
           this.saveData(this.data);
           this.notify();
         }
-        console.log('🌿 Đã đồng bộ dữ liệu thành công từ MongoDB Server!');
+        if (!isSilent) {
+          console.log('🌿 Đã đồng bộ dữ liệu thành công từ MongoDB Server!');
+        }
       }
     } catch (err) {
       console.warn('Backend API offline or unreachable, using local storage cache.');

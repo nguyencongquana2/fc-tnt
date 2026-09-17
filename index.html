@@ -96,6 +96,11 @@
 
       <!-- Utility Actions & Admin Authentication -->
       <div class="nav-actions">
+        <span class="realtime-live-badge" id="realtime-live-indicator" title="Đồng bộ dữ liệu thời gian thực (Real-time WebSocket)">
+          <span class="live-dot"></span>
+          <span class="live-text">Realtime</span>
+        </span>
+
         <div id="auth-status-container" style="display: flex; align-items: center; gap: 0.5rem;">
           <span class="auth-role-badge viewer" id="auth-role-badge" title="Chế độ chỉ xem cho thành viên">
             👁️ <span>Thành Viên</span>
@@ -1166,15 +1171,16 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Javascript Modules -->
-  <script src="js/state.js?v=2.4"></script>
-  <script src="js/players.js?v=2.4"></script>
-  <script src="js/matches.js?v=2.4"></script>
-  <script src="js/finance.js?v=2.4"></script>
-  <script src="js/awards.js?v=2.4"></script>
-  <script src="js/poster.js?v=2.4"></script>
-  <script src="js/moments.js?v=2.4"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/state.js?v=2.5"></script>
+  <script src="js/players.js?v=2.5"></script>
+  <script src="js/matches.js?v=2.5"></script>
+  <script src="js/finance.js?v=2.5"></script>
+  <script src="js/awards.js?v=2.5"></script>
+  <script src="js/poster.js?v=2.5"></script>
+  <script src="js/moments.js?v=2.5"></script>
   <script src="js/weather.js?v=2.9"></script>
-  <script src="js/app.js?v=2.4"></script>
+  <script src="js/app.js?v=2.5"></script>
 </body>
 
 </html>

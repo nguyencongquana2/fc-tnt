@@ -5202,3 +5202,49 @@ body {
     text-align: center;
   }
 }
+
+/* ==========================================================================
+   REALTIME LIVE SYNC PULSE BADGE
+   ========================================================================== */
+.realtime-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.65rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #34d399;
+  letter-spacing: 0.3px;
+  user-select: none;
+  transition: all 0.3s ease;
+}
+
+.realtime-live-badge .live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: liveDotPulse 1.8s infinite;
+}
+
+.realtime-live-badge.offline {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #94a3b8;
+}
+
+.realtime-live-badge.offline .live-dot {
+  background-color: #94a3b8;
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes liveDotPulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 12px #10b981; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}

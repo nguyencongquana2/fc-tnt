@@ -11,11 +11,13 @@ try {
   console.warn('Could not set custom DNS servers:', e.message);
 }
 
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+const { Server } = require('socket.io');
 
 const Player = require('./models/Player');
 const Match = require('./models/Match');
@@ -23,8 +25,37 @@ const Team = require('./models/Team');
 const Moment = require('./models/Moment');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fc_ntn';
+
+// Broadcast helper cho đồng bộ thời gian thực
+const broadcastDataUpdate = (type, message, extra = {}) => {
+  try {
+    io.emit('data_updated', {
+      type,
+      message,
+      timestamp: new Date().toISOString(),
+      ...extra
+    });
+  } catch (err) {
+    console.warn('Socket broadcast error:', err.message);
+  }
+};
+
+io.on('connection', (socket) => {
+  console.log(`⚡ Realtime Client kết nối: ${socket.id}`);
+  socket.on('disconnect', () => {
+    // client disconnected
+  });
+});
 
 // Middleware
 app.use(cors());
@@ -353,10 +384,12 @@ app.post('/api/players', requireAdmin, async (req, res) => {
 
     if (isMongoConnected) {
       const created = await Player.create(data);
+      broadcastDataUpdate('players', `👥 Cầu thủ mới "${data.name}" vừa được thêm vào đội hình!`);
       return res.status(201).json(created);
     }
 
     fallbackData.players.push(data);
+    broadcastDataUpdate('players', `👥 Cầu thủ mới "${data.name}" vừa được thêm vào đội hình!`);
     res.status(201).json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -375,12 +408,14 @@ app.put('/api/players/:id/avatar', async (req, res) => {
 
     if (isMongoConnected) {
       const updated = await Player.findOneAndUpdate({ id }, { avatar }, { new: true });
+      broadcastDataUpdate('players', `📸 Cầu thủ ${updated?.name || ''} vừa cập nhật avatar mới!`);
       return res.json(updated);
     }
 
     const idx = fallbackData.players.findIndex(p => p.id === id);
     if (idx !== -1) {
       fallbackData.players[idx].avatar = avatar;
+      broadcastDataUpdate('players', `📸 Cầu thủ ${fallbackData.players[idx].name} vừa cập nhật avatar mới!`);
       return res.json(fallbackData.players[idx]);
     }
     res.status(404).json({ error: 'Player not found' });
@@ -396,12 +431,14 @@ app.put('/api/players/:id', requireAdmin, async (req, res) => {
 
     if (isMongoConnected) {
       const updated = await Player.findOneAndUpdate({ id }, updates, { new: true });
+      broadcastDataUpdate('players', `👤 Thông tin cầu thủ ${updated?.name || ''} vừa được cập nhật!`);
       return res.json(updated);
     }
 
     const idx = fallbackData.players.findIndex(p => p.id === id);
     if (idx !== -1) {
       fallbackData.players[idx] = { ...fallbackData.players[idx], ...updates };
+      broadcastDataUpdate('players', `👤 Thông tin cầu thủ ${fallbackData.players[idx].name} vừa được cập nhật!`);
       return res.json(fallbackData.players[idx]);
     }
     res.status(404).json({ error: 'Player not found' });
@@ -415,11 +452,15 @@ app.delete('/api/players/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
 
     if (isMongoConnected) {
+      const p = await Player.findOne({ id });
       await Player.findOneAndDelete({ id });
+      broadcastDataUpdate('players', `👥 Cầu thủ ${p?.name || ''} đã được xóa khỏi đội.`);
       return res.json({ success: true, message: 'Player deleted' });
     }
 
+    const p = fallbackData.players.find(p => p.id === id);
     fallbackData.players = fallbackData.players.filter(p => p.id !== id);
+    broadcastDataUpdate('players', `👥 Cầu thủ ${p?.name || ''} đã được xóa khỏi đội.`);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -446,10 +487,12 @@ app.post('/api/matches', requireAdmin, async (req, res) => {
 
     if (isMongoConnected) {
       const created = await Match.create(matchData);
+      broadcastDataUpdate('matches', `⚽ Trận đấu mới gặp "${matchData.opponent || 'Đối thủ'}" vừa được thêm!`);
       return res.status(201).json(created);
     }
 
     fallbackData.matches.unshift(matchData);
+    broadcastDataUpdate('matches', `⚽ Trận đấu mới gặp "${matchData.opponent || 'Đối thủ'}" vừa được thêm!`);
     res.status(201).json(matchData);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -463,12 +506,14 @@ app.put('/api/matches/:id', requireAdmin, async (req, res) => {
 
     if (isMongoConnected) {
       const updated = await Match.findOneAndUpdate({ id }, updates, { new: true });
+      broadcastDataUpdate('matches', `⭐ Điểm số trận gặp "${updated?.opponent || ''}" vừa được cập nhật!`);
       return res.json(updated);
     }
 
     const idx = fallbackData.matches.findIndex(m => m.id === id);
     if (idx !== -1) {
       fallbackData.matches[idx] = { ...fallbackData.matches[idx], ...updates };
+      broadcastDataUpdate('matches', `⭐ Điểm số trận gặp "${fallbackData.matches[idx].opponent || ''}" vừa được cập nhật!`);
       return res.json(fallbackData.matches[idx]);
     }
     res.status(404).json({ error: 'Match not found' });
@@ -483,10 +528,12 @@ app.delete('/api/matches/:id', requireAdmin, async (req, res) => {
 
     if (isMongoConnected) {
       await Match.findOneAndDelete({ id });
+      broadcastDataUpdate('matches', '🗑️ Một trận đấu vừa được xóa khỏi lịch sử.');
       return res.json({ success: true, message: 'Match deleted' });
     }
 
     fallbackData.matches = fallbackData.matches.filter(m => m.id !== id);
+    broadcastDataUpdate('matches', '🗑️ Một trận đấu vừa được xóa khỏi lịch sử.');
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -506,12 +553,14 @@ app.put('/api/matches/:id/finance', async (req, res) => {
         { new: true }
       );
       if (!updated) return res.status(404).json({ error: 'Match not found' });
+      broadcastDataUpdate('matches', '💰 Tiền sân trận đấu vừa được cập nhật!');
       return res.json(updated);
     }
 
     const idx = fallbackData.matches.findIndex(m => m.id === id);
     if (idx !== -1) {
       fallbackData.matches[idx].finance = financeData;
+      broadcastDataUpdate('matches', '💰 Tiền sân trận đấu vừa được cập nhật!');
       return res.json(fallbackData.matches[idx]);
     }
     res.status(404).json({ error: 'Match not found' });
@@ -539,6 +588,7 @@ app.patch('/api/matches/:id/finance/toggle-payment', async (req, res) => {
         match.finance.payments[pIdx].paidAt = isPaid ? new Date() : null;
       }
       await match.save();
+      broadcastDataUpdate('matches', isPaid ? '💳 Đã ghi nhận nộp tiền sân thành công!' : '💳 Đã hủy trạng thái nộp tiền sân.');
       return res.json(match);
     }
 
@@ -550,6 +600,7 @@ app.patch('/api/matches/:id/finance/toggle-payment', async (req, res) => {
         fallbackData.matches[idx].finance.payments[pIdx].isPaid = isPaid;
         fallbackData.matches[idx].finance.payments[pIdx].paidAt = isPaid ? new Date().toISOString() : null;
       }
+      broadcastDataUpdate('matches', isPaid ? '💳 Đã ghi nhận nộp tiền sân thành công!' : '💳 Đã hủy trạng thái nộp tiền sân.');
       return res.json(fallbackData.matches[idx]);
     }
     res.status(404).json({ error: 'Match not found' });
@@ -563,10 +614,12 @@ app.delete('/api/matches', requireAdmin, async (req, res) => {
   try {
     if (isMongoConnected) {
       await Match.deleteMany({});
+      broadcastDataUpdate('matches', '🗑️ Danh sách trận đấu đã được làm mới.');
       return res.json({ success: true, message: 'All matches deleted' });
     }
 
     fallbackData.matches = [];
+    broadcastDataUpdate('matches', '🗑️ Danh sách trận đấu đã được làm mới.');
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -588,11 +641,13 @@ app.put('/api/team', requireAdmin, async (req, res) => {
         if (logo) team.logo = logo;
         await team.save();
       }
+      broadcastDataUpdate('team', `🛡️ Thông tin đội bóng "${team.name}" vừa được cập nhật!`);
       return res.json(team);
     }
 
     if (name) fallbackData.teamInfo.name = name;
     if (slogan !== undefined) fallbackData.teamInfo.slogan = slogan;
+    broadcastDataUpdate('team', `🛡️ Thông tin đội bóng vừa được cập nhật!`);
     res.json(fallbackData.teamInfo);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -628,11 +683,13 @@ app.post('/api/moments', async (req, res) => {
 
     if (isMongoConnected) {
       const newMoment = await Moment.create(momentData);
+      broadcastDataUpdate('moments', `📸 Có bài đăng kỷ niệm mới: "${newMoment.title}"!`);
       return res.status(201).json(newMoment);
     }
 
     fallbackData.moments = fallbackData.moments || [];
     fallbackData.moments.unshift(momentData);
+    broadcastDataUpdate('moments', `📸 Có bài đăng kỷ niệm mới: "${momentData.title}"!`);
     res.status(201).json(momentData);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -647,6 +704,7 @@ app.put('/api/moments/:id', async (req, res) => {
     if (isMongoConnected) {
       const updated = await Moment.findOneAndUpdate({ id }, updateData, { new: true });
       if (!updated) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+      broadcastDataUpdate('moments', `📸 Bài viết "${updated.title}" vừa được cập nhật!`);
       return res.json(updated);
     }
 
@@ -654,6 +712,7 @@ app.put('/api/moments/:id', async (req, res) => {
     const idx = fallbackData.moments.findIndex(m => m.id === id);
     if (idx !== -1) {
       fallbackData.moments[idx] = { ...fallbackData.moments[idx], ...updateData };
+      broadcastDataUpdate('moments', `📸 Bài viết "${fallbackData.moments[idx].title}" vừa được cập nhật!`);
       return res.json(fallbackData.moments[idx]);
     }
     res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
@@ -669,11 +728,13 @@ app.delete('/api/moments/:id', requireAdmin, async (req, res) => {
     if (isMongoConnected) {
       const deleted = await Moment.findOneAndDelete({ id });
       if (!deleted) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc để xóa' });
+      broadcastDataUpdate('moments', '📸 Một khoảnh khắc vừa được xóa.');
       return res.json({ success: true, id });
     }
 
     fallbackData.moments = fallbackData.moments || [];
     fallbackData.moments = fallbackData.moments.filter(m => m.id !== id);
+    broadcastDataUpdate('moments', '📸 Một khoảnh khắc vừa được xóa.');
     res.json({ success: true, id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -715,6 +776,7 @@ app.post('/api/moments/:id/react', async (req, res) => {
       }
 
       await moment.save();
+      broadcastDataUpdate('moments', '', { momentId: id, reactions: moment.reactions });
       return res.json({ success: true, reactions: moment.reactions });
     }
 
@@ -737,6 +799,7 @@ app.post('/api/moments/:id/react', async (req, res) => {
       moment.reactions[reactionType] = (moment.reactions[reactionType] || 0) + 1;
     }
 
+    broadcastDataUpdate('moments', '', { momentId: id, reactions: moment.reactions });
     res.json({ success: true, reactions: moment.reactions });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -767,6 +830,7 @@ app.post('/api/moments/:id/comments', async (req, res) => {
 
       moment.comments.push(newComment);
       await moment.save();
+      broadcastDataUpdate('moments', `💬 ${newComment.authorName} vừa bình luận: "${newComment.content.substring(0, 30)}..."`, { momentId: id });
       return res.status(201).json({ success: true, comment: newComment, comments: moment.comments });
     }
 
@@ -776,6 +840,7 @@ app.post('/api/moments/:id/comments', async (req, res) => {
 
     moment.comments = moment.comments || [];
     moment.comments.push(newComment);
+    broadcastDataUpdate('moments', `💬 ${newComment.authorName} vừa bình luận: "${newComment.content.substring(0, 30)}..."`, { momentId: id });
     res.status(201).json({ success: true, comment: newComment, comments: moment.comments });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -793,6 +858,7 @@ app.delete('/api/moments/:id/comments/:commentId', async (req, res) => {
 
       moment.comments = moment.comments.filter(c => c.id !== commentId);
       await moment.save();
+      broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: id });
       return res.json({ success: true, comments: moment.comments });
     }
 
@@ -801,6 +867,7 @@ app.delete('/api/moments/:id/comments/:commentId', async (req, res) => {
     if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
     moment.comments = (moment.comments || []).filter(c => c.id !== commentId);
+    broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: id });
     res.json({ success: true, comments: moment.comments });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -843,6 +910,7 @@ app.post('/api/backup/restore', requireAdmin, async (req, res) => {
         }
       }
 
+      broadcastDataUpdate('all', '💾 Toàn bộ cơ sở dữ liệu vừa được khôi phục từ bản sao lưu!');
       return res.json({ success: true, message: 'Database restored successfully' });
     }
 
@@ -1890,11 +1958,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Khởi động server
-app.listen(PORT, () => {
+// Khởi động server (Hỗ trợ WebSocket Real-time)
+server.listen(PORT, () => {
   console.log(`=================================================`);
-  console.log(`🚀 FC TNT Server is running!`);
+  console.log(`🚀 FC TNT Real-time Server is running!`);
   console.log(`🌐 Local URL: http://localhost:${PORT}`);
   console.log(`🌿 Database: ${MONGODB_URI}`);
+  console.log(`⚡ Real-time WebSocket: Active`);
   console.log(`=================================================`);
 });
