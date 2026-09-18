@@ -330,16 +330,16 @@ window.momentsModule = {
     const hasFire = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'fire');
 
     return `
-      <button class="reaction-btn ${hasBeer ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'beer')" title="Cạn ly bia">
+      <button class="reaction-btn ${hasBeer ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'beer', event)" title="Cạn ly bia">
         🍻 <span class="reaction-count">${reactions.beer || 0}</span>
       </button>
-      <button class="reaction-btn ${hasHeart ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'heart')" title="Thả tim">
+      <button class="reaction-btn ${hasHeart ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'heart', event)" title="Thả tim">
         ❤️ <span class="reaction-count">${reactions.heart || 0}</span>
       </button>
-      <button class="reaction-btn ${hasFootball ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'football')" title="Đam mê bóng đá">
+      <button class="reaction-btn ${hasFootball ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'football', event)" title="Đam mê bóng đá">
         ⚽ <span class="reaction-count">${reactions.football || 0}</span>
       </button>
-      <button class="reaction-btn ${hasFire ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'fire')" title="Rực lửa">
+      <button class="reaction-btn ${hasFire ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'fire', event)" title="Rực lửa">
         🔥 <span class="reaction-count">${reactions.fire || 0}</span>
       </button>
     `;
@@ -373,9 +373,14 @@ window.momentsModule = {
   },
 
   // Reaction Handler (Cập nhật DOM cục bộ để không gián đoạn video đang phát)
-  async handleReaction(momentId, reactionType) {
+  async handleReaction(momentId, reactionType, e = null) {
     const userKey = localStorage.getItem('fc_user_guid') || 'user_' + Math.random().toString(36).substring(2, 9);
     localStorage.setItem('fc_user_guid', userKey);
+
+    if (e && e.target && window.tntEffects && window.tntEffects.spawnFloatingReaction) {
+      const btn = e.target.closest('.reaction-btn') || e.target;
+      window.tntEffects.spawnFloatingReaction(btn, reactionType);
+    }
 
     const updatedReactions = await window.stateManager.toggleReaction(momentId, reactionType, userKey);
     if (updatedReactions) {

@@ -470,6 +470,15 @@ window.matchesModule = {
             </div>
 
             <div class="sofascore-pitch-container" id="sofascore-pitch-dropzone">
+              <!-- Tactical AI Radar Scan Wave & Laser -->
+              <div class="tactical-pitch-radar">
+                <div class="radar-scan-beam"></div>
+                <div class="radar-scan-trail"></div>
+              </div>
+              <div class="tactical-radar-live-tag">
+                <span class="radar-live-blip"></span>
+                <span>AI TACTICAL RADAR • LIVE</span>
+              </div>
               <div class="pitch-penalty-box-top"></div>
               <div class="pitch-center-circle"></div>
               <div class="pitch-center-line"></div>

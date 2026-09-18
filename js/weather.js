@@ -478,6 +478,13 @@ window.weatherModule = {
         </div>
       </div>
     `;
+
+    if (window.tntEffects && window.tntEffects.applyWeatherParticles) {
+      const focusCard = detailContainer.querySelector('.slot-focus-card');
+      if (focusCard) {
+        window.tntEffects.applyWeatherParticles(focusCard, activeSlot.weatherCode || (activeSlot.rainMm > 0 ? 61 : 0), activeSlot.rainProbability || 0);
+      }
+    }
   },
 
   renderAiChat() {
@@ -812,5 +819,12 @@ window.weatherModule = {
         </div>
       </div>
     `;
+
+    if (window.tntEffects && window.tntEffects.applyWeatherParticles) {
+      const banner = widgetEl.querySelector('.dash-weather-banner');
+      if (banner) {
+        window.tntEffects.applyWeatherParticles(banner, s1.weatherCode || (s1.rainMm > 0 ? 61 : 0), s1.rainProbability || 0);
+      }
+    }
   }
 };

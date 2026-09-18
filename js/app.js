@@ -198,6 +198,9 @@ window.appModule = {
       window.weatherModule.renderAiChat();
     }
 
+    // Bắn sự kiện chuyển tab cho hệ thống hiệu ứng & animation
+    window.dispatchEvent(new CustomEvent('tabChanged', { detail: { tab: tabName } }));
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 

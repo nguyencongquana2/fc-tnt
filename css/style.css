@@ -5647,4 +5647,600 @@ body {
   .splash-fact-text {
     font-size: 0.82rem;
   }
-}
+}
+
+/* ==========================================================================
+   INTERACTIVE SPLASH KICK PARTICLES & FLAME TIERS
+   ========================================================================== */
+.splash-ball-btn.aura-spark {
+  box-shadow: 0 0 25px #fbbf24, 0 0 45px rgba(251, 191, 36, 0.4);
+  animation: splashBallHover 2s ease-in-out infinite alternate, sparkAuraPulse 1s infinite alternate;
+}
+
+.splash-ball-btn.aura-fire {
+  box-shadow: 0 0 30px #f97316, 0 0 60px #ef4444, inset 0 0 15px #fbbf24;
+  animation: splashBallHover 2s ease-in-out infinite alternate, fireAuraBlaze 0.7s infinite alternate;
+}
+
+.splash-ball-btn.aura-super-saiyan {
+  box-shadow: 0 0 35px #38bdf8, 0 0 70px #06b6d4, inset 0 0 20px #ffffff;
+  filter: drop-shadow(0 0 20px #38bdf8) drop-shadow(0 0 35px #eab308);
+  animation: superSaiyanVibe 0.18s infinite alternate;
+}
+
+@keyframes sparkAuraPulse {
+  0% { box-shadow: 0 0 15px #fbbf24, 0 0 30px rgba(251, 191, 36, 0.3); }
+  100% { box-shadow: 0 0 30px #fbbf24, 0 0 55px rgba(251, 191, 36, 0.7); }
+}
+
+@keyframes fireAuraBlaze {
+  0% { transform: scale(1.02); box-shadow: 0 0 25px #ea580c, 0 0 50px #ef4444; }
+  100% { transform: scale(1.1); box-shadow: 0 0 40px #f97316, 0 0 75px #dc2626; }
+}
+
+@keyframes superSaiyanVibe {
+  0% { transform: scale(1.08) translate(-1px, 1px); }
+  50% { transform: scale(1.12) translate(1px, -1px); }
+  100% { transform: scale(1.08) translate(1px, 1px); }
+}
+
+/* Confetti Falling Pieces */
+.splash-confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 99;
+  animation: confettiExplode 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes confettiExplode {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--vx, 50px), var(--vy, -100px)) rotate(var(--rot, 360deg)) scale(1.2);
+  }
+}
+
+.splash-kick-spark {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 14px #fbbf24, 0 0 28px #f59e0b;
+  pointer-events: none;
+  z-index: 10;
+  animation: sparkRise 0.6s ease-out forwards;
+}
+
+@keyframes sparkRise {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-40px) scale(0.2); opacity: 0; }
+}
+
+/* ==========================================================================
+   3D HOLOGRAPHIC TILT & RAINBOW FOIL SHEEN
+   ========================================================================== */
+.player-fifa-card,
+.podium-player-card,
+.trophy-showcase-card,
+.hero-match-card,
+.next-match-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.3s ease;
+  will-change: transform;
+}
+
+.player-fifa-card::before,
+.podium-player-card::before,
+.next-match-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--holo-x, 50%) var(--holo-y, 50%),
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(56, 189, 248, 0.18) 25%,
+    rgba(245, 158, 11, 0.16) 50%,
+    rgba(168, 85, 247, 0.14) 75%,
+    transparent 100%
+  );
+  opacity: 0;
+  mix-blend-mode: color-dodge;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+}
+
+.player-fifa-card.is-tilting::before,
+.podium-player-card.is-tilting::before,
+.next-match-card.is-tilting::before {
+  opacity: 1;
+}
+
+.player-fifa-card:hover {
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(16, 185, 129, 0.3);
+}
+
+.player-fifa-card:hover .player-avatar-large {
+  transform: translateZ(24px) scale(1.06);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.player-fifa-card:hover .player-card-bg-number {
+  color: rgba(16, 185, 129, 0.22);
+  transform: translateZ(10px) scale(1.05);
+  transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   TACTICAL SOFASCORE PITCH RADAR SCAN
+   ========================================================================== */
+.sofascore-pitch-container,
+.pitch-container,
+.sofascore-pitch {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.tactical-pitch-radar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  pointer-events: none;
+  z-index: 8;
+  animation: pitchRadarSweepVertical 5s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+.radar-scan-beam {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(6, 182, 212, 0.7) 15%, #10b981 50%, rgba(6, 182, 212, 0.7) 85%, transparent 100%);
+  box-shadow: 0 0 14px 3px #10b981, 0 0 35px 8px rgba(6, 182, 212, 0.6);
+}
+
+.radar-scan-trail {
+  position: absolute;
+  top: 0;
+  bottom: 3px;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(16, 185, 129, 0.02) 40%, rgba(16, 185, 129, 0.18) 100%);
+}
+
+@keyframes pitchRadarSweepVertical {
+  0% { top: -20px; opacity: 0.2; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: calc(100% - 70px); opacity: 0.2; }
+}
+
+.tactical-radar-live-tag {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 15;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(10, 15, 24, 0.75);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #34d399;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.radar-live-blip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: radarLivePulse 1.4s infinite;
+}
+
+@keyframes radarLivePulse {
+  0% { transform: scale(0.8); opacity: 0.6; box-shadow: 0 0 4px #10b981; }
+  50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 12px #10b981; }
+  100% { transform: scale(0.8); opacity: 0.6; box-shadow: 0 0 4px #10b981; }
+}
+
+.pitch-formation-grid,
+.pitch-formation-row,
+.pitch-player-slot {
+  position: relative;
+  z-index: 10;
+}
+
+/* ==========================================================================
+   PODIUM GLOW, FLOATING CROWN & METALLIC SHINE
+   ========================================================================== */
+.podium-crown {
+  display: inline-block;
+  animation: crownFloat 2.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8));
+}
+
+@keyframes crownFloat {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-7px) rotate(4deg) scale(1.15); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+.podium-step.rank-1 .podium-base {
+  background: linear-gradient(135deg, #d97706 0%, #fbbf24 50%, #b45309 100%);
+  color: #1a0d00;
+  box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.podium-step.rank-1 .podium-base::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: skewX(-25deg);
+  animation: metallicShine 3.5s infinite;
+}
+
+@keyframes metallicShine {
+  0% { left: -150%; }
+  35% { left: 200%; }
+  100% { left: 200%; }
+}
+
+/* ==========================================================================
+   NEON BORDER LASER BEAM (ROTATING CONIC GRADIENT TRACER)
+   ========================================================================== */
+@property --neon-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.dash-weather-banner,
+.next-match-card,
+.slot-focus-card,
+.podium-step.rank-1 .podium-player-card,
+.neon-border-laser {
+  position: relative !important;
+  border: none !important;
+  z-index: 1;
+  background-clip: padding-box;
+}
+
+.dash-weather-banner::before,
+.next-match-card::before,
+.slot-focus-card::before,
+.podium-step.rank-1 .podium-player-card::before,
+.neon-border-laser::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--neon-angle, 0deg),
+    transparent 0deg,
+    transparent 55deg,
+    #10b981 100deg,
+    #06b6d4 150deg,
+    #fbbf24 200deg,
+    transparent 260deg,
+    transparent 360deg
+  );
+  z-index: -2;
+  animation: spinNeonLaser 3.8s linear infinite;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.2);
+}
+
+.dash-weather-banner::after,
+.next-match-card::after,
+.slot-focus-card::after,
+.podium-step.rank-1 .podium-player-card::after,
+.neon-border-laser::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  border-radius: inherit;
+  background: #0d1522;
+  z-index: -1;
+}
+
+@keyframes spinNeonLaser {
+  0% { --neon-angle: 0deg; }
+  100% { --neon-angle: 360deg; }
+}
+
+/* ==========================================================================
+   WEATHER DYNAMIC PARTICLES (RAIN, SUN, THUNDER, CLOUDS)
+   ========================================================================== */
+.weather-particles-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 2;
+}
+
+/* Rain Effect */
+.weather-rain-drop {
+  position: absolute;
+  width: 1.5px;
+  height: 22px;
+  background: linear-gradient(180deg, transparent, rgba(56, 189, 248, 0.85));
+  opacity: 0.75;
+  animation: raindropFall 0.8s linear infinite;
+}
+
+@keyframes raindropFall {
+  0% {
+    transform: translateY(-30px) translateX(0);
+    opacity: 0;
+  }
+  15% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  100% {
+    transform: translateY(180px) translateX(-25px);
+    opacity: 0;
+  }
+}
+
+.weather-rain-ripple {
+  position: absolute;
+  bottom: 8px;
+  width: 14px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  animation: rainRipplePulse 1s ease-out infinite;
+}
+
+@keyframes rainRipplePulse {
+  0% { transform: scale(0.2); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Sunny & Heat Flare Effect */
+.weather-sun-corona {
+  position: absolute;
+  top: -40px;
+  right: -30px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.35) 0%, rgba(245, 158, 11, 0.15) 50%, transparent 70%);
+  filter: blur(20px);
+  animation: sunCoronaPulse 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes sunCoronaPulse {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  100% { transform: scale(1.25); opacity: 1; }
+}
+
+.weather-sun-ray {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 250px;
+  background: conic-gradient(
+    from 0deg at 100% 0%,
+    rgba(251, 191, 36, 0.08) 0deg,
+    transparent 30deg,
+    rgba(251, 191, 36, 0.12) 60deg,
+    transparent 90deg,
+    rgba(251, 191, 36, 0.08) 120deg,
+    transparent 150deg
+  );
+  pointer-events: none;
+  animation: sunRayRotate 20s linear infinite;
+}
+
+@keyframes sunRayRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Thunder Flash */
+.weather-lightning-flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  animation: lightningStrobe 6s infinite;
+}
+
+@keyframes lightningStrobe {
+  0%, 88%, 92%, 100% { opacity: 0; }
+  89% { opacity: 0.65; }
+  90% { opacity: 0.1; }
+  91% { opacity: 0.85; }
+}
+
+/* Clouds Mist */
+.weather-cloud-mist {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(180deg, transparent, rgba(148, 163, 184, 0.08));
+  filter: blur(8px);
+  animation: cloudMistDrift 8s ease-in-out infinite alternate;
+}
+
+@keyframes cloudMistDrift {
+  0% { transform: translateX(-15px); }
+  100% { transform: translateX(15px); }
+}
+
+/* ==========================================================================
+   FLOATING EMOJI EXPLOSION / REACTION BURST
+   ========================================================================== */
+.floating-reaction-bubble {
+  position: fixed;
+  z-index: 999999;
+  font-size: 1.75rem;
+  pointer-events: none;
+  user-select: none;
+  animation: floatReactionBurst 1.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes floatReactionBurst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--drift-x, 20px)), calc(-50% - 60px)) scale(calc(var(--scale-val, 1) * 1.35)) rotate(12deg);
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--drift-x, 20px)), calc(-50% - 150px)) scale(calc(var(--scale-val, 1) * 0.8)) rotate(-15deg);
+  }
+}
+
+/* ==========================================================================
+   PERFORMANCE RATING AURA (FOR SOFASCORE PITCH NODES >= 8.0)
+   ========================================================================== */
+.sofascore-player-node.rating-high-aura .sofascore-avatar-img {
+  box-shadow: 0 0 16px 3px #10b981, 0 0 30px 6px rgba(16, 185, 129, 0.45);
+  border-color: #34d399 !important;
+  animation: ratingAuraBreathing 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes ratingAuraBreathing {
+  0% {
+    box-shadow: 0 0 10px 2px #10b981, 0 0 20px 4px rgba(16, 185, 129, 0.3);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 22px 5px #34d399, 0 0 40px 10px rgba(6, 182, 212, 0.5);
+    transform: scale(1.04);
+  }
+}
+
+.sofascore-player-node .sofa-motm-star {
+  display: inline-block;
+  animation: motmStarSpin 6s linear infinite, motmStarGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes motmStarSpin {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.2) rotate(180deg); }
+  100% { transform: scale(1) rotate(360deg); }
+}
+
+@keyframes motmStarGlow {
+  0% { filter: drop-shadow(0 0 4px #fbbf24); }
+  100% { filter: drop-shadow(0 0 12px #f59e0b) drop-shadow(0 0 20px #ef4444); }
+}
+
+/* ==========================================================================
+   QR LASER SCANNER LINE (VIETQR / MOMO)
+   ========================================================================== */
+#fin-qr-code-box,
+.fin-qr-wrapper {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.qr-laser-scanner-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #10b981 50%, transparent 100%);
+  box-shadow: 0 0 12px 3px #10b981, 0 0 25px 6px rgba(6, 182, 212, 0.6);
+  pointer-events: none;
+  z-index: 10;
+  animation: qrLaserScan 3s ease-in-out infinite alternate;
+}
+
+@keyframes qrLaserScan {
+  0% { top: 4%; opacity: 0.3; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: 94%; opacity: 0.3; }
+}
+
+/* ==========================================================================
+   GLOBAL NEON RIPPLE EFFECT ON BUTTONS & CARDS
+   ========================================================================== */
+.btn,
+.tab-btn,
+.reaction-btn,
+.slot-toggle-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.neon-ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.5) 0%, rgba(6, 182, 212, 0.25) 45%, transparent 70%);
+  transform: scale(0);
+  animation: neonRippleAnim 0.55s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes neonRippleAnim {
+  0% {
+    transform: scale(0);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+/* Lightbox Cinematic Zoom */
+.lightbox-overlay.active .lightbox-content {
+  animation: lightboxZoomIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes lightboxZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+

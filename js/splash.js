@@ -106,24 +106,74 @@
     }
   }
 
+  function spawnConfetti(container, count = 25) {
+    if (!container) return;
+    const colors = ['#f59e0b', '#10b981', '#38bdf8', '#ec4899', '#fbbf24', '#ffffff'];
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'splash-confetti-piece';
+      piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.left = `${50 + (Math.random() * 60 - 30)}%`;
+      piece.style.top = '40%';
+      piece.style.setProperty('--vx', `${(Math.random() - 0.5) * 240}px`);
+      piece.style.setProperty('--vy', `${-Math.random() * 200 - 80}px`);
+      piece.style.setProperty('--rot', `${Math.random() * 720 - 360}deg`);
+      piece.style.animationDelay = `${Math.random() * 0.1}s`;
+      container.appendChild(piece);
+      setTimeout(() => piece.remove(), 1200);
+    }
+  }
+
+  function spawnKickSparkle(e, ballEl) {
+    const parent = ballEl.parentElement;
+    if (!parent) return;
+    const spark = document.createElement('div');
+    spark.className = 'splash-kick-spark';
+    const offsetX = (Math.random() - 0.5) * 50;
+    spark.style.left = `calc(50% + ${offsetX}px)`;
+    spark.style.top = `30%`;
+    parent.appendChild(spark);
+    setTimeout(() => spark.remove(), 600);
+  }
+
   function kickBall(e) {
     kickCount++;
     const countEl = document.getElementById('splash-kick-count');
     const ballEl = document.getElementById('splash-interactive-ball');
     const comboEl = document.getElementById('splash-kick-feedback');
+    const container = document.querySelector('.splash-container');
 
     if (countEl) countEl.textContent = kickCount;
     if (ballEl) {
       ballEl.classList.remove('kicked');
       void ballEl.offsetWidth; // trigger reflow
       ballEl.classList.add('kicked');
+
+      // Tiers of flame & lightning aura
+      ballEl.classList.remove('aura-spark', 'aura-fire', 'aura-super-saiyan');
+      if (kickCount >= 15) {
+        ballEl.classList.add('aura-super-saiyan');
+      } else if (kickCount >= 10) {
+        ballEl.classList.add('aura-fire');
+      } else if (kickCount >= 5) {
+        ballEl.classList.add('aura-spark');
+      }
+
+      spawnKickSparkle(e, ballEl);
     }
 
     if (comboEl) {
       let msg = '+1 ⚽';
-      if (kickCount === 5) msg = '🔥 Tuyệt vời! 5 quả!';
-      else if (kickCount === 10) msg = '⭐ Siêu sao tâng bóng! 10 quả!';
-      else if (kickCount >= 15 && kickCount % 5 === 0) msg = `🏆 Đỉnh cao! ${kickCount} quả!`;
+      if (kickCount === 5) {
+        msg = '🔥 Bắt đầu nóng máy! 5 quả!';
+        if (container) spawnConfetti(container, 15);
+      } else if (kickCount === 10) {
+        msg = '⚡ Siêu sao tâng bóng! 10 quả!';
+        if (container) spawnConfetti(container, 30);
+      } else if (kickCount >= 15 && kickCount % 5 === 0) {
+        msg = `🏆 Huyền thoại sân phủi! ${kickCount} quả!`;
+        if (container) spawnConfetti(container, 45);
+      }
       comboEl.textContent = msg;
       comboEl.classList.remove('pop');
       void comboEl.offsetWidth;
