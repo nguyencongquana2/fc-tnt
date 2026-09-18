@@ -60,6 +60,66 @@
 
 <body>
 
+  <!-- ========================================== -->
+  <!-- MATCHDAY SPORT SPLASH SCREEN & PRELOADER   -->
+  <!-- ========================================== -->
+  <div id="tnt-splash-screen" role="dialog" aria-modal="true" aria-label="FC TNT Khởi động">
+    <div class="splash-stadium-bg"></div>
+    <div class="splash-ambient-glow"></div>
+
+    <div class="splash-container">
+      <!-- Brand & Emblem -->
+      <div class="splash-brand-hero">
+        <div class="splash-emblem-wrapper">
+          <div class="splash-emblem-ring"></div>
+          <div class="splash-emblem-core">⚽</div>
+        </div>
+        <h1 class="splash-title">FC TNT</h1>
+        <p class="splash-slogan">Đá hết mình – Thắng cùng mừng, Thua cùng uống</p>
+      </div>
+
+      <!-- Interactive Mini Soccer Ball Game -->
+      <div class="splash-minigame-area">
+        <div class="splash-kick-feedback" id="splash-kick-feedback">+1 ⚽</div>
+        <button class="splash-ball-btn" id="splash-interactive-ball" title="Chạm/Click để tâng bóng giải trí" type="button" aria-label="Tâng bóng giải trí">
+          ⚽
+        </button>
+        <div class="splash-minigame-hud">
+          <span class="splash-kick-badge">🎯 Tâng bóng: <strong id="splash-kick-count">0</strong> quả</span>
+        </div>
+        <div class="splash-hint-tap">💡 Chạm vào bóng để tâng bóng trong lúc đợi</div>
+      </div>
+
+      <!-- Fun Fact / Phủi Quote Card -->
+      <div class="splash-fact-card" id="splash-fact-box">
+        <div class="splash-fact-header">
+          <span class="splash-fact-tag" id="splash-fact-category">💡 Mẹo Bóng Phủi</span>
+          <button class="splash-fact-refresh-btn" id="splash-next-fact-btn" type="button" title="Xem câu khác">
+            🎲 Đổi câu khác
+          </button>
+        </div>
+        <p class="splash-fact-text" id="splash-fact-text">"Đi bóng qua 3 người không bằng chuyền chuẩn 1 quả rồi dắt nhau đi uống bia!"</p>
+        <p class="splash-fact-author" id="splash-fact-author">— Triết lý Phủi TNT</p>
+      </div>
+
+      <!-- Progress & Loading Status -->
+      <div class="splash-progress-wrapper">
+        <div class="splash-status-row">
+          <span class="splash-status-text" id="splash-status-text">⏳ Đang kết nối phòng thay đồ FC TNT...</span>
+          <span class="splash-percent-badge" id="splash-percent-badge">0%</span>
+        </div>
+        <div class="splash-progress-track">
+          <div class="splash-progress-fill" id="splash-progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Fast Skip Entry Button -->
+      <button class="splash-skip-btn" id="splash-skip-btn" type="button">
+        Vào sân ngay 🚀
+      </button>
+    </div>
+  </div>
+
   <!-- Top Navigation Bar -->
   <header class="navbar">
     <div class="nav-container">
@@ -1180,6 +1240,7 @@
   <script src="js/poster.js?v=2.5"></script>
   <script src="js/moments.js?v=2.5"></script>
   <script src="js/weather.js?v=2.9"></script>
+  <script src="js/splash.js?v=1.0"></script>
   <script src="js/app.js?v=2.5"></script>
 </body>
 
