@@ -124,7 +124,7 @@ window.matchesModule = {
               ${motm && highestRating >= 7.0 ? `
                 <div class="motm-badge-preview">
                   <img class="motm-avatar-small" src="${motm.avatar}" alt="${motm.name}">
-                  <span>MOTM: ${motm.name} (${highestRating}⭐)</span>
+                  <span>MOTM: ${(motm.nickname && motm.nickname.trim()) ? motm.nickname.trim() : motm.name} (${highestRating}⭐)</span>
                 </div>
               ` : ''}
               
@@ -536,6 +536,7 @@ window.matchesModule = {
                   if (!p) return '';
                   const rating = Number(ps.rating) || 7.0;
                   const ratingClass = this.getRatingClass(rating);
+                  const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
 
                   return `
                     <div class="sub-player-card" 
@@ -549,10 +550,10 @@ window.matchesModule = {
                          onclick="window.matchesModule.openQuickEdit('${p.id}')">
                       ${ps.note ? `<div class="sub-speech-indicator" title="Nhận xét: ${ps.note.replace(/"/g, '&quot;')}">💬</div>` : ''}
                       <div class="sub-avatar-wrap">
-                        <img class="sub-avatar" src="${p.avatar}" alt="${p.name}">
+                        <img class="sub-avatar" src="${p.avatar}" alt="${displayName}">
                         <span class="sub-rating-badge ${ratingClass}">${rating.toFixed(1)}</span>
                       </div>
-                      <div class="sub-name">${p.name}</div>
+                      <div class="sub-name">${displayName}</div>
                       <div class="sub-pos">#${p.number} • ${p.position}</div>
                       ${ps.goals > 0 ? `<span style="font-size: 0.72rem; color: var(--accent-ruby); font-weight:700; margin-top:2px;">⚽ ${ps.goals}</span>` : ''}
                       ${ps.assists > 0 ? `<span style="font-size: 0.72rem; color: var(--accent-cyan); font-weight:700;">👟 ${ps.assists}</span>` : ''}
@@ -606,6 +607,8 @@ window.matchesModule = {
               const yellow = Number(ps.yellowCards) || 0;
               const red = Number(ps.redCards) || 0;
               const note = ps.note || '';
+              const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
+              const realName = (p.name && p.name.trim() && p.name.trim().toLowerCase() !== displayName.toLowerCase()) ? p.name.trim() : '';
 
               return `
                 <div class="match-review-card ${isMOTM ? 'is-motm-card' : ''}" 
@@ -617,14 +620,14 @@ window.matchesModule = {
                      title="Bấm để xem/chỉnh sửa điểm & nhận xét">
                   <div class="review-card-top">
                     <div style="display: flex; align-items: center; gap: 0.65rem;">
-                      <img class="review-avatar" src="${p.avatar}" alt="${p.name}">
+                      <img class="review-avatar" src="${p.avatar}" alt="${displayName}">
                       <div>
                         <div class="review-player-name">
-                          ${p.name} #${p.number}
+                          ${displayName} #${p.number}
                           ${isMOTM ? '<span class="review-motm-badge">👑 MOTM</span>' : ''}
                         </div>
                         <div class="review-player-pos">
-                          ${p.position} ${p.nickname ? `• "${p.nickname}"` : ''} • ${ps.isStarter !== false ? '<span style="color:var(--accent-emerald); font-weight:700;">Đá chính</span>' : '<span style="color:var(--accent-cyan); font-weight:700;">Dự bị</span>'}
+                          ${p.position} ${realName ? `• ${realName}` : ''} • ${ps.isStarter !== false ? '<span style="color:var(--accent-emerald); font-weight:700;">Đá chính</span>' : '<span style="color:var(--accent-cyan); font-weight:700;">Dự bị</span>'}
                         </div>
                       </div>
                     </div>
@@ -679,6 +682,7 @@ window.matchesModule = {
     const rating = Number(ps.rating) || 7.0;
     const ratingClass = this.getRatingClass(rating);
     const isMOTM = ps.playerId === motmId && rating >= 7.0;
+    const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
 
     return `
       <div class="sofascore-player-node" 
@@ -693,7 +697,7 @@ window.matchesModule = {
            title="Kéo để đổi vị trí hoặc bấm để chấm điểm">
         
         <div class="sofascore-avatar-box">
-          <img class="sofascore-avatar-img" src="${p.avatar}" alt="${p.name}">
+          <img class="sofascore-avatar-img" src="${p.avatar}" alt="${displayName}">
           ${ps.note ? `<div class="sofa-speech-indicator" title="Nhận xét: ${ps.note.replace(/"/g, '&quot;')}">💬</div>` : ''}
           
           <!-- HUY HIỆU BÊN PHẢI (⚽ BÀN THẮNG & 👟 KIẾN TẠO CHUẨN SOFASCORE) -->
@@ -726,7 +730,7 @@ window.matchesModule = {
           </div>
         </div>
 
-        <div class="sofascore-player-name">${p.number} ${p.name}</div>
+        <div class="sofascore-player-name">${p.number} ${displayName}</div>
         <div style="font-size: 0.62rem; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px #000; font-weight:700;">${roleLabel}</div>
       </div>
     `;
@@ -977,6 +981,7 @@ window.matchesModule = {
     const container = document.getElementById('quick-edit-container');
     if (!container) return;
 
+    const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
     if (!window.stateManager.isAdmin) {
       container.innerHTML = `
         <div class="quick-edit-card" style="border-color: rgba(255,255,255,0.15);">
@@ -984,7 +989,7 @@ window.matchesModule = {
             <div style="display: flex; align-items: center; gap: 0.65rem;">
               <img src="${p.avatar}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-emerald);">
               <div>
-                <div style="font-weight: 800; font-size: 1rem; color: #fff;">${p.name} (#${p.number})</div>
+                <div style="font-weight: 800; font-size: 1rem; color: #fff;">${displayName} (#${p.number})</div>
                 <div style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600;">
                   ${ps.isStarter !== false ? 'Đang đá chính (Sân 3-1-2)' : 'Đang ngồi dự bị'}
                 </div>
@@ -1025,7 +1030,7 @@ window.matchesModule = {
           <div style="display: flex; align-items: center; gap: 0.65rem;">
             <img src="${p.avatar}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-emerald);">
             <div>
-              <div style="font-weight: 800; font-size: 1rem; color: #fff;">${p.name} (#${p.number})</div>
+              <div style="font-weight: 800; font-size: 1rem; color: #fff;">${displayName} (#${p.number})</div>
               <div style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600;">
                 ${ps.isStarter !== false ? 'Đang đá chính (Sân 3-1-2)' : 'Đang ngồi dự bị'}
               </div>
@@ -2579,15 +2584,18 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     const allPlayers = window.stateManager.getPlayers();
     if (grid) {
-      grid.innerHTML = allPlayers.map(p => `
-        <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${p.id}')">
-          <img class="live-picker-avatar" src="${p.avatar}" alt="${p.name}">
-          <div style="overflow: hidden;">
-            <div class="live-picker-name">${p.name}</div>
-            <div class="live-picker-sub">#${p.number} • ${p.position}</div>
+      grid.innerHTML = allPlayers.map(p => {
+        const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
+        return `
+          <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${p.id}')">
+            <img class="live-picker-avatar" src="${p.avatar}" alt="${displayName}">
+            <div style="overflow: hidden;">
+              <div class="live-picker-name">${displayName}</div>
+              <div class="live-picker-sub">#${p.number} • ${p.position}</div>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     if (overlay) overlay.style.display = 'flex';
@@ -2623,15 +2631,18 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         const allPlayers = window.stateManager.getPlayers();
         const grid = document.getElementById('live-picker-player-grid');
         if (grid) {
-          grid.innerHTML = allPlayers.filter(pl => pl.id !== playerId).map(pl => `
-            <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${pl.id}')">
-              <img class="live-picker-avatar" src="${pl.avatar}" alt="${pl.name}">
-              <div style="overflow: hidden;">
-                <div class="live-picker-name">${pl.name}</div>
-                <div class="live-picker-sub">#${pl.number} • ${pl.position}</div>
+          grid.innerHTML = allPlayers.filter(pl => pl.id !== playerId).map(pl => {
+            const displayName = (pl.nickname && pl.nickname.trim()) ? pl.nickname.trim() : pl.name;
+            return `
+              <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${pl.id}')">
+                <img class="live-picker-avatar" src="${pl.avatar}" alt="${displayName}">
+                <div style="overflow: hidden;">
+                  <div class="live-picker-name">${displayName}</div>
+                  <div class="live-picker-sub">#${pl.number} • ${pl.position}</div>
+                </div>
               </div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
         }
         return;
       } else {
