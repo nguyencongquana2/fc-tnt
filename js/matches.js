@@ -2251,21 +2251,6 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
   // ==========================================
   // 🎙️ VOICE-TO-EVENT ENGINE (WEB SPEECH API + FALLBACK)
   // ==========================================
-  async requestMicPermission() {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Giải phóng audio track ngay để engine nhận diện giọng nói sử dụng
-        stream.getTracks().forEach(track => track.stop());
-        return true;
-      } catch (err) {
-        console.warn('Microphone permission request failed:', err);
-        return false;
-      }
-    }
-    return true;
-  },
-
   async toggleVoiceRecording() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -2299,22 +2284,17 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       return;
     }
 
-    // Kiểm tra quyền Micro trước khi khởi động
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      const micGranted = await this.requestMicPermission();
-      if (!micGranted) {
-        if (controlsRow) controlsRow.style.display = 'flex';
-        if (inputEdit) inputEdit.focus();
-        window.showToast('Trình duyệt đang chặn quyền Micro. Hãy nhấn vào biểu tượng 🔒 trên thanh địa chỉ để BẬT Micro!', 'warning');
-        if (statusText) statusText.innerText = '⚠️ Cần cấp quyền Micro trong cài đặt trình duyệt';
-        return;
-      }
-    }
-
     try {
+      // Hủy bỏ instance cũ nếu còn tồn tại
+      if (this.livePitchState.speechRecognition) {
+        try { this.livePitchState.speechRecognition.abort(); } catch (e) {}
+        this.livePitchState.speechRecognition = null;
+      }
+
       const recognition = new SpeechRecognition();
       recognition.lang = 'vi-VN';
-      recognition.continuous = true;
+      // Trên Android Chrome, continuous=false ổn định hơn nhiều và không bị ngắt audio stream
+      recognition.continuous = false;
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
@@ -2367,13 +2347,16 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         this.livePitchState.isRecordingVoice = false;
 
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          window.showToast('Quyền Micro bị từ chối! Hãy cấp quyền trong cài đặt trình duyệt.', 'error');
-          if (statusText) statusText.innerText = '⚠️ Quyền truy cập Micro bị chặn';
+          window.showToast('Quyền Micro bị từ chối! Hãy bấm vào biểu tượng 🔒 trên thanh địa chỉ để BẬT Micro.', 'error');
+          if (statusText) statusText.innerText = '⚠️ Quyền truy cập Micro bị chặn (Bật ở 🔒)';
         } else if (event.error === 'no-speech') {
           if (statusText) statusText.innerText = '🎙️ Chưa nhận được tiếng, chạm lại Mic và nói gần hơn!';
         } else if (event.error === 'network') {
-          window.showToast('Lỗi kết nối mạng dịch vụ giọng nói. Bạn có thể gõ nhanh hoặc chọn mẫu bên dưới!', 'warning');
+          window.showToast('Lỗi kết nối mạng dịch vụ giọng nói Google. Bạn có thể gõ nhanh hoặc chọn mẫu bên dưới!', 'warning');
           if (statusText) statusText.innerText = '⌨️ Có thể gõ nhanh hoặc chọn mẫu sự kiện bên dưới';
+        } else if (event.error === 'audio-capture') {
+          window.showToast('Không tìm thấy thiết bị thu âm Micro hoặc Micro đang bận bởi ứng dụng khác!', 'error');
+          if (statusText) statusText.innerText = '⚠️ Thiết bị Micro đang bận';
         } else {
           if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
         }
@@ -2396,7 +2379,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       if (micBtn) micBtn.classList.remove('recording');
       if (controlsRow) controlsRow.style.display = 'flex';
       if (inputEdit) inputEdit.focus();
-      window.showToast('Không thể bật ghi âm tự động. Bạn có thể gõ nhanh nội dung!', 'warning');
+      window.showToast('Không thể bật ghi âm tự động: ' + (err.message || 'Lỗi khởi động'), 'warning');
     }
   },
 
