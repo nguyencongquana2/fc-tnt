@@ -172,7 +172,8 @@ window.playersModule = {
     container.innerHTML = players.map(p => {
       const stats = statsMap[p.id] || { matchesPlayed: 0, avgRating: 0, totalGoals: 0, totalAssists: 0, motmCount: 0 };
       const posClass = `pos-${p.position.toLowerCase()}`;
-      const hasUniqueNickname = p.nickname && p.nickname.trim() && p.nickname.trim().toLowerCase() !== p.name.trim().toLowerCase();
+      const primaryDisplayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
+      const secondaryRealName = (p.name && p.name.trim() && p.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? p.name.trim() : '';
       
       return `
         <div class="player-fifa-card" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
@@ -186,12 +187,12 @@ window.playersModule = {
               <span class="pos-tag ${posClass}">${p.position}</span>
             </div>
             
-            <div class="player-card-header-nickname">
-              ${hasUniqueNickname ? `<span class="player-nickname-pill" title="Biệt danh: ${p.nickname}">"${p.nickname}"</span>` : ''}
+            <div class="player-card-header-badge">
+              <span class="player-card-club-tag">FC TNT</span>
             </div>
 
             <div style="position: relative; cursor: pointer;" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Bấm để tải ảnh đại diện từ điện thoại/máy tính">
-              <img class="player-avatar-large" src="${p.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}" alt="${p.name}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'">
+              <img class="player-avatar-large" src="${p.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}" alt="${primaryDisplayName}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'">
               <div style="position: absolute; bottom: -2px; right: -2px; background: var(--accent-emerald); color: #000; font-size: 0.65rem; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: 2px solid #111; box-shadow: 0 2px 4px rgba(0,0,0,0.6);">
                 📷
               </div>
@@ -199,7 +200,8 @@ window.playersModule = {
           </div>
 
           <div class="player-jersey-section">
-            <div class="player-jersey-name">${p.name}</div>
+            <div class="player-jersey-name" title="${primaryDisplayName}">${primaryDisplayName}</div>
+            ${secondaryRealName ? `<div class="player-card-realname-sub" title="Họ và tên: ${secondaryRealName}">${secondaryRealName}</div>` : ''}
             <div class="player-jersey-number">${p.number !== undefined && p.number !== null ? p.number : '-'}</div>
           </div>
 
@@ -387,6 +389,9 @@ window.playersModule = {
     const content = document.getElementById('player-profile-content');
     const isAdmin = window.stateManager.isAdmin;
 
+    const primaryDisplayName = (player.nickname && player.nickname.trim()) ? player.nickname.trim() : player.name;
+    const secondaryRealName = (player.name && player.name.trim() && player.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? player.name.trim() : '';
+
     content.innerHTML = `
       <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
         <div style="position: relative; cursor: pointer;" onclick="window.playersModule.quickUploadAvatar('${player.id}')" title="Bấm để tải ảnh đại diện từ điện thoại/máy tính">
@@ -397,7 +402,7 @@ window.playersModule = {
         </div>
         <div>
           <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <h2 style="font-family: var(--font-display); font-size: 1.6rem; color: #fff;">${player.name}</h2>
+            <h2 style="font-family: var(--font-display); font-size: 1.6rem; color: #fff;">${primaryDisplayName}</h2>
             <span class="pos-tag pos-${player.position.toLowerCase()}">${player.position}</span>
             <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; margin-left: 0.5rem;">
               📷 Đổi Ảnh
@@ -411,7 +416,7 @@ window.playersModule = {
               </button>
             ` : ''}
           </div>
-          <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">#${player.number} ${player.nickname && player.nickname.trim().toLowerCase() !== player.name.trim().toLowerCase() ? `• "${player.nickname}"` : ''}</p>
+          <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">#${player.number} ${secondaryRealName ? `• Họ tên: "${secondaryRealName}"` : ''}</p>
           <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem;">${player.note || 'Chưa có ghi chú đặc biệt'}</p>
           ${player.bankAccountNumber ? `
             <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 3px 8px; margin-top: 0.4rem; font-size: 0.8rem; color: var(--accent-gold);">
