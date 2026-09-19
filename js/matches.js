@@ -2226,12 +2226,14 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     const micBtn = document.getElementById('live-voice-mic-btn');
     const statusText = document.getElementById('live-voice-status');
     const transcriptText = document.getElementById('live-voice-transcript');
+    const controlsRow = document.getElementById('live-voice-controls-row');
+    const inputEdit = document.getElementById('live-voice-input-edit');
 
     if (this.livePitchState.isRecordingVoice && this.livePitchState.speechRecognition) {
       this.livePitchState.speechRecognition.stop();
       this.livePitchState.isRecordingVoice = false;
       if (micBtn) micBtn.classList.remove('recording');
-      if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+      if (statusText) statusText.innerText = '🎙️ Đã thu xong! Bấm "Ghi Nhận" hoặc "Hủy"';
       return;
     }
 
@@ -2248,12 +2250,15 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       if (micBtn) micBtn.classList.add('recording');
       if (statusText) statusText.innerText = '🔴 Đang lắng nghe... Hãy nói sự kiện!';
       if (transcriptText) transcriptText.innerText = 'Đang nghe bạn nói...';
+      if (inputEdit) inputEdit.value = '';
+      if (controlsRow) controlsRow.style.display = 'flex';
 
       recognition.onresult = (event) => {
         const transcript = Array.from(event.results)
           .map(result => result[0].transcript)
           .join('');
         if (transcriptText) transcriptText.innerText = `"${transcript}"`;
+        if (inputEdit) inputEdit.value = transcript;
       };
 
       recognition.onerror = (event) => {
@@ -2268,12 +2273,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
       recognition.onend = () => {
         if (micBtn) micBtn.classList.remove('recording');
-        if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
         this.livePitchState.isRecordingVoice = false;
-
-        const finalText = transcriptText ? transcriptText.innerText.replace(/^"|"$/g, '').trim() : '';
-        if (finalText && finalText !== 'Đang nghe bạn nói...') {
-          this.parseVoiceTranscript(finalText);
+        const currentVal = inputEdit ? inputEdit.value.trim() : '';
+        if (statusText) {
+          statusText.innerText = currentVal ? '✅ Đã nhận diện! Bấm "Ghi Nhận" để xác nhận' : '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
         }
       };
 
@@ -2283,6 +2286,55 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       this.livePitchState.isRecordingVoice = false;
       if (micBtn) micBtn.classList.remove('recording');
     }
+  },
+
+  cancelVoiceRecording() {
+    if (this.livePitchState.speechRecognition && this.livePitchState.isRecordingVoice) {
+      this.livePitchState.speechRecognition.stop();
+    }
+    this.livePitchState.isRecordingVoice = false;
+
+    const micBtn = document.getElementById('live-voice-mic-btn');
+    const statusText = document.getElementById('live-voice-status');
+    const transcriptText = document.getElementById('live-voice-transcript');
+    const controlsRow = document.getElementById('live-voice-controls-row');
+    const inputEdit = document.getElementById('live-voice-input-edit');
+
+    if (micBtn) micBtn.classList.remove('recording');
+    if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+    if (transcriptText) transcriptText.innerText = 'Ví dụ: "Quân vừa sút xa ghi bàn, Tuấn Anh kiến tạo" hoặc "Hùng cứu thua 1vs1"';
+    if (inputEdit) inputEdit.value = '';
+    if (controlsRow) controlsRow.style.display = 'none';
+
+    window.showToast('Đã hủy bỏ câu nói');
+  },
+
+  submitVoiceRecording() {
+    if (this.livePitchState.speechRecognition && this.livePitchState.isRecordingVoice) {
+      this.livePitchState.speechRecognition.stop();
+    }
+    this.livePitchState.isRecordingVoice = false;
+
+    const micBtn = document.getElementById('live-voice-mic-btn');
+    const statusText = document.getElementById('live-voice-status');
+    const transcriptText = document.getElementById('live-voice-transcript');
+    const controlsRow = document.getElementById('live-voice-controls-row');
+    const inputEdit = document.getElementById('live-voice-input-edit');
+
+    const textToSubmit = inputEdit ? inputEdit.value.trim() : '';
+
+    if (!textToSubmit || textToSubmit === 'Đang nghe bạn nói...') {
+      window.showToast('Chưa có nội dung sự kiện để ghi nhận!', 'info');
+      return;
+    }
+
+    this.parseVoiceTranscript(textToSubmit);
+
+    if (micBtn) micBtn.classList.remove('recording');
+    if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+    if (transcriptText) transcriptText.innerText = `Đã ghi nhận: "${textToSubmit}"`;
+    if (inputEdit) inputEdit.value = '';
+    if (controlsRow) controlsRow.style.display = 'none';
   },
 
   parseVoiceTranscript(text) {

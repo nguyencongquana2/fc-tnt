@@ -1298,14 +1298,29 @@
         </div>
 
         <!-- Quick Action: Voice Memo Microphone Bar -->
-        <div class="live-voice-bar-wrapper">
-          <button type="button" class="live-voice-mic-btn" id="live-voice-mic-btn" onclick="window.matchesModule.toggleVoiceRecording()" title="Bấm để nói bằng tiếng Việt">
-            <div class="mic-wave-ring" id="live-mic-wave"></div>
-            <span class="mic-icon" id="live-mic-icon">🎙️</span>
-          </button>
-          <div class="live-voice-info">
-            <div class="live-voice-title" id="live-voice-status">🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)</div>
-            <div class="live-voice-hint" id="live-voice-transcript">Ví dụ: "Quân vừa sút xa ghi bàn, Tuấn Anh kiến tạo" hoặc "Hùng cứu thua 1vs1"</div>
+        <div class="live-voice-bar-wrapper" id="live-voice-bar-container">
+          <div class="live-voice-top-row">
+            <button type="button" class="live-voice-mic-btn" id="live-voice-mic-btn" onclick="window.matchesModule.toggleVoiceRecording()" title="Bấm để nói bằng tiếng Việt">
+              <div class="mic-wave-ring" id="live-mic-wave"></div>
+              <span class="mic-icon" id="live-mic-icon">🎙️</span>
+            </button>
+            <div class="live-voice-info">
+              <div class="live-voice-title" id="live-voice-status">🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)</div>
+              <div class="live-voice-hint" id="live-voice-transcript">Ví dụ: "Quân vừa sút xa ghi bàn, Tuấn Anh kiến tạo" hoặc "Hùng cứu thua 1vs1"</div>
+            </div>
+          </div>
+
+          <!-- Controls row: Cancel & Submit buttons -->
+          <div class="live-voice-controls-row" id="live-voice-controls-row" style="display: none;">
+            <input type="text" class="live-voice-input-edit" id="live-voice-input-edit" placeholder="Chỉnh sửa câu nói nếu cần..." onkeydown="if(event.key==='Enter') window.matchesModule.submitVoiceRecording()">
+            <div class="live-voice-btn-group">
+              <button type="button" class="live-voice-cancel-btn" onclick="window.matchesModule.cancelVoiceRecording()" title="Hủy bỏ câu nói này">
+                ✕ Hủy Bỏ
+              </button>
+              <button type="button" class="live-voice-submit-btn" onclick="window.matchesModule.submitVoiceRecording()" title="Ghi nhận sự kiện ngay">
+                ✓ Ghi Nhận Ngay
+              </button>
+            </div>
           </div>
         </div>
 
