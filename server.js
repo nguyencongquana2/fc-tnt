@@ -23,6 +23,7 @@ const Player = require('./models/Player');
 const Match = require('./models/Match');
 const Team = require('./models/Team');
 const Moment = require('./models/Moment');
+const LiveMatchDraft = require('./models/LiveMatchDraft');
 
 const app = express();
 const server = http.createServer(app);
@@ -1936,7 +1937,7 @@ Hãy trả lời trực diện câu hỏi của anh em thật tự nhiên, chu�
       }
     }
 
-    // Fallback thông minh với Football Pitch NLP
+    // Fallback thông minh với Football NLP
     const answer = analyzePitchWithFootballNLP(question, forecastData, selectedDate, selectedSlot);
     return res.json({
       success: true,
@@ -1946,6 +1947,101 @@ Hãy trả lời trực diện câu hỏi của anh em thật tự nhiên, chu�
 
   } catch (err) {
     console.error('Error in /api/weather/ai-consultant:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// 📡 REAL-TIME MULTI-DEVICE LIVE MATCH SYNC API
+// ==========================================
+let fallbackLiveMatchDraft = null;
+
+// Lấy bản nháp trận đấu Live đang diễn ra (để máy khác vào tiếp tục)
+app.get('/api/live-match/current', async (req, res) => {
+  try {
+    let draft = null;
+    if (isMongoConnected) {
+      draft = await LiveMatchDraft.findOne({ id: 'current_live_match_draft' }).lean();
+    } else {
+      draft = fallbackLiveMatchDraft;
+    }
+
+    if (!draft || draft.status === 'idle' || draft.status === 'finished') {
+      return res.json({ success: true, active: false, draft: null });
+    }
+
+    // Kiểm tra nếu bản nháp lưu trong vòng 12 tiếng
+    const updatedAt = new Date(draft.updatedAt || draft.savedAt || Date.now()).getTime();
+    if (Date.now() - updatedAt > 12 * 3600 * 1000) {
+      return res.json({ success: true, active: false, draft: null });
+    }
+
+    return res.json({
+      success: true,
+      active: true,
+      draft
+    });
+  } catch (err) {
+    console.error('Error in GET /api/live-match/current:', err);
+    res.status(500).json({ success: false, error: err.message, draft: fallbackLiveMatchDraft });
+  }
+});
+
+// Đồng bộ diễn biến trận đấu Live lên Cloud cho mọi thiết bị
+app.post('/api/live-match/sync', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const draftData = {
+      id: 'current_live_match_draft',
+      status: 'active',
+      opponent: payload.opponent || 'FC Đối Thủ',
+      venue: payload.venue || 'Sân bóng',
+      homeScore: Number(payload.homeScore) || 0,
+      awayScore: Number(payload.awayScore) || 0,
+      timerSeconds: Number(payload.timerSeconds) || 0,
+      timerRunning: Boolean(payload.timerRunning),
+      timerStartedAt: payload.timerStartedAt || null,
+      period: Number(payload.period) || 1,
+      events: Array.isArray(payload.events) ? payload.events : [],
+      matchId: payload.matchId || null,
+      updatedAt: new Date()
+    };
+
+    fallbackLiveMatchDraft = draftData;
+
+    if (isMongoConnected) {
+      await LiveMatchDraft.findOneAndUpdate(
+        { id: 'current_live_match_draft' },
+        draftData,
+        { upsert: true, new: true }
+      );
+    }
+
+    // Phát WebSocket đồng bộ ngay lập tức cho tất cả các máy khác
+    io.emit('live_match_synced', draftData);
+
+    return res.json({ success: true, draft: draftData });
+  } catch (err) {
+    console.error('Error in POST /api/live-match/sync:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Xóa bản nháp khi trận đấu hoàn tất lưu hoặc hủy
+app.post('/api/live-match/clear', async (req, res) => {
+  try {
+    fallbackLiveMatchDraft = null;
+    if (isMongoConnected) {
+      await LiveMatchDraft.findOneAndUpdate(
+        { id: 'current_live_match_draft' },
+        { status: 'idle', events: [], homeScore: 0, awayScore: 0, timerSeconds: 0, updatedAt: new Date() }
+      );
+    }
+
+    io.emit('live_match_cleared');
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Error in POST /api/live-match/clear:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

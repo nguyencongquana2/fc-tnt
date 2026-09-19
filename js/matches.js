@@ -1959,7 +1959,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     isRecordingVoice: false
   },
 
-  openLiveCompanionModal(matchId = null) {
+  async openLiveCompanionModal(matchId = null) {
     if (!window.stateManager.isAdmin) {
       window.showToast('🔒 Hãy đăng nhập Quản trị viên để ghi nhận trực tiếp trên sân!', 'info');
       return;
@@ -2013,21 +2013,30 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         }
       }
     } else {
-      // Đọc bản nháp gần nhất nếu có
-      this.loadLiveDraft();
+      // Đọc bản nháp từ Cloud/Local để đồng bộ tiếp tục trận đấu
+      await this.loadLiveDraft();
     }
 
     // Cập nhật giao diện
+    this.updateLiveCompanionUI();
+
+    // Tự động bật giữ sáng màn hình
+    this.acquireWakeLock();
+
+    modal.classList.add('active');
+  },
+
+  updateLiveCompanionUI() {
     const teamInfo = window.stateManager.data.teamInfo;
     const homeNameEl = document.getElementById('live-home-team-name');
     if (homeNameEl) homeNameEl.innerText = teamInfo?.name || 'FC TNT';
 
     const opponentLabel = document.getElementById('live-match-opponent-label');
-    if (opponentLabel) opponentLabel.innerText = 'vs ' + this.livePitchState.opponent;
+    if (opponentLabel) opponentLabel.innerText = 'vs ' + (this.livePitchState.opponent || 'FC Đối Thủ');
 
     const awayInput = document.getElementById('live-away-team-input');
     if (awayInput) {
-      awayInput.value = this.livePitchState.opponent;
+      awayInput.value = this.livePitchState.opponent || 'FC Đối Thủ';
       awayInput.onchange = (e) => {
         this.livePitchState.opponent = e.target.value.trim() || 'FC Đối Thủ';
         if (opponentLabel) opponentLabel.innerText = 'vs ' + this.livePitchState.opponent;
@@ -2035,16 +2044,37 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       };
     }
 
-    document.getElementById('live-home-score').innerText = this.livePitchState.homeScore;
-    document.getElementById('live-away-score').innerText = this.livePitchState.awayScore;
+    const homeScoreEl = document.getElementById('live-home-score');
+    if (homeScoreEl) homeScoreEl.innerText = this.livePitchState.homeScore;
+
+    const awayScoreEl = document.getElementById('live-away-score');
+    if (awayScoreEl) awayScoreEl.innerText = this.livePitchState.awayScore;
 
     this.updateTimerDisplay();
     this.renderLiveTimeline();
+  },
 
-    // Tự động bật giữ sáng màn hình
-    this.acquireWakeLock();
+  handleRemoteLiveMatchSync(draftData) {
+    if (!draftData) return;
+    const modal = document.getElementById('live-companion-modal');
+    const isModalActive = modal && modal.classList.contains('active');
 
-    modal.classList.add('active');
+    // Cập nhật state nội bộ
+    this.applyLiveDraftData(draftData);
+
+    if (isModalActive) {
+      window.showToast('📡 Đã nhận đồng bộ trực tiếp từ thiết bị khác!', 'info');
+    }
+  },
+
+  handleRemoteLiveMatchClear() {
+    localStorage.removeItem('fctnt_live_pitch_draft');
+    this.livePitchState.events = [];
+    this.livePitchState.homeScore = 0;
+    this.livePitchState.awayScore = 0;
+    this.livePitchState.timerSeconds = 0;
+    this.livePitchState.period = 1;
+    this.updateLiveCompanionUI();
   },
 
   closeLiveCompanionModal() {
@@ -2916,45 +2946,84 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
   },
 
   // ==========================================
-  // AUTO-SAVE & DRAFT RESILIENCE
+  // AUTO-SAVE & MULTI-DEVICE CLOUD DRAFT SYNC
   // ==========================================
   saveLiveDraft() {
     try {
       const draft = {
-        opponent: this.livePitchState.opponent,
-        venue: this.livePitchState.venue,
-        homeScore: this.livePitchState.homeScore,
-        awayScore: this.livePitchState.awayScore,
-        timerSeconds: this.livePitchState.timerSeconds,
-        period: this.livePitchState.period,
-        events: this.livePitchState.events,
+        opponent: this.livePitchState.opponent || 'FC Đối Thủ',
+        venue: this.livePitchState.venue || 'Sân bóng',
+        homeScore: Number(this.livePitchState.homeScore) || 0,
+        awayScore: Number(this.livePitchState.awayScore) || 0,
+        timerSeconds: Number(this.livePitchState.timerSeconds) || 0,
+        timerRunning: Boolean(this.livePitchState.isTimerRunning),
+        period: Number(this.livePitchState.period) || 1,
+        events: Array.isArray(this.livePitchState.events) ? this.livePitchState.events : [],
+        matchId: this.livePitchState.matchId || null,
         savedAt: Date.now()
       };
+
+      // 1. Lưu tức thời tại Local Storage của thiết bị hiện tại
       localStorage.setItem('fctnt_live_pitch_draft', JSON.stringify(draft));
+
+      // 2. Đồng bộ lên Cloud Server cho các thiết bị khác
+      if (this._syncDebounceTimer) clearTimeout(this._syncDebounceTimer);
+      this._syncDebounceTimer = setTimeout(() => {
+        fetch('/api/live-match/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(draft)
+        }).catch(err => console.warn('Cloud live draft sync error:', err));
+      }, 250);
+
     } catch (e) {
       console.warn('Draft save error:', e);
     }
   },
 
-  loadLiveDraft() {
+  async loadLiveDraft() {
+    // 1. Thử tải từ Cloud Server trước để lấy dữ liệu mới nhất nếu đổi thiết bị
+    try {
+      const res = await fetch('/api/live-match/current');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.active && data.draft) {
+          console.log('☁️ Đã khôi phục trận đấu Live từ Cloud Server:', data.draft);
+          this.applyLiveDraftData(data.draft);
+          localStorage.setItem('fctnt_live_pitch_draft', JSON.stringify(data.draft));
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Cloud live draft fetch failed, switching to local storage:', err);
+    }
+
+    // 2. Fallback sang Local Storage
     try {
       const raw = localStorage.getItem('fctnt_live_pitch_draft');
       if (raw) {
         const draft = JSON.parse(raw);
         // Nếu draft lưu trong vòng 12 tiếng
-        if (draft && (Date.now() - draft.savedAt < 12 * 3600 * 1000)) {
-          this.livePitchState.opponent = draft.opponent || 'FC Đối Thủ';
-          this.livePitchState.venue = draft.venue || 'Sân bóng';
-          this.livePitchState.homeScore = draft.homeScore || 0;
-          this.livePitchState.awayScore = draft.awayScore || 0;
-          this.livePitchState.timerSeconds = draft.timerSeconds || 0;
-          this.livePitchState.period = draft.period || 1;
-          this.livePitchState.events = Array.isArray(draft.events) ? draft.events : [];
+        if (draft && (Date.now() - (draft.savedAt || 0) < 12 * 3600 * 1000)) {
+          this.applyLiveDraftData(draft);
         }
       }
     } catch (e) {
       console.warn('Draft load error:', e);
     }
+  },
+
+  applyLiveDraftData(draft) {
+    if (!draft) return;
+    this.livePitchState.opponent = draft.opponent || 'FC Đối Thủ';
+    this.livePitchState.venue = draft.venue || 'Sân bóng';
+    this.livePitchState.homeScore = Number(draft.homeScore) || 0;
+    this.livePitchState.awayScore = Number(draft.awayScore) || 0;
+    this.livePitchState.timerSeconds = Number(draft.timerSeconds) || 0;
+    this.livePitchState.period = Number(draft.period) || 1;
+    this.livePitchState.matchId = draft.matchId || null;
+    this.livePitchState.events = Array.isArray(draft.events) ? draft.events : [];
+    this.updateLiveCompanionUI();
   },
 
   clearLiveDraft() {
@@ -2964,6 +3033,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     this.livePitchState.awayScore = 0;
     this.livePitchState.timerSeconds = 0;
     this.livePitchState.period = 1;
+    this.livePitchState.matchId = null;
+
+    // Xóa trên Cloud
+    fetch('/api/live-match/clear', { method: 'POST' }).catch(e => {});
   }
 };
 

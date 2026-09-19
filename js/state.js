@@ -85,6 +85,21 @@ class StateManager {
             }
           }
         });
+
+        // Nhận tín hiệu đồng bộ trận đấu Live liên máy
+        this.socket.on('live_match_synced', (draftData) => {
+          console.log('📡 Nhận tín hiệu Live Match từ thiết bị khác:', draftData);
+          if (window.matchesModule && typeof window.matchesModule.handleRemoteLiveMatchSync === 'function') {
+            window.matchesModule.handleRemoteLiveMatchSync(draftData);
+          }
+        });
+
+        this.socket.on('live_match_cleared', () => {
+          console.log('📡 Trận đấu Live đã kết thúc/xóa trên thiết bị khác');
+          if (window.matchesModule && typeof window.matchesModule.handleRemoteLiveMatchClear === 'function') {
+            window.matchesModule.handleRemoteLiveMatchClear();
+          }
+        });
       } catch (err) {
         console.warn('Socket.io client init error:', err);
       }
