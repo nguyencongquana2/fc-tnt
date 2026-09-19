@@ -2214,14 +2214,25 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
   },
 
   // ==========================================
-  // 🎙️ VOICE-TO-EVENT ENGINE (WEB SPEECH API)
+  // 🎙️ VOICE-TO-EVENT ENGINE (WEB SPEECH API + FALLBACK)
   // ==========================================
-  toggleVoiceRecording() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      window.showToast('Trình duyệt không hỗ trợ nhận diện giọng nói. Hãy dùng Google Chrome/Safari!', 'error');
-      return;
+  async requestMicPermission() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Giải phóng audio track ngay để engine nhận diện giọng nói sử dụng
+        stream.getTracks().forEach(track => track.stop());
+        return true;
+      } catch (err) {
+        console.warn('Microphone permission request failed:', err);
+        return false;
+      }
     }
+    return true;
+  },
+
+  async toggleVoiceRecording() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     const micBtn = document.getElementById('live-voice-mic-btn');
     const statusText = document.getElementById('live-voice-status');
@@ -2229,18 +2240,46 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     const controlsRow = document.getElementById('live-voice-controls-row');
     const inputEdit = document.getElementById('live-voice-input-edit');
 
+    // Nếu đang ghi âm -> Dừng lại và mở ô duyệt
     if (this.livePitchState.isRecordingVoice && this.livePitchState.speechRecognition) {
-      this.livePitchState.speechRecognition.stop();
+      try {
+        this.livePitchState.speechRecognition.stop();
+      } catch (e) {}
       this.livePitchState.isRecordingVoice = false;
       if (micBtn) micBtn.classList.remove('recording');
-      if (statusText) statusText.innerText = '🎙️ Đã thu xong! Bấm "Ghi Nhận" hoặc "Hủy"';
+      if (statusText) statusText.innerText = '🎙️ Đã dừng thu! Bấm "Ghi Nhận" hoặc chỉnh sửa';
       return;
+    }
+
+    // Trường hợp trình duyệt không hỗ trợ Web Speech API (Firefox, In-app Browser,...)
+    if (!SpeechRecognition) {
+      if (controlsRow) controlsRow.style.display = 'flex';
+      if (inputEdit) {
+        inputEdit.focus();
+        inputEdit.placeholder = 'Nhập câu sự kiện (hoặc bấm biểu tượng Mic 🎙️ trên bàn phím điện thoại)...';
+      }
+      if (statusText) statusText.innerText = '⌨️ Nhập sự kiện / Dùng Mic bàn phím';
+      if (transcriptText) transcriptText.innerText = 'Trình duyệt chưa hỗ trợ Speech API trực tiếp. Bạn có thể dùng phím Mic trên bàn phím điện thoại hoặc chọn mẫu nhanh bên dưới!';
+      window.showToast('Bạn có thể nhập câu lệnh hoặc dùng phím Micro 🎙️ trên bàn phím điện thoại!', 'info');
+      return;
+    }
+
+    // Kiểm tra quyền Micro trước khi khởi động
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const micGranted = await this.requestMicPermission();
+      if (!micGranted) {
+        if (controlsRow) controlsRow.style.display = 'flex';
+        if (inputEdit) inputEdit.focus();
+        window.showToast('Trình duyệt đang chặn quyền Micro. Hãy nhấn vào biểu tượng 🔒 trên thanh địa chỉ để BẬT Micro!', 'warning');
+        if (statusText) statusText.innerText = '⚠️ Cần cấp quyền Micro trong cài đặt trình duyệt';
+        return;
+      }
     }
 
     try {
       const recognition = new SpeechRecognition();
       recognition.lang = 'vi-VN';
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
@@ -2248,35 +2287,70 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       this.livePitchState.isRecordingVoice = true;
 
       if (micBtn) micBtn.classList.add('recording');
-      if (statusText) statusText.innerText = '🔴 Đang lắng nghe... Hãy nói sự kiện!';
-      if (transcriptText) transcriptText.innerText = 'Đang nghe bạn nói...';
+      if (statusText) statusText.innerText = '🔴 Đang lắng nghe... Hãy nói sự kiện trận đấu!';
+      if (transcriptText) transcriptText.innerText = 'Đang nhận diện giọng nói tiếng Việt...';
       if (inputEdit) inputEdit.value = '';
       if (controlsRow) controlsRow.style.display = 'flex';
 
+      let speechTimeout = null;
+
+      recognition.onstart = () => {
+        this.livePitchState.isRecordingVoice = true;
+        if (micBtn) micBtn.classList.add('recording');
+        if (statusText) statusText.innerText = '🔴 Đang lắng nghe... Hãy nói sự kiện!';
+        // Tự động dừng sau 12 giây nếu người dùng không bấm nút dừng
+        speechTimeout = setTimeout(() => {
+          if (this.livePitchState.isRecordingVoice && this.livePitchState.speechRecognition) {
+            try { this.livePitchState.speechRecognition.stop(); } catch (e) {}
+          }
+        }, 12000);
+      };
+
       recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join('');
-        if (transcriptText) transcriptText.innerText = `"${transcript}"`;
-        if (inputEdit) inputEdit.value = transcript;
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText) {
+          if (transcriptText) transcriptText.innerText = `"${currentText}"`;
+          if (inputEdit) inputEdit.value = currentText;
+        }
       };
 
       recognition.onerror = (event) => {
         console.warn('Speech recognition error:', event.error);
+        if (speechTimeout) clearTimeout(speechTimeout);
         if (micBtn) micBtn.classList.remove('recording');
-        if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
         this.livePitchState.isRecordingVoice = false;
-        if (event.error !== 'no-speech') {
-          window.showToast('Không nhận diện được giọng nói: ' + event.error, 'error');
+
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          window.showToast('Quyền Micro bị từ chối! Hãy cấp quyền trong cài đặt trình duyệt.', 'error');
+          if (statusText) statusText.innerText = '⚠️ Quyền truy cập Micro bị chặn';
+        } else if (event.error === 'no-speech') {
+          if (statusText) statusText.innerText = '🎙️ Chưa nhận được tiếng, chạm lại Mic và nói gần hơn!';
+        } else if (event.error === 'network') {
+          window.showToast('Lỗi kết nối mạng dịch vụ giọng nói. Bạn có thể gõ nhanh hoặc chọn mẫu bên dưới!', 'warning');
+          if (statusText) statusText.innerText = '⌨️ Có thể gõ nhanh hoặc chọn mẫu sự kiện bên dưới';
+        } else {
+          if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
         }
       };
 
       recognition.onend = () => {
+        if (speechTimeout) clearTimeout(speechTimeout);
         if (micBtn) micBtn.classList.remove('recording');
         this.livePitchState.isRecordingVoice = false;
         const currentVal = inputEdit ? inputEdit.value.trim() : '';
         if (statusText) {
-          statusText.innerText = currentVal ? '✅ Đã nhận diện! Bấm "Ghi Nhận" để xác nhận' : '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+          statusText.innerText = currentVal ? '✅ Đã nhận diện! Bấm "Ghi Nhận Sự Kiện" để xác nhận' : '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
         }
       };
 
@@ -2285,7 +2359,48 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       console.error('Speech recognition start failed:', err);
       this.livePitchState.isRecordingVoice = false;
       if (micBtn) micBtn.classList.remove('recording');
+      if (controlsRow) controlsRow.style.display = 'flex';
+      if (inputEdit) inputEdit.focus();
+      window.showToast('Không thể bật ghi âm tự động. Bạn có thể gõ nhanh nội dung!', 'warning');
     }
+  },
+
+  toggleVoiceManualInput() {
+    const controlsRow = document.getElementById('live-voice-controls-row');
+    const inputEdit = document.getElementById('live-voice-input-edit');
+    const statusText = document.getElementById('live-voice-status');
+
+    if (!controlsRow) return;
+
+    if (controlsRow.style.display === 'none' || !controlsRow.style.display) {
+      controlsRow.style.display = 'flex';
+      if (inputEdit) {
+        inputEdit.focus();
+        inputEdit.placeholder = 'Nhập câu sự kiện (hoặc dùng mic bàn phím)...';
+      }
+      if (statusText) statusText.innerText = '⌨️ Đang mở ô nhập sự kiện thủ công';
+    } else {
+      controlsRow.style.display = 'none';
+      if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+    }
+  },
+
+  quickVoicePreset(presetText) {
+    const inputEdit = document.getElementById('live-voice-input-edit');
+    const controlsRow = document.getElementById('live-voice-controls-row');
+
+    if (inputEdit) inputEdit.value = presetText;
+    if (controlsRow) controlsRow.style.display = 'flex';
+
+    // Xử lý và ghi nhận ngay
+    this.parseVoiceTranscript(presetText);
+
+    const statusText = document.getElementById('live-voice-status');
+    const transcriptText = document.getElementById('live-voice-transcript');
+    if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+    if (transcriptText) transcriptText.innerText = `Đã ghi nhận: "${presetText}"`;
+    if (inputEdit) inputEdit.value = '';
+    if (controlsRow) controlsRow.style.display = 'none';
   },
 
   cancelVoiceRecording() {
