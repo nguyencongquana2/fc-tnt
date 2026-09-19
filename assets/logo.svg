@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Glow & Shield Base -->
+  <circle cx="256" cy="256" r="236" fill="url(#shieldGrad)" stroke="url(#glowGrad)" stroke-width="16" filter="url(#dropShadow)" />
+  <circle cx="256" cy="256" r="215" fill="none" stroke="#06b6d4" stroke-width="3" stroke-opacity="0.6" stroke-dasharray="8 6" />
+
+  <!-- Stars (Top) -->
+  <g fill="url(#goldGrad)" stroke="#fef3c7" stroke-width="1.5">
+    <!-- Center Star -->
+    <polygon points="256,70 263,88 282,88 267,99 272,117 256,106 240,117 245,99 230,88 249,88" />
+    <!-- Left Star -->
+    <polygon points="180,82 185,95 200,95 188,103 192,117 180,108 168,117 172,103 160,95 175,95" />
+    <!-- Right Star -->
+    <polygon points="332,82 337,95 352,95 340,103 344,117 332,108 320,117 324,103 312,95 327,95" />
+  </g>
+
+  <!-- EST 2026 -->
+  <text x="256" y="150" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="900" letter-spacing="4" text-anchor="middle">EST. 2026</text>
+
+  <!-- Soccer Ball -->
+  <g transform="translate(256, 260)">
+    <!-- Ball Circle -->
+    <circle cx="0" cy="0" r="115" fill="#f8fafc" stroke="#1e293b" stroke-width="6"/>
+    
+    <!-- Central Dark Pentagon -->
+    <polygon points="0,-42 40,-13 25,34 -25,34 -40,-13" fill="#1e293b" />
+    
+    <!-- Seam Lines and Surrounding Patches -->
+    <!-- Top Patch -->
+    <line x1="0" y1="-42" x2="0" y2="-112" stroke="#1e293b" stroke-width="5" />
+    <polygon points="-28,-110 0,-112 28,-110 20,-88 -20,-88" fill="#334155" />
+    
+    <!-- Top Right Patch -->
+    <line x1="40" y1="-13" x2="106" y2="-36" stroke="#1e293b" stroke-width="5" />
+    <polygon points="106,-36 90,-70 65,-58 75,-25" fill="#334155" />
+    
+    <!-- Bottom Right Patch -->
+    <line x1="25" y1="34" x2="68" y2="92" stroke="#1e293b" stroke-width="5" />
+    <polygon points="68,92 100,56 78,42 52,68" fill="#334155" />
+    
+    <!-- Bottom Left Patch -->
+    <line x1="-25" y1="34" x2="-68" y2="92" stroke="#1e293b" stroke-width="5" />
+    <polygon points="-68,92 -100,56 -78,42 -52,68" fill="#334155" />
+    
+    <!-- Top Left Patch -->
+    <line x1="-40" y1="-13" x2="-106" y2="-36" stroke="#1e293b" stroke-width="5" />
+    <polygon points="-106,-36 -90,-70 -65,-58 -75,-25" fill="#334155" />
+  </g>
+
+  <!-- Banner & FC TNT Ribbon -->
+  <g filter="url(#dropShadow)">
+    <polygon points="70,370 442,370 420,455 92,455" fill="url(#glowGrad)" stroke="#ffffff" stroke-width="4"/>
+    <text x="256" y="430" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Impact', sans-serif" font-size="58" font-weight="900" letter-spacing="3" text-anchor="middle" stroke="#0f172a" stroke-width="3" paint-order="stroke fill">FC TNT</text>
+  </g>
+</svg>

@@ -21,7 +21,7 @@
   <meta property="og:url" content="https://fc-tnt.onrender.com/">
   <meta property="og:title" content="FC TNT - Quản Lý Đội Bóng Phủi & Bảng Vinh Danh Trao Thưởng">
   <meta property="og:description" content="Nền tảng quản lý đội bóng phong trào FC TNT: Chấm điểm phong độ, bảng xếp hạng vinh danh, thống kê bàn thắng kiến tạo và dự báo thời tiết sân bóng.">
-  <meta property="og:image" content="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&auto=format&fit=crop&q=80">
+  <meta property="og:image" content="https://fc-tnt.onrender.com/assets/logo-512.png">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="FC TNT">
 
@@ -30,19 +30,42 @@
   <meta name="twitter:url" content="https://fc-tnt.onrender.com/">
   <meta name="twitter:title" content="FC TNT - Quản Lý Đội Bóng Phủi & Bảng Vinh Danh Trao Thưởng">
   <meta name="twitter:description" content="Nền tảng quản lý đội bóng phong trào FC TNT: Chấm điểm phong độ, bảng xếp hạng vinh danh và thống kê toàn diện.">
-  <meta name="twitter:image" content="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&auto=format&fit=crop&q=80">
+  <meta name="twitter:image" content="https://fc-tnt.onrender.com/assets/logo-512.png">
 
-  <!-- Structured Data (Schema.org JSON-LD) -->
+  <!-- Structured Data (Schema.org JSON-LD for Google Site Name & Rich Snippets) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SportsTeam",
-    "name": "FC TNT",
-    "alternateName": ["CLB Bóng Đá TNT", "Đội bóng FC TNT"],
-    "url": "https://fc-tnt.onrender.com/",
-    "sport": "Soccer",
-    "description": "Câu lạc bộ bóng đá phong trào FC TNT với hệ thống quản lý lịch sử thi đấu, chấm điểm phong độ cầu thủ và bảng vinh danh trao giải thưởng.",
-    "logo": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop&q=80"
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://fc-tnt.onrender.com/#website",
+        "url": "https://fc-tnt.onrender.com/",
+        "name": "FC TNT",
+        "alternateName": ["CLB Bóng Đá TNT", "Đội bóng FC TNT", "FC TNT Club"],
+        "description": "Nền tảng quản lý đội bóng phong trào FC TNT",
+        "publisher": {
+          "@type": "SportsTeam",
+          "name": "FC TNT",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://fc-tnt.onrender.com/assets/logo-512.png",
+            "width": 512,
+            "height": 512
+          }
+        }
+      },
+      {
+        "@type": "SportsTeam",
+        "@id": "https://fc-tnt.onrender.com/#team",
+        "name": "FC TNT",
+        "alternateName": ["CLB Bóng Đá TNT", "Đội bóng FC TNT"],
+        "url": "https://fc-tnt.onrender.com/",
+        "sport": "Soccer",
+        "description": "Câu lạc bộ bóng đá phong trào FC TNT với hệ thống quản lý lịch sử thi đấu, chấm điểm phong độ cầu thủ và bảng vinh danh trao giải thưởng.",
+        "logo": "https://fc-tnt.onrender.com/assets/logo-512.png"
+      }
+    ]
   }
   </script>
 
@@ -52,10 +75,13 @@
   <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css?v=3.2">
-  <link rel="icon"
-    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
-  <link rel="apple-touch-icon"
-    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+  
+  <!-- Standard Favicons for Browsers & Google Search Engine Crawler -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 </head>
 
 <body>
