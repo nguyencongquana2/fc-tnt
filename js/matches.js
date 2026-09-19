@@ -335,6 +335,9 @@ window.matchesModule = {
           ${m.note ? `<div style="font-size: 0.82rem; color: var(--accent-gold); margin-top: 0.25rem;">💬 ${m.note}</div>` : ''}
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-emerald btn-sm" onclick="window.matchesModule.openLiveCompanionModal('${m.id}')" title="Mở Trợ lý Sân cỏ trực tiếp để ghi nhận sự kiện trên sân">
+            🏟️ Trợ Lý Sân Cỏ
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
             💰 Tiền Sân & Chia Tiền
           </button>
@@ -1932,8 +1935,871 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
       card.style.display = show ? 'flex' : 'none';
     });
+  },
+
+  // =========================================================================
+  // 🏟️ LIVE PITCH COMPANION (TRỢ LÝ SÂN CỎ TRỰC TIẾP & VOICE-TO-EVENT)
+  // =========================================================================
+  livePitchState: {
+    matchId: null,
+    opponent: 'FC Đối Thủ',
+    venue: 'Sân bóng Tân Triều',
+    homeScore: 0,
+    awayScore: 0,
+    timerSeconds: 0,
+    timerInterval: null,
+    isTimerRunning: false,
+    period: 1, // 1: H1, 2: H2, 3: Full-time
+    events: [],
+    currentAction: null,
+    pendingGoalPlayerId: null,
+    wakeLockSentinel: null,
+    isScreenWakeOn: false,
+    speechRecognition: null,
+    isRecordingVoice: false
+  },
+
+  openLiveCompanionModal(matchId = null) {
+    if (!window.stateManager.isAdmin) {
+      window.showToast('🔒 Hãy đăng nhập Quản trị viên để ghi nhận trực tiếp trên sân!', 'info');
+      return;
+    }
+
+    const modal = document.getElementById('live-companion-modal');
+    if (!modal) return;
+
+    this.livePitchState.matchId = matchId;
+
+    if (matchId) {
+      const m = window.stateManager.getMatchById(matchId);
+      if (m) {
+        this.livePitchState.opponent = m.opponent || 'FC Đối Thủ';
+        this.livePitchState.venue = m.venue || 'Sân bóng';
+        this.livePitchState.homeScore = Number(m.homeScore) || 0;
+        this.livePitchState.awayScore = Number(m.awayScore) || 0;
+        // Chuyển đổi playerStats thành sự kiện ban đầu nếu có bàn thắng/kiến tạo
+        if (this.livePitchState.events.length === 0 && Array.isArray(m.playerStats)) {
+          m.playerStats.forEach(ps => {
+            const p = window.stateManager.getPlayerById(ps.playerId);
+            if (p) {
+              for (let i = 0; i < (ps.goals || 0); i++) {
+                this.livePitchState.events.push({
+                  id: 'evt_' + Date.now() + Math.random(),
+                  minute: 10 + i * 15,
+                  type: 'GOAL',
+                  typeLabel: '⚽ Bàn Thắng',
+                  playerId: p.id,
+                  playerName: p.name,
+                  playerAvatar: p.avatar,
+                  assistPlayerId: null,
+                  assistPlayerName: null,
+                  note: 'Bàn thắng của ' + p.name
+                });
+              }
+              for (let i = 0; i < (ps.yellowCards || 0); i++) {
+                this.livePitchState.events.push({
+                  id: 'evt_' + Date.now() + Math.random(),
+                  minute: 30,
+                  type: 'CARD',
+                  typeLabel: '🟨 Thẻ Vàng',
+                  playerId: p.id,
+                  playerName: p.name,
+                  playerAvatar: p.avatar,
+                  note: 'Thẻ vàng phạm lỗi'
+                });
+              }
+            }
+          });
+        }
+      }
+    } else {
+      // Đọc bản nháp gần nhất nếu có
+      this.loadLiveDraft();
+    }
+
+    // Cập nhật giao diện
+    const teamInfo = window.stateManager.data.teamInfo;
+    const homeNameEl = document.getElementById('live-home-team-name');
+    if (homeNameEl) homeNameEl.innerText = teamInfo?.name || 'FC TNT';
+
+    const opponentLabel = document.getElementById('live-match-opponent-label');
+    if (opponentLabel) opponentLabel.innerText = 'vs ' + this.livePitchState.opponent;
+
+    const awayInput = document.getElementById('live-away-team-input');
+    if (awayInput) {
+      awayInput.value = this.livePitchState.opponent;
+      awayInput.onchange = (e) => {
+        this.livePitchState.opponent = e.target.value.trim() || 'FC Đối Thủ';
+        if (opponentLabel) opponentLabel.innerText = 'vs ' + this.livePitchState.opponent;
+        this.saveLiveDraft();
+      };
+    }
+
+    document.getElementById('live-home-score').innerText = this.livePitchState.homeScore;
+    document.getElementById('live-away-score').innerText = this.livePitchState.awayScore;
+
+    this.updateTimerDisplay();
+    this.renderLiveTimeline();
+
+    // Tự động bật giữ sáng màn hình
+    this.acquireWakeLock();
+
+    modal.classList.add('active');
+  },
+
+  closeLiveCompanionModal() {
+    const modal = document.getElementById('live-companion-modal');
+    if (modal) modal.classList.remove('active');
+    this.closeLivePlayerPicker();
+    this.saveLiveDraft();
+  },
+
+  // ==========================================
+  // SCREEN WAKE LOCK (GIỮ SÁNG MÀN HÌNH NGOÀI SÂN)
+  // ==========================================
+  async toggleScreenWakeLock() {
+    if (this.livePitchState.wakeLockSentinel) {
+      this.releaseWakeLock();
+      window.showToast('Đã tắt chế độ giữ sáng màn hình');
+    } else {
+      await this.acquireWakeLock();
+      if (this.livePitchState.wakeLockSentinel) {
+        window.showToast('☀️ Đã bật giữ sáng màn hình ngoài sân bóng!');
+      }
+    }
+  },
+
+  async acquireWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        this.livePitchState.wakeLockSentinel = await navigator.wakeLock.request('screen');
+        this.livePitchState.isScreenWakeOn = true;
+        const btn = document.getElementById('live-wakelock-toggle');
+        const text = document.getElementById('live-wakelock-text');
+        if (btn) btn.classList.add('active');
+        if (text) text.innerText = 'Màn hình: LUÔN SÁNG ☀️';
+
+        this.livePitchState.wakeLockSentinel.addEventListener('release', () => {
+          this.livePitchState.wakeLockSentinel = null;
+          this.livePitchState.isScreenWakeOn = false;
+          if (btn) btn.classList.remove('active');
+          if (text) text.innerText = 'Giữ sáng: TẮT';
+        });
+      } catch (err) {
+        console.warn('Wake Lock request failed:', err);
+      }
+    }
+  },
+
+  releaseWakeLock() {
+    if (this.livePitchState.wakeLockSentinel) {
+      this.livePitchState.wakeLockSentinel.release();
+      this.livePitchState.wakeLockSentinel = null;
+    }
+    this.livePitchState.isScreenWakeOn = false;
+    const btn = document.getElementById('live-wakelock-toggle');
+    const text = document.getElementById('live-wakelock-text');
+    if (btn) btn.classList.remove('active');
+    if (text) text.innerText = 'Giữ sáng: TẮT';
+  },
+
+  // ==========================================
+  // MATCH TIMER (ĐỒNG HỒ BẤM GIỜ LIỀN MẠCH SÂN PHỦI)
+  // ==========================================
+  toggleLiveTimer() {
+    const btn = document.getElementById('live-timer-toggle-btn');
+    const periodBadge = document.getElementById('live-timer-period');
+
+    if (this.livePitchState.isTimerRunning) {
+      // Pause
+      clearInterval(this.livePitchState.timerInterval);
+      this.livePitchState.timerInterval = null;
+      this.livePitchState.isTimerRunning = false;
+      if (btn) {
+        btn.innerHTML = '▶️ Tiếp Tục';
+        btn.style.background = 'rgba(16, 185, 129, 0.2)';
+      }
+      if (periodBadge) {
+        periodBadge.innerText = '⏸️ TẠM DỪNG';
+        periodBadge.style.color = '#fbbf24';
+        periodBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+      }
+    } else {
+      // Start
+      this.livePitchState.isTimerRunning = true;
+      if (btn) {
+        btn.innerHTML = '⏸️ Tạm Dừng';
+        btn.style.background = 'rgba(239, 68, 68, 0.25)';
+      }
+      if (periodBadge) {
+        periodBadge.innerText = '🟢 ĐANG THI ĐẤU';
+        periodBadge.style.color = 'var(--accent-emerald)';
+        periodBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+      }
+      this.livePitchState.timerInterval = setInterval(() => {
+        this.livePitchState.timerSeconds++;
+        this.updateTimerDisplay();
+        if (this.livePitchState.timerSeconds % 10 === 0) {
+          this.saveLiveDraft();
+        }
+      }, 1000);
+    }
+  },
+
+  finishLiveMatchTime() {
+    if (this.livePitchState.isTimerRunning) {
+      this.toggleLiveTimer();
+    }
+    const periodBadge = document.getElementById('live-timer-period');
+    if (periodBadge) {
+      periodBadge.innerText = '🏁 ĐÃ KẾT THÚC';
+      periodBadge.style.color = '#f87171';
+      periodBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+    }
+    const mins = Math.floor(this.livePitchState.timerSeconds / 60);
+    this.recordLiveEvent('NOTE', null, null, `🏁 Trọng tài / Hai đội kết thúc trận đấu (Tổng thời gian: ${mins} phút)`);
+    window.showToast(`🏁 Hết giờ thi đấu (${mins} phút)! Giờ bạn có thể bấm "🤖 AI Chấm Điểm" hoặc "📋 Copy Gửi Zalo".`);
+    this.saveLiveDraft();
+  },
+
+  resetLiveTimer() {
+    if (confirm('Bạn có chắc muốn đặt lại đồng hồ bấm giờ về 00:00?')) {
+      if (this.livePitchState.isTimerRunning) {
+        this.toggleLiveTimer();
+      }
+      this.livePitchState.timerSeconds = 0;
+      const periodBadge = document.getElementById('live-timer-period');
+      const btn = document.getElementById('live-timer-toggle-btn');
+      if (periodBadge) {
+        periodBadge.innerText = '⏱️ CHƯA BẮT ĐẦU';
+        periodBadge.style.color = 'var(--accent-gold)';
+        periodBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+      }
+      if (btn) {
+        btn.innerHTML = '▶️ Bắt Đầu';
+        btn.style.background = 'rgba(16, 185, 129, 0.2)';
+      }
+      this.updateTimerDisplay();
+      this.saveLiveDraft();
+    }
+  },
+
+  updateTimerDisplay() {
+    const display = document.getElementById('live-timer-display');
+    if (!display) return;
+    const mins = Math.floor(this.livePitchState.timerSeconds / 60);
+    const secs = this.livePitchState.timerSeconds % 60;
+    display.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  },
+
+  getCurrentMatchMinute() {
+    if (this.livePitchState.timerSeconds > 0) {
+      return Math.floor(this.livePitchState.timerSeconds / 60) + 1;
+    }
+    return 1;
+  },
+
+  // ==========================================
+  // SCORE STEPPER & SYNC
+  // ==========================================
+  adjustLiveScore(team, delta) {
+    if (team === 'home') {
+      this.livePitchState.homeScore = Math.max(0, this.livePitchState.homeScore + delta);
+      document.getElementById('live-home-score').innerText = this.livePitchState.homeScore;
+    } else {
+      this.livePitchState.awayScore = Math.max(0, this.livePitchState.awayScore + delta);
+      document.getElementById('live-away-score').innerText = this.livePitchState.awayScore;
+    }
+    this.saveLiveDraft();
+  },
+
+  // ==========================================
+  // 🎙️ VOICE-TO-EVENT ENGINE (WEB SPEECH API)
+  // ==========================================
+  toggleVoiceRecording() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      window.showToast('Trình duyệt không hỗ trợ nhận diện giọng nói. Hãy dùng Google Chrome/Safari!', 'error');
+      return;
+    }
+
+    const micBtn = document.getElementById('live-voice-mic-btn');
+    const statusText = document.getElementById('live-voice-status');
+    const transcriptText = document.getElementById('live-voice-transcript');
+
+    if (this.livePitchState.isRecordingVoice && this.livePitchState.speechRecognition) {
+      this.livePitchState.speechRecognition.stop();
+      this.livePitchState.isRecordingVoice = false;
+      if (micBtn) micBtn.classList.remove('recording');
+      if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'vi-VN';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      this.livePitchState.speechRecognition = recognition;
+      this.livePitchState.isRecordingVoice = true;
+
+      if (micBtn) micBtn.classList.add('recording');
+      if (statusText) statusText.innerText = '🔴 Đang lắng nghe... Hãy nói sự kiện!';
+      if (transcriptText) transcriptText.innerText = 'Đang nghe bạn nói...';
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        if (transcriptText) transcriptText.innerText = `"${transcript}"`;
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('Speech recognition error:', event.error);
+        if (micBtn) micBtn.classList.remove('recording');
+        if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+        this.livePitchState.isRecordingVoice = false;
+        if (event.error !== 'no-speech') {
+          window.showToast('Không nhận diện được giọng nói: ' + event.error, 'error');
+        }
+      };
+
+      recognition.onend = () => {
+        if (micBtn) micBtn.classList.remove('recording');
+        if (statusText) statusText.innerText = '🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)';
+        this.livePitchState.isRecordingVoice = false;
+
+        const finalText = transcriptText ? transcriptText.innerText.replace(/^"|"$/g, '').trim() : '';
+        if (finalText && finalText !== 'Đang nghe bạn nói...') {
+          this.parseVoiceTranscript(finalText);
+        }
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error('Speech recognition start failed:', err);
+      this.livePitchState.isRecordingVoice = false;
+      if (micBtn) micBtn.classList.remove('recording');
+    }
+  },
+
+  parseVoiceTranscript(text) {
+    const raw = text.toLowerCase();
+    const allPlayers = window.stateManager.getPlayers();
+
+    // Tìm cầu thủ có tên hoặc biệt danh xuất hiện trong câu nói
+    const matchedPlayers = allPlayers.filter(p => {
+      const nameParts = p.name.toLowerCase().split(/\s+/);
+      const lastName = nameParts[nameParts.length - 1];
+      const nickname = (p.nickname || '').toLowerCase();
+      return raw.includes(p.name.toLowerCase()) || 
+             (lastName.length >= 2 && raw.includes(lastName)) ||
+             (nickname && raw.includes(nickname));
+    });
+
+    const primaryPlayer = matchedPlayers[0] || null;
+    const secondaryPlayer = matchedPlayers[1] || null;
+    const minute = this.getCurrentMatchMinute();
+
+    // Phân loại từ khóa
+    if (raw.includes('siêu phẩm') || raw.includes('solo') || raw.includes('qua 3 người') || raw.includes('góc chữ a') || raw.includes('móc bóng') || raw.includes('xe đạp chổng ngược') || raw.includes('sút xa đỉnh')) {
+      if (primaryPlayer) {
+        this.recordLiveEvent('WONDERGOAL', primaryPlayer.id, secondaryPlayer ? secondaryPlayer.id : null, `🌟 Siêu phẩm đỉnh cao: "${text}"`);
+        this.adjustLiveScore('home', 1);
+        window.showToast(`🌟 Siêu phẩm cho ${primaryPlayer.name}! Quá đẹp!`);
+      } else {
+        this.recordLiveEvent('WONDERGOAL', null, null, `🌟 ${minute}': Siêu phẩm - "${text}"`);
+        this.adjustLiveScore('home', 1);
+        window.showToast(`🌟 Siêu phẩm từ giọng nói!`);
+      }
+    } else if (raw.includes('ghi bàn') || raw.includes('sút vào') || raw.includes('bàn thắng') || raw.includes('lập công') || raw.includes('vào rồi')) {
+      if (primaryPlayer) {
+        this.recordLiveEvent('GOAL', primaryPlayer.id, secondaryPlayer ? secondaryPlayer.id : null, `🎙️ Giọng nói: "${text}"`);
+        this.adjustLiveScore('home', 1);
+        window.showToast(`⚽ +1 Bàn thắng cho ${primaryPlayer.name}${secondaryPlayer ? ` (Kiến tạo: ${secondaryPlayer.name})` : ''}!`);
+      } else {
+        this.recordLiveEvent('NOTE', null, null, `⚽ ${minute}': Bàn thắng - "${text}"`);
+        this.adjustLiveScore('home', 1);
+        window.showToast(`⚽ +1 Bàn thắng từ giọng nói!`);
+      }
+    } else if (raw.includes('cứu thua') || raw.includes('cản phá') || raw.includes('bắt dính') || raw.includes('xuất thần')) {
+      const p = primaryPlayer || allPlayers.find(pl => pl.position === 'GK') || allPlayers[0];
+      this.recordLiveEvent('SAVE', p ? p.id : null, null, `🎙️ Giọng nói: "${text}"`);
+      window.showToast(`🧤 Cứu thua xuất thần: ${p ? p.name : 'Thủ môn'}!`);
+    } else if (raw.includes('xà ngang') || raw.includes('cột dọc') || raw.includes('trúng xà') || raw.includes('trúng cột')) {
+      this.recordLiveEvent('WOODWORK', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ Giọng nói: "${text}"`);
+      window.showToast(`🪵 Sút trúng xà/cột: ${primaryPlayer ? primaryPlayer.name : ''}!`);
+    } else if (raw.includes('bỏ lỡ') || raw.includes('đệm ra ngoài') || raw.includes('lên trời') || raw.includes('gỗ')) {
+      this.recordLiveEvent('MISS', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ Giọng nói: "${text}"`);
+      window.showToast(`💨 Bỏ lỡ đáng tiếc: ${primaryPlayer ? primaryPlayer.name : ''}!`);
+    } else if (raw.includes('tấu hài') || raw.includes('hài hước') || raw.includes('ngã') || raw.includes('trượt chân')) {
+      this.recordLiveEvent('FUNNY', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ Giọng nói: "${text}"`);
+      window.showToast(`😂 Pha tấu hài: ${primaryPlayer ? primaryPlayer.name : ''}!`);
+    } else if (raw.includes('phòng ngự') || raw.includes('bọc lót') || raw.includes('cắt bóng') || raw.includes('thủ hay')) {
+      this.recordLiveEvent('DEFENSE', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ Giọng nói: "${text}"`);
+      window.showToast(`🧱 Phòng ngự hay: ${primaryPlayer ? primaryPlayer.name : ''}!`);
+    } else {
+      // Lưu dưới dạng ghi chú giọng nói
+      this.recordLiveEvent('NOTE', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ "${text}"`);
+      window.showToast(`📝 Đã ghi nhận diễn biến: "${text}"`);
+    }
+  },
+
+  // ==========================================
+  // QUICK TOUCH ACTION MATRIX & PLAYER PICKER
+  // ==========================================
+  openLivePlayerPicker(actionType) {
+    this.livePitchState.currentAction = actionType;
+    this.livePitchState.pendingGoalPlayerId = null;
+
+    const overlay = document.getElementById('live-player-picker-overlay');
+    const tagEl = document.getElementById('live-picker-action-tag');
+    const titleEl = document.getElementById('live-picker-title');
+    const assistBox = document.getElementById('live-assist-prompt-box');
+    const grid = document.getElementById('live-picker-player-grid');
+
+    if (assistBox) assistBox.style.display = 'none';
+
+    const actionConfig = {
+      GOAL: { tag: '⚽ BÀN THẮNG (+1)', title: 'Ai là người ghi bàn?', color: '#ef4444' },
+      ASSIST: { tag: '👟 KIẾN TẠO (+1)', title: 'Ai là người kiến tạo?', color: '#06b6d4' },
+      SAVE: { tag: '🧤 CỨU THUA XUẤT THẦN', title: 'Ai là người cản phá cứu thua?', color: '#f59e0b' },
+      WONDERGOAL: { tag: '🌟 SIÊU PHẨM / SOLO', title: 'Ai vừa lập siêu phẩm / solo qua người?', color: '#fbbf24' },
+      WOODWORK: { tag: '🪵 SÚT XÀ / CỘT DỌC', title: 'Ai sút bóng trúng khung gỗ?', color: '#d97706' },
+      MISS: { tag: '💨 BỎ LỠ ĐÁNG TIẾC', title: 'Ai vừa bỏ lỡ cơ hội ngon ăn?', color: '#94a3b8' },
+      DEFENSE: { tag: '🧱 BỌC LÓT / CẮT BÓNG HAY', title: 'Ai vừa phòng ngự / cản phá hay?', color: '#10b981' },
+      FUNNY: { tag: '😂 PHA TẤU HÀI SÂN CỎ', title: 'Ai vừa tạo khoảnh khắc tấu hài?', color: '#a855f7' }
+    };
+
+    const cfg = actionConfig[actionType] || { tag: '⚡ SỰ KIỆN', title: 'Chọn cầu thủ liên quan:', color: '#fff' };
+    if (tagEl) {
+      tagEl.innerText = cfg.tag;
+      tagEl.style.color = cfg.color;
+    }
+    if (titleEl) titleEl.innerText = cfg.title;
+
+    const allPlayers = window.stateManager.getPlayers();
+    if (grid) {
+      grid.innerHTML = allPlayers.map(p => `
+        <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${p.id}')">
+          <img class="live-picker-avatar" src="${p.avatar}" alt="${p.name}">
+          <div style="overflow: hidden;">
+            <div class="live-picker-name">${p.name}</div>
+            <div class="live-picker-sub">#${p.number} • ${p.position}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    if (overlay) overlay.style.display = 'flex';
+  },
+
+  closeLivePlayerPicker() {
+    const overlay = document.getElementById('live-player-picker-overlay');
+    if (overlay) overlay.style.display = 'none';
+    this.livePitchState.currentAction = null;
+    this.livePitchState.pendingGoalPlayerId = null;
+  },
+
+  selectPlayerForLiveAction(playerId) {
+    const p = window.stateManager.getPlayerById(playerId);
+    if (!p) return;
+
+    if (this.livePitchState.currentAction === 'GOAL') {
+      if (!this.livePitchState.pendingGoalPlayerId) {
+        // Bước 1: Đã chọn người ghi bàn -> chuyển sang chọn người kiến tạo
+        this.livePitchState.pendingGoalPlayerId = playerId;
+        const tagEl = document.getElementById('live-picker-action-tag');
+        const titleEl = document.getElementById('live-picker-title');
+        const assistBox = document.getElementById('live-assist-prompt-box');
+
+        if (tagEl) {
+          tagEl.innerText = `⚽ BÀN THẮNG: ${p.name}`;
+          tagEl.style.color = '#ef4444';
+        }
+        if (titleEl) titleEl.innerText = '👟 Ai là người kiến tạo đường chuyền?';
+        if (assistBox) assistBox.style.display = 'block';
+
+        // Lọc bớt người ghi bàn ra khỏi danh sách kiến tạo
+        const allPlayers = window.stateManager.getPlayers();
+        const grid = document.getElementById('live-picker-player-grid');
+        if (grid) {
+          grid.innerHTML = allPlayers.filter(pl => pl.id !== playerId).map(pl => `
+            <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${pl.id}')">
+              <img class="live-picker-avatar" src="${pl.avatar}" alt="${pl.name}">
+              <div style="overflow: hidden;">
+                <div class="live-picker-name">${pl.name}</div>
+                <div class="live-picker-sub">#${pl.number} • ${pl.position}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+        return;
+      } else {
+        // Bước 2: Đã chọn người kiến tạo
+        const scorer = window.stateManager.getPlayerById(this.livePitchState.pendingGoalPlayerId);
+        this.recordLiveEvent('GOAL', scorer.id, p.id, `${scorer.name} ghi bàn (Kiến tạo: ${p.name})`);
+        this.adjustLiveScore('home', 1);
+        window.showToast(`⚽ +1 Bàn thắng cho ${scorer.name} (Kiến tạo: ${p.name})!`);
+        this.closeLivePlayerPicker();
+        return;
+      }
+    }
+
+    // Các sự kiện khác
+    const action = this.livePitchState.currentAction;
+    if (action === 'WONDERGOAL') {
+      this.recordLiveEvent('WONDERGOAL', p.id, null, `${p.name} lập siêu phẩm đẳng cấp solo / sút xa đẹp mắt`);
+      this.adjustLiveScore('home', 1);
+      window.showToast(`🌟 +1 Siêu phẩm cho ${p.name}! Quá đẳng cấp!`);
+    } else if (action === 'ASSIST') {
+      this.recordLiveEvent('ASSIST', p.id, null, `${p.name} có đường chuyền dọn cỗ`);
+      window.showToast(`👟 +1 Kiến tạo cho ${p.name}!`);
+    } else if (action === 'SAVE') {
+      this.recordLiveEvent('SAVE', p.id, null, `${p.name} cản phá xuất thần cứu thua mười mươi`);
+      window.showToast(`🧤 Cứu thua xuất thần: ${p.name}!`);
+    } else if (action === 'WOODWORK') {
+      this.recordLiveEvent('WOODWORK', p.id, null, `${p.name} dứt điểm dội xà ngang / cột dọc`);
+      window.showToast(`🪵 Sút trúng xà/cột: ${p.name}!`);
+    } else if (action === 'MISS') {
+      this.recordLiveEvent('MISS', p.id, null, `${p.name} bỏ lỡ cơ hội đáng tiếc trước gôn`);
+      window.showToast(`💨 Bỏ lỡ đáng tiếc: ${p.name}!`);
+    } else if (action === 'DEFENSE') {
+      this.recordLiveEvent('DEFENSE', p.id, null, `${p.name} bọc lót và cắt bóng chuẩn xác`);
+      window.showToast(`🧱 Phòng ngự chắc chắn: ${p.name}!`);
+    } else if (action === 'FUNNY') {
+      this.recordLiveEvent('FUNNY', p.id, null, `${p.name} có pha xử lý tấu hài mang lại tiếng cười`);
+      window.showToast(`😂 Pha tấu hài: ${p.name}!`);
+    }
+
+    this.closeLivePlayerPicker();
+  },
+
+  skipAssistSelection() {
+    if (this.livePitchState.pendingGoalPlayerId) {
+      const scorer = window.stateManager.getPlayerById(this.livePitchState.pendingGoalPlayerId);
+      if (scorer) {
+        this.recordLiveEvent('GOAL', scorer.id, null, `${scorer.name} solo lập công (Không có kiến tạo)`);
+        this.adjustLiveScore('home', 1);
+        window.showToast(`⚽ +1 Bàn thắng solo cho ${scorer.name}!`);
+      }
+    }
+    this.closeLivePlayerPicker();
+  },
+
+  recordLiveEvent(type, playerId, assistId = null, extraNote = '') {
+    const minute = this.getCurrentMatchMinute();
+    const p = playerId ? window.stateManager.getPlayerById(playerId) : null;
+    const assistP = assistId ? window.stateManager.getPlayerById(assistId) : null;
+
+    const typeConfig = {
+      GOAL: { label: '⚽ Bàn Thắng', badgeColor: '#ef4444' },
+      ASSIST: { label: '👟 Kiến Tạo', badgeColor: '#06b6d4' },
+      SAVE: { label: '🧤 Cứu Thua', badgeColor: '#f59e0b' },
+      WONDERGOAL: { label: '🌟 Siêu Phẩm', badgeColor: '#fbbf24' },
+      WOODWORK: { label: '🪵 Xà/Cột', badgeColor: '#d97706' },
+      MISS: { label: '💨 Bỏ Lỡ', badgeColor: '#94a3b8' },
+      DEFENSE: { label: '🧱 Bọc Lót', badgeColor: '#10b981' },
+      FUNNY: { label: '😂 Tấu Hài', badgeColor: '#a855f7' },
+      NOTE: { label: '📝 Ghi Chú', badgeColor: '#64748b' }
+    };
+
+    const cfg = typeConfig[type] || { label: '⚡ Sự kiện', badgeColor: '#fff' };
+
+    const newEvent = {
+      id: 'evt_' + Date.now() + Math.random(),
+      minute,
+      type,
+      typeLabel: cfg.label,
+      badgeColor: cfg.badgeColor,
+      playerId: p ? p.id : null,
+      playerName: p ? p.name : null,
+      playerAvatar: p ? p.avatar : null,
+      assistPlayerId: assistP ? assistP.id : null,
+      assistPlayerName: assistP ? assistP.name : null,
+      note: extraNote,
+      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    this.livePitchState.events.unshift(newEvent);
+    this.renderLiveTimeline();
+    this.saveLiveDraft();
+  },
+
+  renderLiveTimeline() {
+    const list = document.getElementById('live-timeline-events-list');
+    const countEl = document.getElementById('live-event-count');
+    if (countEl) countEl.innerText = this.livePitchState.events.length;
+    if (!list) return;
+
+    if (this.livePitchState.events.length === 0) {
+      list.innerHTML = `
+        <div class="live-empty-timeline" id="live-empty-timeline">
+          ⏳ Chưa có sự kiện nào. Hãy bấm nút sự kiện bên trên hoặc giữ Mic để nói!
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = this.livePitchState.events.map((evt, idx) => `
+      <div class="live-event-card">
+        <span class="live-event-minute">${evt.minute}'</span>
+        <div class="live-event-body">
+          <span class="live-event-badge" style="background: ${evt.badgeColor}22; color: ${evt.badgeColor}; border: 1px solid ${evt.badgeColor}44;">
+            ${evt.typeLabel}
+          </span>
+          ${evt.playerAvatar ? `<img src="${evt.playerAvatar}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;">` : ''}
+          <span style="font-weight: 700; color: #fff;">${evt.playerName || ''}</span>
+          ${evt.assistPlayerName ? `<span style="font-size: 0.76rem; color: var(--accent-cyan);">(👟 ${evt.assistPlayerName})</span>` : ''}
+          ${evt.note && evt.note !== `${evt.playerName} ghi bàn` ? `<span style="font-size: 0.78rem; color: #94a3b8; font-style: italic;">• ${evt.note}</span>` : ''}
+        </div>
+        <button type="button" class="live-event-del-btn" onclick="window.matchesModule.deleteLiveEvent(${idx})" title="Xóa sự kiện">&times;</button>
+      </div>
+    `).join('');
+  },
+
+  deleteLiveEvent(index) {
+    const evt = this.livePitchState.events[index];
+    if (!evt) return;
+
+    if (evt.type === 'GOAL' || evt.type === 'WONDERGOAL') {
+      if (confirm(`Sự kiện này là bàn thắng của ${evt.playerName || 'cầu thủ'}. Bạn có muốn giảm 1 bàn của đội nhà trên bảng tỉ số không?`)) {
+        this.adjustLiveScore('home', -1);
+      }
+    }
+
+    this.livePitchState.events.splice(index, 1);
+    this.renderLiveTimeline();
+    this.saveLiveDraft();
+  },
+
+  addCustomNotePrompt() {
+    const note = prompt('Nhập diễn biến / ghi chú trực tiếp trên sân:', '');
+    if (note && note.trim()) {
+      this.recordLiveEvent('NOTE', null, null, note.trim());
+      window.showToast('Đã lưu ghi chú diễn biến!');
+    }
+  },
+
+  // ==========================================
+  // EXPORT & AI RATING INTEGRATION
+  // ==========================================
+  copyLiveSummaryToZalo() {
+    const teamInfo = window.stateManager.data.teamInfo;
+    const teamName = teamInfo?.name || 'FC TNT';
+    const opponent = this.livePitchState.opponent;
+    const homeScore = this.livePitchState.homeScore;
+    const awayScore = this.livePitchState.awayScore;
+    const dateStr = new Date().toLocaleDateString('vi-VN');
+
+    // Gom bàn thắng & siêu phẩm
+    const goals = this.livePitchState.events.filter(e => e.type === 'GOAL' || e.type === 'WONDERGOAL');
+    const assists = this.livePitchState.events.filter(e => e.type === 'ASSIST' || e.assistPlayerName);
+    const saves = this.livePitchState.events.filter(e => e.type === 'SAVE');
+    const funny = this.livePitchState.events.filter(e => e.type === 'FUNNY');
+
+    let text = `🔥 [KẾT QUẢ TRẬN ĐẤU ${teamName.toUpperCase()}] 🔥\n`;
+    text += `⚽ ${teamName} ${homeScore} - ${awayScore} ${opponent}\n`;
+    text += `📅 Ngày: ${dateStr} • 📍 Sân: ${this.livePitchState.venue}\n\n`;
+
+    if (goals.length > 0) {
+      text += `⚽ Bàn thắng & Highlight:\n`;
+      goals.forEach(g => {
+        text += `• ${g.minute}' - ${g.type === 'WONDERGOAL' ? '🌟 ' : ''}${g.playerName}${g.assistPlayerName ? ` (Kiến tạo: ${g.assistPlayerName})` : ''}\n`;
+      });
+      text += `\n`;
+    }
+
+    if (saves.length > 0) {
+      text += `🧤 Cứu thua xuất thần: ${saves.map(s => s.playerName).filter(Boolean).join(', ')}\n`;
+    }
+
+    if (funny.length > 0) {
+      text += `😂 Khoảnh khắc tấu hài: ${funny.map(f => `${f.playerName} (${f.note || ''})`).join('; ')}\n`;
+    }
+
+    text += `\n👉 Xem sơ đồ sân & chi tiết điểm số: ${window.location.origin}`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        window.showToast('📋 Đã copy tóm tắt trận đấu! Dán ngay vào nhóm Zalo nhé.');
+      }).catch(() => {
+        prompt('Copy nội dung gửi Zalo:', text);
+      });
+    } else {
+      prompt('Copy nội dung gửi Zalo:', text);
+    }
+  },
+
+  finishAndGenerateAiRatings() {
+    if (this.livePitchState.events.length === 0) {
+      window.showToast('Chưa có sự kiện nào được ghi nhận để AI phân tích!', 'info');
+      return;
+    }
+
+    // Tự động lưu trận trước
+    const savedMatch = this.saveAndPublishLiveMatch(false);
+    if (!savedMatch) return;
+
+    // Tổng hợp narration phong phú từ toàn bộ sự kiện trên sân
+    const teamInfo = window.stateManager.data.teamInfo;
+    const teamName = teamInfo?.name || 'FC TNT';
+    const opponent = this.livePitchState.opponent;
+    const homeScore = this.livePitchState.homeScore;
+    const awayScore = this.livePitchState.awayScore;
+
+    let narration = `Trận đấu giữa ${teamName} và ${opponent} kết thúc với tỉ số ${homeScore} - ${awayScore}.\n`;
+    narration += `Diễn biến thực tế được ghi nhận trực tiếp trên sân gồm:\n`;
+
+    // Sắp xếp sự kiện theo phút tăng dần
+    const sortedEvents = [...this.livePitchState.events].sort((a, b) => (a.minute || 0) - (b.minute || 0));
+    sortedEvents.forEach(evt => {
+      narration += `- Phút ${evt.minute}': [${evt.typeLabel}] ${evt.playerName || 'Đội bóng'} ${evt.assistPlayerName ? `(Kiến tạo: ${evt.assistPlayerName})` : ''} - ${evt.note || ''}\n`;
+    });
+
+    this.closeLiveCompanionModal();
+    this.openAiRatingModal(savedMatch.id);
+
+    // Điền văn bản sự kiện trực tiếp vào ô nhập AI
+    setTimeout(() => {
+      const textarea = document.getElementById('ai-match-narration-input');
+      if (textarea) {
+        textarea.value = narration;
+        window.showToast('🤖 AI đã nạp toàn bộ sự kiện sân cỏ! Bấm "Chấm Điểm Tự Động" ngay.');
+      }
+    }, 300);
+  },
+
+  saveAndPublishLiveMatch(showSuccessToast = true) {
+    const allPlayers = window.stateManager.getPlayers();
+    const opponent = this.livePitchState.opponent || 'FC Đối Thủ';
+    const homeScore = this.livePitchState.homeScore;
+    const awayScore = this.livePitchState.awayScore;
+
+    let result = 'DRAW';
+    if (homeScore > awayScore) result = 'WIN';
+    else if (homeScore < awayScore) result = 'LOSS';
+
+    // Thống kê bàn thắng, kiến tạo từ events
+    const playerStatsMap = {};
+    allPlayers.forEach((p, idx) => {
+      playerStatsMap[p.id] = {
+        playerId: p.id,
+        isStarter: idx < 7,
+        rating: 7.0,
+        goals: 0,
+        assists: 0,
+        yellowCards: 0,
+        redCards: 0,
+        note: ''
+      };
+    });
+
+    this.livePitchState.events.forEach(evt => {
+      if (evt.playerId && playerStatsMap[evt.playerId]) {
+        if (evt.type === 'GOAL' || evt.type === 'WONDERGOAL') playerStatsMap[evt.playerId].goals += 1;
+        if (evt.type === 'ASSIST') playerStatsMap[evt.playerId].assists += 1;
+        if (evt.note && !playerStatsMap[evt.playerId].note) {
+          playerStatsMap[evt.playerId].note = evt.note;
+        }
+      }
+      if (evt.assistPlayerId && playerStatsMap[evt.assistPlayerId]) {
+        playerStatsMap[evt.assistPlayerId].assists += 1;
+      }
+    });
+
+    const playerStats = Object.values(playerStatsMap);
+
+    const matchPayload = {
+      date: new Date().toISOString().split('T')[0],
+      time: '19:30',
+      opponent,
+      venue: this.livePitchState.venue || 'Sân bóng Tân Triều',
+      type: '7',
+      formation: '3-1-2',
+      homeScore,
+      awayScore,
+      result,
+      note: `Ghi nhận trực tiếp ngoài sân (${this.livePitchState.events.length} sự kiện)`,
+      playerStats
+    };
+
+    let savedMatch;
+    if (this.livePitchState.matchId) {
+      savedMatch = window.stateManager.updateMatch(this.livePitchState.matchId, matchPayload);
+    } else {
+      savedMatch = window.stateManager.addMatch(matchPayload);
+      this.livePitchState.matchId = savedMatch.id;
+    }
+
+    this.clearLiveDraft();
+    this.renderMatches();
+    if (window.awardsModule) window.awardsModule.renderAwards();
+    if (window.appModule) window.appModule.renderDashboard();
+
+    if (showSuccessToast) {
+      window.showToast('🎉 Đã lưu và xuất bản trận đấu thành công!');
+      this.closeLiveCompanionModal();
+      this.openMatchDetailModal(savedMatch.id);
+    }
+
+    return savedMatch;
+  },
+
+  // ==========================================
+  // AUTO-SAVE & DRAFT RESILIENCE
+  // ==========================================
+  saveLiveDraft() {
+    try {
+      const draft = {
+        opponent: this.livePitchState.opponent,
+        venue: this.livePitchState.venue,
+        homeScore: this.livePitchState.homeScore,
+        awayScore: this.livePitchState.awayScore,
+        timerSeconds: this.livePitchState.timerSeconds,
+        period: this.livePitchState.period,
+        events: this.livePitchState.events,
+        savedAt: Date.now()
+      };
+      localStorage.setItem('fctnt_live_pitch_draft', JSON.stringify(draft));
+    } catch (e) {
+      console.warn('Draft save error:', e);
+    }
+  },
+
+  loadLiveDraft() {
+    try {
+      const raw = localStorage.getItem('fctnt_live_pitch_draft');
+      if (raw) {
+        const draft = JSON.parse(raw);
+        // Nếu draft lưu trong vòng 12 tiếng
+        if (draft && (Date.now() - draft.savedAt < 12 * 3600 * 1000)) {
+          this.livePitchState.opponent = draft.opponent || 'FC Đối Thủ';
+          this.livePitchState.venue = draft.venue || 'Sân bóng';
+          this.livePitchState.homeScore = draft.homeScore || 0;
+          this.livePitchState.awayScore = draft.awayScore || 0;
+          this.livePitchState.timerSeconds = draft.timerSeconds || 0;
+          this.livePitchState.period = draft.period || 1;
+          this.livePitchState.events = Array.isArray(draft.events) ? draft.events : [];
+        }
+      }
+    } catch (e) {
+      console.warn('Draft load error:', e);
+    }
+  },
+
+  clearLiveDraft() {
+    localStorage.removeItem('fctnt_live_pitch_draft');
+    this.livePitchState.events = [];
+    this.livePitchState.homeScore = 0;
+    this.livePitchState.awayScore = 0;
+    this.livePitchState.timerSeconds = 0;
+    this.livePitchState.period = 1;
   }
 };
+
 
 
 

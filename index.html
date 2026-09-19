@@ -199,6 +199,9 @@
         </div>
         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
           <button class="btn btn-secondary btn-sm admin-only" id="edit-team-btn">✏️ Đổi Tên Đội</button>
+          <button class="btn btn-emerald admin-only" onclick="window.matchesModule.openLiveCompanionModal()" title="Trợ lý trực tiếp ngoài sân bóng - 1 chạm & giọng nói">
+            🏟️ Trợ Lý Sân Cỏ Live
+          </button>
           <button class="btn btn-primary admin-only" onclick="window.matchesModule.openCreateMatchModal()">⚽ + Thêm Trận Đấu
             Mới</button>
           <button class="btn btn-gold" onclick="window.appModule.switchTab('awards')">🏆 Xem Bảng Trao Thưởng</button>
@@ -379,6 +382,9 @@
           <p class="section-subtitle">Bấm vào từng trận để xem sơ đồ 3-1-2 và chấm điểm (0-10) cho anh em</p>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn btn-emerald admin-only" onclick="window.matchesModule.openLiveCompanionModal()" title="Ghi nhận sự kiện ngay trên sân bóng">
+            🏟️ Trợ Lý Sân Cỏ Live
+          </button>
           <button class="btn btn-secondary btn-sm admin-only" onclick="window.matchesModule.clearAllMatches()"
             title="Làm mới toàn bộ danh sách trận">
             🗑️ Xóa Tất Cả Trận
@@ -1220,6 +1226,182 @@
       </div>
       <div class="modal-body" id="match-finance-modal-body">
         <!-- Rendered by window.financeModule.renderFinanceModal -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: TRỢ LÝ SÂN CỎ TRỰC TIẾP & VOICE LOG -->
+  <!-- ========================================== -->
+  <div class="modal-overlay live-companion-overlay" id="live-companion-modal">
+    <div class="modal-container live-companion-container">
+      <!-- Top Header: Match Info, Timer & Screen Wake Lock -->
+      <div class="live-companion-header">
+        <div class="live-header-left">
+          <span class="live-pulse-indicator">
+            <span class="live-dot-pulse"></span> LIVE SÂN CỎ
+          </span>
+          <div class="live-match-title" id="live-match-opponent-label">vs FC Đối Thủ</div>
+        </div>
+        
+        <div class="live-header-right">
+          <!-- Wake Lock Status Indicator Button -->
+          <button type="button" class="live-wakelock-btn" id="live-wakelock-toggle" onclick="window.matchesModule.toggleScreenWakeLock()" title="Tự động giữ sáng màn hình điện thoại khi ở ngoài sân">
+            ☀️ <span id="live-wakelock-text">Giữ sáng MH: BẬT</span>
+          </button>
+          <button type="button" class="modal-close-btn live-close-btn" onclick="window.matchesModule.closeLiveCompanionModal()">&times;</button>
+        </div>
+      </div>
+
+      <div class="live-companion-body">
+        <!-- Live Match Scoreboard & Clock -->
+        <div class="live-scoreboard-card">
+          <div class="live-match-timer-zone">
+            <div class="live-timer-display" id="live-timer-display">00:00</div>
+            <div class="live-timer-period-badge" id="live-timer-period">⏱️ CHƯA BẮT ĐẦU</div>
+            <div class="live-timer-controls">
+              <button type="button" class="live-timer-btn" id="live-timer-toggle-btn" onclick="window.matchesModule.toggleLiveTimer()">
+                ▶️ Bắt Đầu
+              </button>
+              <button type="button" class="live-timer-btn secondary" id="live-timer-finish-btn" onclick="window.matchesModule.finishLiveMatchTime()">
+                🏁 Hết Giờ / Kết Thúc
+              </button>
+              <button type="button" class="live-timer-btn secondary" onclick="window.matchesModule.resetLiveTimer()" title="Đặt lại đồng hồ về 00:00">
+                🔄 Đặt lại
+              </button>
+            </div>
+          </div>
+
+          <div class="live-score-display-zone">
+            <!-- Home Team -->
+            <div class="live-team-score-box home">
+              <div class="live-team-name" id="live-home-team-name">FC TNT</div>
+              <div class="live-score-number" id="live-home-score">0</div>
+              <div class="live-score-stepper">
+                <button type="button" class="live-step-btn" onclick="window.matchesModule.adjustLiveScore('home', -1)">-</button>
+                <button type="button" class="live-step-btn" onclick="window.matchesModule.adjustLiveScore('home', 1)">+</button>
+              </div>
+            </div>
+
+            <div class="live-score-divider">:</div>
+
+            <!-- Away Team -->
+            <div class="live-team-score-box away">
+              <input type="text" class="live-away-name-input" id="live-away-team-input" value="FC Đối Thủ" placeholder="Nhập tên đối thủ...">
+              <div class="live-score-number" id="live-away-score">0</div>
+              <div class="live-score-stepper">
+                <button type="button" class="live-step-btn" onclick="window.matchesModule.adjustLiveScore('away', -1)">-</button>
+                <button type="button" class="live-step-btn" onclick="window.matchesModule.adjustLiveScore('away', 1)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Action: Voice Memo Microphone Bar -->
+        <div class="live-voice-bar-wrapper">
+          <button type="button" class="live-voice-mic-btn" id="live-voice-mic-btn" onclick="window.matchesModule.toggleVoiceRecording()" title="Bấm để nói bằng tiếng Việt">
+            <div class="mic-wave-ring" id="live-mic-wave"></div>
+            <span class="mic-icon" id="live-mic-icon">🎙️</span>
+          </button>
+          <div class="live-voice-info">
+            <div class="live-voice-title" id="live-voice-status">🎙️ Chạm Mic & Nói Tự Nhiên (Tiếng Việt)</div>
+            <div class="live-voice-hint" id="live-voice-transcript">Ví dụ: "Quân vừa sút xa ghi bàn, Tuấn Anh kiến tạo" hoặc "Hùng cứu thua 1vs1"</div>
+          </div>
+        </div>
+
+        <!-- Big Touch Quick Action Matrix (Nút sự kiện nhanh) -->
+        <div class="live-quick-actions-section">
+          <div class="live-section-subtitle">⚡ GHI NHANH SỰ KIỆN 1-CHẠM:</div>
+          <div class="live-actions-grid">
+            <button type="button" class="live-action-btn goal" onclick="window.matchesModule.openLivePlayerPicker('GOAL')">
+              <span class="live-action-icon">⚽</span>
+              <span class="live-action-label">+1 Bàn Thắng</span>
+            </button>
+            <button type="button" class="live-action-btn assist" onclick="window.matchesModule.openLivePlayerPicker('ASSIST')">
+              <span class="live-action-icon">👟</span>
+              <span class="live-action-label">+1 Kiến Tạo</span>
+            </button>
+            <button type="button" class="live-action-btn save" onclick="window.matchesModule.openLivePlayerPicker('SAVE')">
+              <span class="live-action-icon">🧤</span>
+              <span class="live-action-label">Cứu Thua Xuất Thần</span>
+            </button>
+            <button type="button" class="live-action-btn wondergoal" onclick="window.matchesModule.openLivePlayerPicker('WONDERGOAL')">
+              <span class="live-action-icon">🌟</span>
+              <span class="live-action-label">Siêu Phẩm / Solo</span>
+            </button>
+            <button type="button" class="live-action-btn woodwork" onclick="window.matchesModule.openLivePlayerPicker('WOODWORK')">
+              <span class="live-action-icon">🪵</span>
+              <span class="live-action-label">Sút Xà / Cột</span>
+            </button>
+            <button type="button" class="live-action-btn miss" onclick="window.matchesModule.openLivePlayerPicker('MISS')">
+              <span class="live-action-icon">💨</span>
+              <span class="live-action-label">Bỏ Lỡ Đáng Tiếc</span>
+            </button>
+            <button type="button" class="live-action-btn defense" onclick="window.matchesModule.openLivePlayerPicker('DEFENSE')">
+              <span class="live-action-icon">🧱</span>
+              <span class="live-action-label">Bọc Lót / Cắt Bóng</span>
+            </button>
+            <button type="button" class="live-action-btn funny" onclick="window.matchesModule.openLivePlayerPicker('FUNNY')">
+              <span class="live-action-icon">😂</span>
+              <span class="live-action-label">Pha Tấu Hài</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Match Timeline Feed -->
+        <div class="live-timeline-section">
+          <div class="live-timeline-header">
+            <span style="font-size: 0.85rem; font-weight: 800; color: #fff;">📜 NHẬT KÝ TRẬN ĐẤU THỜI GIAN THỰC (<span id="live-event-count">0</span>):</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.matchesModule.addCustomNotePrompt()" style="font-size: 0.72rem; padding: 0.2rem 0.6rem; color: var(--accent-gold);">
+              ✏️ + Ghi chú tay
+            </button>
+          </div>
+          <div class="live-timeline-list" id="live-timeline-events-list">
+            <div class="live-empty-timeline" id="live-empty-timeline">
+              ⏳ Chưa có sự kiện nào. Hãy bấm nút sự kiện bên trên hoặc giữ Mic để nói!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Player Selection Picker (Bottom Sheet / Overlay) -->
+      <div class="live-player-picker-overlay" id="live-player-picker-overlay" style="display: none;">
+        <div class="live-picker-sheet">
+          <div class="live-picker-header">
+            <div>
+              <span class="live-picker-tag" id="live-picker-action-tag">⚽ BÀN THẮNG</span>
+              <h4 class="live-picker-title" id="live-picker-title">Chọn cầu thủ ghi bàn:</h4>
+            </div>
+            <button type="button" class="live-picker-close-btn" onclick="window.matchesModule.closeLivePlayerPicker()">&times;</button>
+          </div>
+          
+          <div class="live-picker-grid" id="live-picker-player-grid">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Step 2 for Assist Picker -->
+          <div id="live-assist-prompt-box" style="display: none; padding: 0.75rem; background: rgba(0,0,0,0.4); border-radius: var(--radius-md); margin-top: 0.75rem; text-align: center;">
+            <div style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; margin-bottom: 0.5rem;">👟 Ai là người kiến tạo? (Hoặc bấm bỏ qua)</div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.matchesModule.skipAssistSelection()" style="font-size: 0.78rem;">
+              🚫 Tự ghi bàn (Không kiến tạo)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky Action Bottom Bar -->
+      <div class="live-footer-bar">
+        <div class="live-footer-actions">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.matchesModule.copyLiveSummaryToZalo()" title="Copy kết quả định dạng Zalo">
+            📋 Copy Gửi Zalo
+          </button>
+          <button type="button" class="btn btn-ai-sparkle btn-sm" onclick="window.matchesModule.finishAndGenerateAiRatings()" title="Dùng AI đọc sự kiện thực tế để chấm điểm tự động">
+            🤖 AI Chấm Điểm
+          </button>
+          <button type="button" class="btn btn-primary" onclick="window.matchesModule.saveAndPublishLiveMatch()">
+            💾 Hoàn Tất & Lưu
+          </button>
+        </div>
       </div>
     </div>
   </div>
