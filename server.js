@@ -69,17 +69,17 @@ const OFFICIAL_PLAYERS = [
   { id: 'p_2', name: 'Vinh Lê', nickname: 'Vinh Lê', number: 6, position: 'MF', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', phone: '0912345678', bankCode: 'VCB', bankAccountNumber: '1012345678', bankAccountName: 'LE QUANG VINH', note: 'Tiền vệ trung tâm điều tiết' },
   { id: 'p_3', name: 'ToDiu', nickname: 'ToDiu', number: 24, position: 'GK', avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Thủ môn bắt chính' },
   { id: 'p_4', name: 'Tài Thọ', nickname: 'Tài Thọ', number: 7, position: 'FW', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền đạo cánh phải bứt tốc' },
-  { id: 'p_5', name: 'ct', nickname: 'ct', number: 11, position: 'MF', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Kỹ thuật lắt léo' },
-  { id: 'p_6', name: 'Côn 35K1', nickname: 'Côn 35K1', number: 69, position: 'DF', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Trung vệ thòng không chiến' },
+  { id: 'p_5', name: 'Công Thắng', nickname: 'ct', number: 11, position: 'MF', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Kỹ thuật lắt léo' },
+  { id: 'p_6', name: 'Quang', nickname: 'Voi', number: 69, position: 'DF', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Trung vệ thòng không chiến' },
   { id: 'p_7', name: 'Trường Giang', nickname: 'Trường Giang', number: 8, position: 'MF', avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền vệ năng động' },
-  { id: 'p_8', name: 'BusCek.exe', nickname: 'BusCek.exe', number: 31, position: 'DF', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ bọc lót' },
-  { id: 'p_9', name: 'Tiếnn', nickname: 'Tiếnn', number: 22, position: 'MF', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền vệ cánh tốc độ' },
+  { id: 'p_8', name: 'Bùi Tiến', nickname: 'Tiến', number: 31, position: 'DF', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ bọc lót' },
+  { id: 'p_9', name: 'Công Tiến', nickname: 'Tiếnn', number: 22, position: 'MF', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền vệ cánh tốc độ' },
   { id: 'p_10', name: 'Đức Bắc', nickname: 'Đức Bắc', number: 4, position: 'DF', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ cánh phải dập khỏe' },
   { id: 'p_11', name: 'Đình Chiến', nickname: 'Đình Chiến', number: 19, position: 'MF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tạt bóng chuẩn xác' },
   { id: 'p_12', name: 'Hùng Sứt', nickname: 'Hùng Sứt', number: 10, position: 'FW', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền đạo cánh trái sát thủ' },
   { id: 'p_13', name: 'Đình Anh', nickname: 'Đình Anh', number: 67, position: 'DF', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Hậu vệ tranh chấp tốt' },
-  { id: 'p_14', name: 'Thành Nam', nickname: 'Thành Nam', number: 88, position: 'FW', avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền đạo đánh đầu' },
-  { id: 'p_15', name: 'Sỹ Nam', nickname: 'Sỹ Nam', number: 12, position: 'GK', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Thủ môn phản xạ' }
+  { id: 'p_14', name: 'Thành Nam', nickname: 'Nam Cao', number: 88, position: 'FW', avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Tiền đạo đánh đầu' },
+  { id: 'p_15', name: 'Sỹ Nam', nickname: 'Nam Thấp', number: 12, position: 'GK', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', phone: '', note: 'Thủ môn phản xạ' }
 ];
 
 const INITIAL_MOMENTS = [
@@ -180,12 +180,12 @@ async function seedInitialData() {
       // Cập nhật thông tin ngân hàng cho Quân Kun nếu chưa có
       await Player.findOneAndUpdate(
         { id: 'p_1' },
-        { 
-          $set: { 
-            bankCode: 'VCB', 
-            bankAccountNumber: '9392139587', 
-            bankAccountName: 'NGUYEN CONG QUAN' 
-          } 
+        {
+          $set: {
+            bankCode: 'VCB',
+            bankAccountNumber: '9392139587',
+            bankAccountName: 'NGUYEN CONG QUAN'
+          }
         }
       );
     }
@@ -579,10 +579,10 @@ app.patch('/api/matches/:id/finance/toggle-payment', async (req, res) => {
     if (isMongoConnected) {
       const match = await Match.findOne({ id });
       if (!match) return res.status(404).json({ error: 'Match not found' });
-      
+
       if (!match.finance) match.finance = { payments: [] };
       if (!match.finance.payments) match.finance.payments = [];
-      
+
       const pIdx = match.finance.payments.findIndex(p => p.playerId === playerId);
       if (pIdx !== -1) {
         match.finance.payments[pIdx].isPaid = isPaid;
@@ -944,7 +944,12 @@ function getPlayerAliases(p) {
 
   const nameParts = rawName.split(/\s+/);
   if (nameParts.length > 1) {
-    aliases.add(nameParts[nameParts.length - 1]); // Tên gọi riêng: hoàn, vinh, bắc, giang, nam, thọ, quân, dũng, anh, chiến, tiến
+    aliases.add(nameParts[nameParts.length - 1]);
+  }
+  const nickParts = rawNick.split(/\s+/);
+  if (nickParts.length > 1) {
+    aliases.add(nickParts[0]);
+    aliases.add(nickParts[nickParts.length - 1]);
   }
 
   // Bảng ánh xạ biệt danh phủi đặc trưng của FC TNT
@@ -953,18 +958,15 @@ function getPlayerAliases(p) {
     aliases.add('vinh lê');
     aliases.add('vinh');
   }
-  if (rawName.includes('todiu') || rawNick.includes('todiu') || rawName.includes('diu')) {
+  if (rawName.includes('todiu') || rawNick.includes('todiu') || rawName.includes('diu') || rawNick.includes('diu') || rawName.includes('diệu') || rawNick.includes('diệu')) {
     aliases.add('tố địu');
-    aliases.add('tô diệu');
     aliases.add('tố điệu');
-    aliases.add('todiu');
+    aliases.add('tố');
     aliases.add('địu');
   }
-  if (rawName.includes('côn') || rawNick.includes('côn') || rawName.includes('quang') || rawNick.includes('quang')) {
+  if (rawName.includes('quang') || rawNick.includes('quang')) {
     aliases.add('quang');
-    aliases.add('côn');
-    aliases.add('côn 35k1');
-    aliases.add('quang côn');
+    aliases.add('voi');
   }
   if (rawName.includes('bắc') || rawNick.includes('bắc')) {
     aliases.add('đức bắc');
@@ -985,22 +987,27 @@ function getPlayerAliases(p) {
   if (rawName.includes('quân') || rawNick.includes('quân')) {
     aliases.add('quân kun');
     aliases.add('quân');
+    aliases.add('công quân');
   }
-  if (rawName.includes('thọ') || rawNick.includes('thọ')) {
+  if (rawName.includes('tài') || rawNick.includes('tài')) {
     aliases.add('tài thọ');
-    aliases.add('thọ');
+    aliases.add('tài');
+    aliases.add('tấn tài');
+    aliases.add('lê tấn tài');
   }
   if (rawName.includes('hùng') || rawNick.includes('hùng')) {
     aliases.add('hùng sứt');
     aliases.add('hùng');
+    aliases.add('lường hùng');
   }
   if (rawName.includes('nam') || rawNick.includes('nam')) {
     if (rawName.includes('thành nam') || rawNick.includes('thành nam')) {
       aliases.add('thành nam');
-      aliases.add('nam');
+      aliases.add('nam cao');
     }
-    if (rawName.includes('sỹ nam') || rawNick.includes('sỹ nam')) {
+    if (rawName.includes('sỹ nam') || rawNick.includes('sỹ nam') || p.position === 'GK') {
       aliases.add('sỹ nam');
+      aliases.add('nam thấp');
     }
   }
   if (rawName.includes('chiến') || rawNick.includes('chiến')) {
@@ -1014,10 +1021,13 @@ function getPlayerAliases(p) {
   if (rawName.includes('tiến') || rawNick.includes('tiến')) {
     aliases.add('tiếnn');
     aliases.add('tiến');
+    aliases.add('công tiến');
   }
-  if (rawName.includes('buscek') || rawNick.includes('buscek')) {
-    aliases.add('buscek.exe');
-    aliases.add('buscek');
+
+  if (rawName.includes('ct') || rawNick.includes('ct') || rawName.includes('thắng') || rawNick.includes('thắng')) {
+    aliases.add('ct');
+    aliases.add('thắng');
+    aliases.add('công thắng');
   }
 
   return Array.from(aliases).filter(a => a.length >= 2);
@@ -1063,7 +1073,7 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
   // Loại bỏ các mention trùng lặp
   const cleanMentions = [];
   playerMentions.forEach(m => {
-    if (!cleanMentions.some(existing => 
+    if (!cleanMentions.some(existing =>
       (m.index >= existing.index && m.index < existing.endIndex) ||
       (m.playerId === existing.playerId && Math.abs(m.index - existing.index) < 10)
     )) {
@@ -1324,13 +1334,13 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
   const homeScore = matchInfo?.homeScore ?? 0;
   const awayScore = matchInfo?.awayScore ?? 0;
   const opponent = matchInfo?.opponent || 'Đối thủ';
-  const matchHeadline = isWin 
-    ? `🔥 Chiến Thắng Thuyết Phục ${homeScore} - ${awayScore} Trước ${opponent}!` 
-    : isLoss 
-    ? `⚡ Trận Cầu Nỗ Lực (${homeScore} - ${awayScore} vs ${opponent})`
-    : `🤝 Màn Rượt Đuổi Tỉ Số Kịch Tính ${homeScore} - ${awayScore} vs ${opponent}`;
+  const matchHeadline = isWin
+    ? `🔥 Chiến Thắng Thuyết Phục ${homeScore} - ${awayScore} Trước ${opponent}!`
+    : isLoss
+      ? `⚡ Trận Cầu Nỗ Lực (${homeScore} - ${awayScore} vs ${opponent})`
+      : `🤝 Màn Rượt Đuổi Tỉ Số Kịch Tính ${homeScore} - ${awayScore} vs ${opponent}`;
 
-  const matchSummary = isLoss 
+  const matchSummary = isLoss
     ? `Trận đấu gặp ${opponent} kết thúc với tỉ số ${homeScore} - ${awayScore}. Đội bóng thi đấu nhiệt huyết nhưng còn bộc lộ một số sai sót trước đối thủ, ghi nhận nhiều nỗ lực cá nhân nổi bật.`
     : `Trận đấu giữa FC TNT và ${opponent} diễn ra sôi nổi với tỉ số chung cuộc ${homeScore} - ${awayScore}. Toàn đội thể hiện tinh thần quyết tâm cao, các cá nhân phối hợp ăn ý và cống hiến hết mình.`;
 
@@ -1357,13 +1367,13 @@ app.post('/api/ai/rate-match', async (req, res) => {
     // If Gemini key is available, call Google Gemini Flash
     if (geminiKey) {
       try {
-        const playerInfoText = playerList.map(p => 
+        const playerInfoText = playerList.map(p =>
           `- ID: "${p.id}", Tên: "${p.name}", Biệt danh: "${p.nickname || ''}", Số áo: #${p.number}, Vị trí: ${p.position}, Đá chính: ${p.isStarter !== false ? 'Có' : 'Dự bị'}`
         ).join('\n');
 
         let eventsText = 'Không có sự kiện thô riêng biệt.';
         if (Array.isArray(liveEvents) && liveEvents.length > 0) {
-          eventsText = liveEvents.map(e => 
+          eventsText = liveEvents.map(e =>
             `- Phút ${e.minute || 0}': [${e.typeLabel || e.type}] ${e.playerName || 'Đội bóng'} ${e.assistPlayerName ? `(Kiến tạo: ${e.assistPlayerName})` : ''} - ${e.note || ''}`
           ).join('\n');
         }
@@ -1382,18 +1392,23 @@ QUY TẮC CHẤM ĐIỂM BẮT BUỘC (TUÂN THỦ TUYỆT ĐỐI):
    - Thi đấu tròn vai không sự kiện nổi bật: Đá chính 6.4 - 6.8, Dự bị 6.0 - 6.5.
    - Mắc sai lầm / chân yếu / ói bóng: rating 4.5 - 5.5.
 3. TUYỆT ĐỐI KHÔNG TỰ BỊA BÀN THẮNG/KIẾN TẠO nếu không có trong diễn biến!
-4. BẢNG BIỆT DANH FC TNT:
-   - "Vinh" / "Duy Vinh" = Vinh Lê
-   - "ToDiu" / "Tố Địu" / "Tô Diệu" = ToDiu
+4. BẢNG BIỆT DANH FC TNT (Phải nhận diện chuẩn xác):
+   - "Vinh" / "Duy Vinh" / "Vinh Lê" = Vinh Lê
+   - "ToDiu" / "Tố Địu" / "Tố" / "Địu" / "Tố Điệu" = ToDiu
    - "Hoàn" / "Trí Hoàn" = Trí Hoàn
-   - "Côn" / "Quang" / "Côn 35K1" = Côn 35K1
+   - "Voi" / "Quang"  = Quang  Voi
    - "Bắc" / "Đức Bắc" = Đức Bắc
    - "Giang" / "Trường Giang" = Trường Giang
    - "Dũng" / "Công Dũng" = Công Dũng
-   - "Nam" / "Thành Nam" = Thành Nam
-   - "Thọ" / "Tài Thọ" = Tài Thọ
-   - "Hùng" / "Hùng Sứt" = Hùng Sứt
-   - "Quân" / "Quân Kun" = Quân Kun
+   - "Nam Cao" / "Thành Nam" = Thành Nam
+   - "Sỹ Nam" / "Nam Thấp" = Sỹ Nam
+   - "Tài" / "Lê Tấn Tài" / "Tài Thọ"  = Tài Thọ
+   - "Hùng" / "Hùng Sứt"  / "Lường Hùng"= Hùng Sứt
+   - "Quân" / "Quân Kun" / "Công Quân" = Quân Kun
+   - "Chiến" / "Đình Chiến" = Đình Chiến
+   - "Anh" / "Đình Anh" = Đình Anh
+   - "Tiến" / "Tiếnn"/ "Công Tiến" = Tiếnn
+   - "Thắng" / "Công Thắng" / "ct" = ct
 
 Trả về đúng chuẩn JSON không có định dạng markdown hay văn bản thừa:
 {
@@ -1639,7 +1654,7 @@ app.get('/api/weather/forecast', async (req, res) => {
       const dateObj = new Date(dateStr);
       const dayOfWeek = dateObj.getDay();
       const dayNameVi = dayNamesVi[dayOfWeek];
-      
+
       const isToday = i === 0;
       const isTomorrow = i === 1;
       let displayLabel = dayNameVi;
@@ -1788,7 +1803,7 @@ app.get('/api/weather/forecast', async (req, res) => {
 function analyzePitchWithFootballNLP(question, forecastData, selectedDate, selectedSlot) {
   const q = (question || '').toLowerCase();
   const venueName = 'Sân bóng đá AKKA (68 ĐL Chu Văn An, Thanh Liệt, Hà Nội)';
-  
+
   const daysList = forecastData?.days || [];
   let dayData = daysList[0];
   if (selectedDate && daysList.length > 0) {
@@ -1887,7 +1902,7 @@ function analyzePitchWithFootballNLP(question, forecastData, selectedDate, selec
     let conclusionText = '';
     if (queriedDays.length === 1) {
       const singleSlot = queriedDays[0].slots[targetSlotKey];
-      conclusionText = singleSlot.score <= 50 
+      conclusionText = singleSlot.score <= 50
         ? `👉 **Kết luận:** **${queriedDays[0].dayNameVi}** ${targetSlotName} thời tiết rất xấu, **không nên đá** để bảo vệ an toàn cho anh em!`
         : (singleSlot.score <= 75 ? `👉 **Kết luận:** **${queriedDays[0].dayNameVi}** ${targetSlotName} đá được nhưng sân còn ẩm ướt, cần đi giày đinh TF bám gót!` : `👉 **Kết luận:** **${queriedDays[0].dayNameVi}** ${targetSlotName} thời tiết lý tưởng, chốt kèo đi đá thôi!`);
     } else {
@@ -1932,7 +1947,7 @@ function analyzePitchWithFootballNLP(question, forecastData, selectedDate, selec
       const s1_desc = top1.slots.slot_1.rainMm === 0 ? 'Tạnh ráo, cỏ khô' : top1.slots.slot_1.weatherLabel;
       const s2_desc = top2.slots.slot_1.rainMm === 0 ? 'Tạnh ráo, cỏ khô' : top2.slots.slot_1.weatherLabel;
 
-      return `🏆 **Bảng xếp hạng ngày đẹp nhất tuần này để FC TNT lên kèo (Sân AKKA):**\n\n1. 🥇 **${top1.displayLabel} (${top1.date}):** Điểm thi đấu **${Math.round((top1.slots.slot_1.score + top1.slots.slot_2.score)/2)}/100** • ${s1_desc}, mát ${top1.slots.slot_1.temperature}°C, xác suất mưa thấp (${top1.slots.slot_1.rainProbability}%).\n2. 🥈 **${top2.displayLabel} (${top2.date}):** Điểm thi đấu **${Math.round((top2.slots.slot_1.score + top2.slots.slot_2.score)/2)}/100** • ${s2_desc}, cả 2 slot 20h45 & 22h15 đều lý tưởng.\n\n💡 **Gợi ý của Trợ lý:** Anh em nên bắt đối giao hữu vào **${top1.dayNameVi}** hoặc **${top2.dayNameVi}** để có trải nghiệm sân mượt mà nhất!`;
+      return `🏆 **Bảng xếp hạng ngày đẹp nhất tuần này để FC TNT lên kèo (Sân AKKA):**\n\n1. 🥇 **${top1.displayLabel} (${top1.date}):** Điểm thi đấu **${Math.round((top1.slots.slot_1.score + top1.slots.slot_2.score) / 2)}/100** • ${s1_desc}, mát ${top1.slots.slot_1.temperature}°C, xác suất mưa thấp (${top1.slots.slot_1.rainProbability}%).\n2. 🥈 **${top2.displayLabel} (${top2.date}):** Điểm thi đấu **${Math.round((top2.slots.slot_1.score + top2.slots.slot_2.score) / 2)}/100** • ${s2_desc}, cả 2 slot 20h45 & 22h15 đều lý tưởng.\n\n💡 **Gợi ý của Trợ lý:** Anh em nên bắt đối giao hữu vào **${top1.dayNameVi}** hoặc **${top2.dayNameVi}** để có trải nghiệm sân mượt mà nhất!`;
     }
   }
 
@@ -2084,6 +2099,7 @@ app.post('/api/live-match/sync', async (req, res) => {
       timerStartedAt: payload.timerStartedAt || null,
       period: Number(payload.period) || 1,
       events: Array.isArray(payload.events) ? payload.events : [],
+      registeredPlayerIds: Array.isArray(payload.registeredPlayerIds) ? payload.registeredPlayerIds : [],
       matchId: payload.matchId || null,
       updatedAt: new Date()
     };

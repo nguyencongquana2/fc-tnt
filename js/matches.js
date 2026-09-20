@@ -222,7 +222,7 @@ window.matchesModule = {
 
     const homeScore = parseInt(document.getElementById('match-home-score').value) || 0;
     const awayScore = parseInt(document.getElementById('match-away-score').value) || 0;
-    
+
     let result = 'DRAW';
     if (homeScore > awayScore) result = 'WIN';
     else if (homeScore < awayScore) result = 'LOSS';
@@ -394,71 +394,71 @@ window.matchesModule = {
     const starters = allStats.filter(ps => ps.isStarter !== false);
     const subs = allStats.filter(ps => ps.isStarter === false);
 
-      // 7 vị trí chuẩn sơ đồ 3-1-2
-      const slotDefs = [
-        { id: 'GK', name: 'THỦ MÔN (GK)', row: 1 },
-        { id: 'DF_L', name: 'CÁNH TRÁI', row: 2 },
-        { id: 'DF_C', name: 'THÒNG GIỮA', row: 2 },
-        { id: 'DF_R', name: 'CÁNH PHẢI', row: 2 },
-        { id: 'MF_C', name: 'TIỀN VỆ GIỮA', row: 3 },
-        { id: 'FW_L', name: 'TIỀN ĐẠO TRÁI', row: 4 },
-        { id: 'FW_R', name: 'TIỀN ĐẠO PHẢI', row: 4 }
-      ];
+    // 7 vị trí chuẩn sơ đồ 3-1-2
+    const slotDefs = [
+      { id: 'GK', name: 'THỦ MÔN (GK)', row: 1 },
+      { id: 'DF_L', name: 'CÁNH TRÁI', row: 2 },
+      { id: 'DF_C', name: 'THÒNG GIỮA', row: 2 },
+      { id: 'DF_R', name: 'CÁNH PHẢI', row: 2 },
+      { id: 'MF_C', name: 'TIỀN VỆ GIỮA', row: 3 },
+      { id: 'FW_L', name: 'TIỀN ĐẠO TRÁI', row: 4 },
+      { id: 'FW_R', name: 'TIỀN ĐẠO PHẢI', row: 4 }
+    ];
 
-      // Phân bổ các vị trí cho starters nếu chưa có slot
-      const usedSlots = new Set();
-      starters.forEach(ps => {
-        if (ps.pitchSlot && slotDefs.some(s => s.id === ps.pitchSlot) && !usedSlots.has(ps.pitchSlot)) {
-          usedSlots.add(ps.pitchSlot);
-        } else {
-          ps.pitchSlot = null;
+    // Phân bổ các vị trí cho starters nếu chưa có slot
+    const usedSlots = new Set();
+    starters.forEach(ps => {
+      if (ps.pitchSlot && slotDefs.some(s => s.id === ps.pitchSlot) && !usedSlots.has(ps.pitchSlot)) {
+        usedSlots.add(ps.pitchSlot);
+      } else {
+        ps.pitchSlot = null;
+      }
+    });
+
+    // Gán slot tự động cho các cầu thủ chưa có slot
+    starters.forEach(ps => {
+      if (!ps.pitchSlot) {
+        const p = window.stateManager.getPlayerById(ps.playerId);
+        const pos = p ? p.position : 'DF';
+
+        let preferredSlot = null;
+        if (pos === 'GK' && !usedSlots.has('GK')) preferredSlot = 'GK';
+        else if (pos === 'DF') {
+          if (!usedSlots.has('DF_L')) preferredSlot = 'DF_L';
+          else if (!usedSlots.has('DF_C')) preferredSlot = 'DF_C';
+          else if (!usedSlots.has('DF_R')) preferredSlot = 'DF_R';
+        } else if (pos === 'MF') {
+          if (!usedSlots.has('MF_C')) preferredSlot = 'MF_C';
+          else if (!usedSlots.has('DF_C')) preferredSlot = 'DF_C';
+        } else if (pos === 'FW') {
+          if (!usedSlots.has('FW_L')) preferredSlot = 'FW_L';
+          else if (!usedSlots.has('FW_R')) preferredSlot = 'FW_R';
         }
-      });
 
-      // Gán slot tự động cho các cầu thủ chưa có slot
-      starters.forEach(ps => {
-        if (!ps.pitchSlot) {
-          const p = window.stateManager.getPlayerById(ps.playerId);
-          const pos = p ? p.position : 'DF';
-          
-          let preferredSlot = null;
-          if (pos === 'GK' && !usedSlots.has('GK')) preferredSlot = 'GK';
-          else if (pos === 'DF') {
-            if (!usedSlots.has('DF_L')) preferredSlot = 'DF_L';
-            else if (!usedSlots.has('DF_C')) preferredSlot = 'DF_C';
-            else if (!usedSlots.has('DF_R')) preferredSlot = 'DF_R';
-          } else if (pos === 'MF') {
-            if (!usedSlots.has('MF_C')) preferredSlot = 'MF_C';
-            else if (!usedSlots.has('DF_C')) preferredSlot = 'DF_C';
-          } else if (pos === 'FW') {
-            if (!usedSlots.has('FW_L')) preferredSlot = 'FW_L';
-            else if (!usedSlots.has('FW_R')) preferredSlot = 'FW_R';
-          }
-
-          if (!preferredSlot) {
-            const available = slotDefs.find(s => !usedSlots.has(s.id));
-            if (available) preferredSlot = available.id;
-          }
-
-          if (preferredSlot) {
-            ps.pitchSlot = preferredSlot;
-            usedSlots.add(preferredSlot);
-          }
+        if (!preferredSlot) {
+          const available = slotDefs.find(s => !usedSlots.has(s.id));
+          if (available) preferredSlot = available.id;
         }
-      });
 
-      // Lấy cầu thủ cho từng slot
-      const getSlotPlayer = (slotId) => starters.find(ps => ps.pitchSlot === slotId);
+        if (preferredSlot) {
+          ps.pitchSlot = preferredSlot;
+          usedSlots.add(preferredSlot);
+        }
+      }
+    });
 
-      const gkPs = getSlotPlayer('GK');
-      const dfLPs = getSlotPlayer('DF_L');
-      const dfCPs = getSlotPlayer('DF_C');
-      const dfRPs = getSlotPlayer('DF_R');
-      const mfCPs = getSlotPlayer('MF_C');
-      const fwLPs = getSlotPlayer('FW_L');
-      const fwRPs = getSlotPlayer('FW_R');
+    // Lấy cầu thủ cho từng slot
+    const getSlotPlayer = (slotId) => starters.find(ps => ps.pitchSlot === slotId);
 
-      body.innerHTML = `
+    const gkPs = getSlotPlayer('GK');
+    const dfLPs = getSlotPlayer('DF_L');
+    const dfCPs = getSlotPlayer('DF_C');
+    const dfRPs = getSlotPlayer('DF_R');
+    const mfCPs = getSlotPlayer('MF_C');
+    const fwLPs = getSlotPlayer('FW_L');
+    const fwRPs = getSlotPlayer('FW_R');
+
+    body.innerHTML = `
         <div class="match-detail-split-layout">
           <!-- CỘT TRÁI: SÂN BÓNG 3-1-2 TRỌN VẸN (KÉO THẢ ĐỔI VỊ TRÍ) -->
           <div>
@@ -532,13 +532,13 @@ window.matchesModule = {
               </div>
               <div class="substitutes-grid">
                 ${subs.length > 0 ? subs.map(ps => {
-                  const p = window.stateManager.getPlayerById(ps.playerId);
-                  if (!p) return '';
-                  const rating = Number(ps.rating) || 7.0;
-                  const ratingClass = this.getRatingClass(rating);
-                  const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
+      const p = window.stateManager.getPlayerById(ps.playerId);
+      if (!p) return '';
+      const rating = Number(ps.rating) || 7.0;
+      const ratingClass = this.getRatingClass(rating);
+      const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
 
-                  return `
+      return `
                     <div class="sub-player-card" 
                          id="player-card-${p.id}"
                          draggable="true"
@@ -559,7 +559,7 @@ window.matchesModule = {
                       ${ps.assists > 0 ? `<span style="font-size: 0.72rem; color: var(--accent-cyan); font-weight:700;">👟 ${ps.assists}</span>` : ''}
                     </div>
                   `;
-                }).join('') : '<p style="grid-column: 1/-1; text-align: center; color: var(--text-dim); font-size: 0.85rem; padding: 1rem;">Không có cầu thủ dự bị (Kéo cầu thủ từ sân vào đây để dự bị)</p>'}
+    }).join('') : '<p style="grid-column: 1/-1; text-align: center; color: var(--text-dim); font-size: 0.85rem; padding: 1rem;">Không có cầu thủ dự bị (Kéo cầu thủ từ sân vào đây để dự bị)</p>'}
               </div>
             </div>
           </div>
@@ -597,20 +597,20 @@ window.matchesModule = {
 
           <div id="match-reviews-grid-body" class="match-reviews-grid">
             ${playerStats.map(ps => {
-              const p = window.stateManager.getPlayerById(ps.playerId);
-              if (!p) return '';
-              const rating = Number(ps.rating) || 7.0;
-              const ratingClass = this.getRatingClass(rating);
-              const isMOTM = ps.playerId === motmId && rating >= 7.0;
-              const goals = Number(ps.goals) || 0;
-              const assists = Number(ps.assists) || 0;
-              const yellow = Number(ps.yellowCards) || 0;
-              const red = Number(ps.redCards) || 0;
-              const note = ps.note || '';
-              const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
-              const realName = (p.name && p.name.trim() && p.name.trim().toLowerCase() !== displayName.toLowerCase()) ? p.name.trim() : '';
+      const p = window.stateManager.getPlayerById(ps.playerId);
+      if (!p) return '';
+      const rating = Number(ps.rating) || 7.0;
+      const ratingClass = this.getRatingClass(rating);
+      const isMOTM = ps.playerId === motmId && rating >= 7.0;
+      const goals = Number(ps.goals) || 0;
+      const assists = Number(ps.assists) || 0;
+      const yellow = Number(ps.yellowCards) || 0;
+      const red = Number(ps.redCards) || 0;
+      const note = ps.note || '';
+      const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
+      const realName = (p.name && p.name.trim() && p.name.trim().toLowerCase() !== displayName.toLowerCase()) ? p.name.trim() : '';
 
-              return `
+      return `
                 <div class="match-review-card ${isMOTM ? 'is-motm-card' : ''}" 
                      id="review-card-${p.id}"
                      data-is-starter="${ps.isStarter !== false ? 'true' : 'false'}"
@@ -653,7 +653,7 @@ window.matchesModule = {
                   </div>
                 </div>
               `;
-            }).join('')}
+    }).join('')}
           </div>
         </div>
       `;
@@ -719,8 +719,8 @@ window.matchesModule = {
 
           <!-- HUY HIỆU BÊN TRÁI (THẺ PHẠT) -->
           <div class="sofa-left-badges">
-            ${ps.redCards > 0 ? `<div class="sofa-card-badge sofa-card-red" title="Thẻ Đỏ"></div>` : 
-              ps.yellowCards > 0 ? `<div class="sofa-card-badge sofa-card-yellow" title="Thẻ Vàng"></div>` : ''}
+            ${ps.redCards > 0 ? `<div class="sofa-card-badge sofa-card-red" title="Thẻ Đỏ"></div>` :
+        ps.yellowCards > 0 ? `<div class="sofa-card-badge sofa-card-yellow" title="Thẻ Vàng"></div>` : ''}
           </div>
 
           <!-- RATING BOX VÀ NGÔI SAO MOTM ĐẶT DƯỚI AVATAR -->
@@ -1321,7 +1321,7 @@ window.matchesModule = {
       textarea.value = `Hôm nay FC TNT có chiến thắng tưng bừng trước ${opponent}. 
 ToDiu bắt rất chắc tay, cản phá 3 pha đối mặt xuất sắc giữ vững thế trận.
 Quân Kun leo biên dẻo, tạt bóng như đặt có 1 kiến tạo và phòng ngự bọc lót chắc chắn.
-Côn 35K1 đá thòng cực hay, không chiến và tranh chấp dũng mãnh.
+Quang Voi đá thòng cực hay, không chiến và tranh chấp dũng mãnh.
 Vinh Lê cầm nhịp tuyến giữa xuất sắc, chia bài đỉnh cao và có 2 kiến tạo.
 Tài Thọ bứt tốc cánh phải lập cú đúp siêu phẩm, quấy phá hàng thủ đối phương.
 Hùng Sứt vào sân thay người đá năng nổ ghi 1 bàn ấn định chiến thắng.
@@ -1444,102 +1444,9 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     const baseStarterRating = isWin ? 6.8 : isLoss ? 6.2 : 6.5;
     const baseSubRating = isWin ? 6.5 : isLoss ? 6.0 : 6.2;
 
-    const getAliases = (p) => {
-      const aliases = new Set();
-      const rawName = (p.name || '').toLowerCase().trim();
-      const rawNick = (p.nickname || '').toLowerCase().trim();
-      const numStr = String(p.number || '').trim();
-
-      if (rawName) aliases.add(rawName);
-      if (rawNick) aliases.add(rawNick);
-      if (numStr) {
-        aliases.add(`số ${numStr}`);
-        aliases.add(`#${numStr}`);
-      }
-
-      const nameParts = rawName.split(/\s+/);
-      if (nameParts.length > 1) {
-        aliases.add(nameParts[nameParts.length - 1]);
-      }
-
-      if (rawName.includes('vinh') || rawNick.includes('vinh')) {
-        aliases.add('duy vinh');
-        aliases.add('vinh lê');
-        aliases.add('vinh');
-      }
-      if (rawName.includes('todiu') || rawNick.includes('todiu') || rawName.includes('diu')) {
-        aliases.add('tố địu');
-        aliases.add('tô diệu');
-        aliases.add('tố điệu');
-        aliases.add('todiu');
-        aliases.add('địu');
-      }
-      if (rawName.includes('côn') || rawNick.includes('côn') || rawName.includes('quang') || rawNick.includes('quang')) {
-        aliases.add('quang');
-        aliases.add('côn');
-        aliases.add('côn 35k1');
-        aliases.add('quang côn');
-      }
-      if (rawName.includes('bắc') || rawNick.includes('bắc')) {
-        aliases.add('đức bắc');
-        aliases.add('bắc');
-      }
-      if (rawName.includes('giang') || rawNick.includes('giang')) {
-        aliases.add('trường giang');
-        aliases.add('giang');
-      }
-      if (rawName.includes('dũng') || rawNick.includes('dũng')) {
-        aliases.add('công dũng');
-        aliases.add('dũng');
-      }
-      if (rawName.includes('hoàn') || rawNick.includes('hoàn')) {
-        aliases.add('trí hoàn');
-        aliases.add('hoàn');
-      }
-      if (rawName.includes('quân') || rawNick.includes('quân')) {
-        aliases.add('quân kun');
-        aliases.add('quân');
-      }
-      if (rawName.includes('thọ') || rawNick.includes('thọ')) {
-        aliases.add('tài thọ');
-        aliases.add('thọ');
-      }
-      if (rawName.includes('hùng') || rawNick.includes('hùng')) {
-        aliases.add('hùng sứt');
-        aliases.add('hùng');
-      }
-      if (rawName.includes('nam') || rawNick.includes('nam')) {
-        if (rawName.includes('thành nam') || rawNick.includes('thành nam')) {
-          aliases.add('thành nam');
-          aliases.add('nam');
-        }
-        if (rawName.includes('sỹ nam') || rawNick.includes('sỹ nam')) {
-          aliases.add('sỹ nam');
-        }
-      }
-      if (rawName.includes('chiến') || rawNick.includes('chiến')) {
-        aliases.add('đình chiến');
-        aliases.add('chiến');
-      }
-      if (rawName.includes('anh') || rawNick.includes('anh')) {
-        aliases.add('đình anh');
-        aliases.add('anh');
-      }
-      if (rawName.includes('tiến') || rawNick.includes('tiến')) {
-        aliases.add('tiếnn');
-        aliases.add('tiến');
-      }
-      if (rawName.includes('buscek') || rawNick.includes('buscek')) {
-        aliases.add('buscek.exe');
-        aliases.add('buscek');
-      }
-
-      return Array.from(aliases).filter(a => a.length >= 2);
-    };
-
     const playerMentions = [];
     playerList.forEach(p => {
-      const aliases = getAliases(p);
+      const aliases = this.getPlayerAliases(p);
       aliases.forEach(alias => {
         let startIndex = 0;
         while ((startIndex = textLower.indexOf(alias, startIndex)) !== -1) {
@@ -1565,7 +1472,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     const cleanMentions = [];
     playerMentions.forEach(m => {
-      if (!cleanMentions.some(existing => 
+      if (!cleanMentions.some(existing =>
         (m.index >= existing.index && m.index < existing.endIndex) ||
         (m.playerId === existing.playerId && Math.abs(m.index - existing.index) < 10)
       )) {
@@ -1817,7 +1724,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     return {
       matchHeadline: isWin ? `🔥 Chiến Thắng Thuyết Phục Trước ${m.opponent}!` : `⚡ Trận Cầu ${m.homeScore} - ${m.awayScore} Trước ${m.opponent}`,
-      matchSummary: isLoss 
+      matchSummary: isLoss
         ? `Trận đấu gặp ${m.opponent} kết thúc với tỉ số ${m.homeScore} - ${m.awayScore}. Đội bóng thi đấu nhiệt huyết nhưng còn bộc lộ một số sai sót trước đối thủ, ghi nhận nhiều nỗ lực cá nhân nổi bật.`
         : `Trận đấu giữa FC TNT và ${m.opponent} diễn ra sôi nổi với tỉ số chung cuộc ${m.homeScore} - ${m.awayScore}. Toàn đội thể hiện tinh thần quyết tâm cao, các cá nhân phối hợp ăn ý và cống hiến hết mình.`,
       motmPlayerId: motmId,
@@ -2271,6 +2178,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     this.livePitchState.awayScore = 0;
     this.livePitchState.timerSeconds = 0;
     this.livePitchState.period = 1;
+    this.initLiveRoster();
     this.updateLiveCompanionUI();
   },
 
@@ -2457,7 +2365,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     if (this.livePitchState.isRecordingVoice && this.livePitchState.speechRecognition) {
       try {
         this.livePitchState.speechRecognition.stop();
-      } catch (e) {}
+      } catch (e) { }
       this.livePitchState.isRecordingVoice = false;
       if (micBtn) micBtn.classList.remove('recording');
       if (statusText) statusText.innerText = '🎙️ Đã dừng thu! Bấm "Ghi Nhận" hoặc chỉnh sửa';
@@ -2480,7 +2388,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     try {
       // Hủy bỏ instance cũ nếu còn tồn tại
       if (this.livePitchState.speechRecognition) {
-        try { this.livePitchState.speechRecognition.abort(); } catch (e) {}
+        try { this.livePitchState.speechRecognition.abort(); } catch (e) { }
         this.livePitchState.speechRecognition = null;
       }
 
@@ -2509,7 +2417,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         // Tự động dừng sau 12 giây nếu người dùng không bấm nút dừng
         speechTimeout = setTimeout(() => {
           if (this.livePitchState.isRecordingVoice && this.livePitchState.speechRecognition) {
-            try { this.livePitchState.speechRecognition.stop(); } catch (e) {}
+            try { this.livePitchState.speechRecognition.stop(); } catch (e) { }
           }
         }, 12000);
       };
@@ -2663,64 +2571,308 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     if (controlsRow) controlsRow.style.display = 'none';
   },
 
+  getPlayerShortName(p) {
+    if (!p) return '';
+    if (p.nickname && p.nickname.trim()) return p.nickname.trim();
+    return p.name || '';
+  },
+
+  getPlayerAliases(p) {
+    const aliases = new Set();
+    const rawName = (p.name || '').toLowerCase().trim();
+    const rawNick = (p.nickname || '').toLowerCase().trim();
+    const numStr = String(p.number || '').trim();
+
+    if (rawName) aliases.add(rawName);
+    if (rawNick) aliases.add(rawNick);
+    if (numStr) {
+      aliases.add(`số ${numStr}`);
+      aliases.add(`#${numStr}`);
+    }
+
+    const nameParts = rawName.split(/\s+/);
+    if (nameParts.length > 1) {
+      aliases.add(nameParts[nameParts.length - 1]);
+    }
+    const nickParts = rawNick.split(/\s+/);
+    if (nickParts.length > 1) {
+      aliases.add(nickParts[0]);
+      aliases.add(nickParts[nickParts.length - 1]);
+    }
+
+    // Bảng ánh xạ biệt danh phủi đặc trưng của FC TNT
+    if (rawName.includes('vinh') || rawNick.includes('vinh')) {
+      aliases.add('duy vinh');
+      aliases.add('vinh lê');
+      aliases.add('vinh');
+    }
+    if (rawName.includes('todiu') || rawNick.includes('todiu') || rawName.includes('diu') || rawNick.includes('diu') || rawName.includes('diệu') || rawNick.includes('diệu')) {
+      aliases.add('tố địu');
+      aliases.add('tố điệu');
+      aliases.add('tố');
+      aliases.add('địu');
+    }
+    if (rawName.includes('quang') || rawNick.includes('quang')) {
+      aliases.add('quang');
+      aliases.add('voi');
+    }
+    if (rawName.includes('bắc') || rawNick.includes('bắc')) {
+      aliases.add('đức bắc');
+      aliases.add('bắc');
+    }
+    if (rawName.includes('giang') || rawNick.includes('giang')) {
+      aliases.add('trường giang');
+      aliases.add('giang');
+    }
+    if (rawName.includes('dũng') || rawNick.includes('dũng')) {
+      aliases.add('công dũng');
+      aliases.add('dũng');
+    }
+    if (rawName.includes('hoàn') || rawNick.includes('hoàn')) {
+      aliases.add('trí hoàn');
+      aliases.add('hoàn');
+    }
+    if (rawName.includes('quân') || rawNick.includes('quân')) {
+      aliases.add('quân kun');
+      aliases.add('quân');
+      aliases.add('công quân');
+    }
+    if (rawName.includes('tài') || rawNick.includes('tài')) {
+      aliases.add('tài thọ');
+      aliases.add('tài');
+      aliases.add('tấn tài');
+      aliases.add('lê tấn tài');
+    }
+    if (rawName.includes('hùng') || rawNick.includes('hùng')) {
+      aliases.add('hùng sứt');
+      aliases.add('hùng');
+      aliases.add('lường hùng');
+    }
+    if (rawName.includes('nam') || rawNick.includes('nam')) {
+      if (rawName.includes('thành nam') || rawNick.includes('thành nam')) {
+        aliases.add('thành nam');
+        aliases.add('nam cao');
+      }
+      if (rawName.includes('sỹ nam') || rawNick.includes('sỹ nam') || p.position === 'GK') {
+        aliases.add('sỹ nam');
+        aliases.add('nam thấp');
+      }
+    }
+    if (rawName.includes('chiến') || rawNick.includes('chiến')) {
+      aliases.add('đình chiến');
+      aliases.add('chiến');
+    }
+    if (rawName.includes('anh') || rawNick.includes('anh')) {
+      aliases.add('đình anh');
+      aliases.add('anh');
+    }
+    if (rawName.includes('tiến') || rawNick.includes('tiến')) {
+      aliases.add('tiếnn');
+      aliases.add('tiến');
+      aliases.add('công tiến');
+    }
+
+    if (rawName.includes('ct') || rawNick.includes('ct') || rawName.includes('thắng') || rawNick.includes('thắng')) {
+      aliases.add('ct');
+      aliases.add('thắng');
+      aliases.add('công thắng');
+    }
+
+    return Array.from(aliases).filter(a => a.length >= 2);
+  },
+
   parseVoiceTranscript(text) {
-    const raw = text.toLowerCase();
+    const raw = text.toLowerCase().trim();
+    if (!raw) return;
+
     const allPlayers = window.stateManager.getPlayers();
-
-    // Tìm cầu thủ có tên hoặc biệt danh xuất hiện trong câu nói
-    const matchedPlayers = allPlayers.filter(p => {
-      const nameParts = p.name.toLowerCase().split(/\s+/);
-      const lastName = nameParts[nameParts.length - 1];
-      const nickname = (p.nickname || '').toLowerCase();
-      return raw.includes(p.name.toLowerCase()) || 
-             (lastName.length >= 2 && raw.includes(lastName)) ||
-             (nickname && raw.includes(nickname));
-    });
-
-    const primaryPlayer = matchedPlayers[0] || null;
-    const secondaryPlayer = matchedPlayers[1] || null;
     const minute = this.getCurrentMatchMinute();
 
-    // Phân loại từ khóa
-    if (raw.includes('siêu phẩm') || raw.includes('solo') || raw.includes('qua 3 người') || raw.includes('góc chữ a') || raw.includes('móc bóng') || raw.includes('xe đạp chổng ngược') || raw.includes('sút xa đỉnh')) {
-      if (primaryPlayer) {
-        this.recordLiveEvent('WONDERGOAL', primaryPlayer.id, secondaryPlayer ? secondaryPlayer.id : null, `🌟 Siêu phẩm đỉnh cao: "${text}"`);
+    // 1. Quét tìm tất cả các đề cập cầu thủ trong câu nói theo vị trí
+    const mentions = [];
+    allPlayers.forEach(p => {
+      const aliases = this.getPlayerAliases(p);
+      aliases.forEach(alias => {
+        let startIndex = 0;
+        while ((startIndex = raw.indexOf(alias, startIndex)) !== -1) {
+          const prevChar = startIndex > 0 ? raw[startIndex - 1] : ' ';
+          const nextChar = startIndex + alias.length < raw.length ? raw[startIndex + alias.length] : ' ';
+          const isWordBoundary = /[\s,.;!?:()\n\r\t\[\]'"]/.test(prevChar) && /[\s,.;!?:()\n\r\t\[\]'"]/.test(nextChar);
+
+          if (isWordBoundary || startIndex === 0 || startIndex + alias.length === raw.length) {
+            mentions.push({
+              player: p,
+              alias,
+              startIndex,
+              endIndex: startIndex + alias.length
+            });
+          }
+          startIndex += alias.length;
+        }
+      });
+    });
+
+    // Sắp xếp theo vị trí xuất hiện trong câu; nếu cùng vị trí thì ưu tiên alias dài hơn
+    mentions.sort((a, b) => a.startIndex - b.startIndex || b.alias.length - a.alias.length);
+
+    // Lọc trùng lặp
+    const cleanMentions = [];
+    mentions.forEach(m => {
+      if (!cleanMentions.some(existing =>
+        (m.startIndex >= existing.startIndex && m.startIndex < existing.endIndex) ||
+        (m.player.id === existing.player.id && Math.abs(m.startIndex - existing.startIndex) < 6)
+      )) {
+        cleanMentions.push(m);
+      }
+    });
+
+    // 2. Phân tích ngữ nghĩa bóng đá thông minh (Grammar & Intent Parsing)
+    let handled = false;
+
+    // A. Mẫu: [A] kiến tạo / chuyền / tạt / dọn cỗ cho [B] ghi bàn / sút vào / lập công
+    if (!handled && cleanMentions.length >= 2) {
+      const p1 = cleanMentions[0];
+      const p2 = cleanMentions[1];
+      const betweenText = raw.substring(p1.endIndex, p2.startIndex);
+      const afterText = raw.substring(p2.endIndex);
+
+      const isP1AssistP2 = /kiến\s*tạo|chuyền|tạt|dọn\s*cỗ|đưa\s*bóng|nhả\s*bóng/i.test(betweenText) &&
+        /cho|để|tới/i.test(betweenText);
+      const isP2Score = /ghi\s*bàn|sút\s*vào|lập\s*công|đánh\s*đầu|đệm\s*bóng|vào\s*rồi|lưới/i.test(afterText) ||
+        /ghi\s*bàn|sút\s*vào|lập\s*công/i.test(raw);
+
+      if (isP1AssistP2 && isP2Score) {
+        const assistPlayer = p1.player;
+        const scorerPlayer = p2.player;
+        const scorerName = this.getPlayerShortName(scorerPlayer);
+        const assistName = this.getPlayerShortName(assistPlayer);
+
+        this.recordLiveEvent('GOAL', scorerPlayer.id, assistPlayer.id, `${assistName} kiến tạo cho ${scorerName} ghi bàn`);
         this.adjustLiveScore('home', 1);
-        window.showToast(`🌟 Siêu phẩm cho ${primaryPlayer.name}! Quá đẹp!`);
+        window.showToast(`⚽ +1 Bàn thắng cho ${scorerName} (Kiến tạo: ${assistName})!`);
+        handled = true;
+      }
+    }
+
+    // B. Mẫu: [B] ghi bàn từ đường chuyền / kiến tạo của [A] hoặc [B] ghi bàn, [A] kiến tạo
+    if (!handled && cleanMentions.length >= 2) {
+      const p1 = cleanMentions[0];
+      const p2 = cleanMentions[1];
+      const betweenText = raw.substring(p1.endIndex, p2.startIndex);
+      const afterText = raw.substring(p2.endIndex);
+
+      const isP1Scorer = /ghi\s*bàn|sút\s*vào|lập\s*công|đánh\s*đầu/i.test(betweenText);
+      const isP2Assist = /kiến\s*tạo|chuyền|dọn\s*cỗ|tạt/i.test(betweenText) || /kiến\s*tạo|chuyền|dọn\s*cỗ/i.test(afterText);
+
+      if (isP1Scorer && isP2Assist) {
+        const scorerPlayer = p1.player;
+        const assistPlayer = p2.player;
+        const scorerName = this.getPlayerShortName(scorerPlayer);
+        const assistName = this.getPlayerShortName(assistPlayer);
+
+        this.recordLiveEvent('GOAL', scorerPlayer.id, assistPlayer.id, `${scorerName} ghi bàn (Kiến tạo: ${assistName})`);
+        this.adjustLiveScore('home', 1);
+        window.showToast(`⚽ +1 Bàn thắng cho ${scorerName} (Kiến tạo: ${assistName})!`);
+        handled = true;
+      }
+    }
+
+    // C. Siêu phẩm / Solo qua người
+    if (!handled && (raw.includes('siêu phẩm') || raw.includes('solo') || raw.includes('qua 3 người') || raw.includes('góc chữ a') || raw.includes('móc bóng') || raw.includes('xe đạp chổng ngược') || raw.includes('sút xa đỉnh'))) {
+      const primary = cleanMentions[0]?.player;
+      const secondary = cleanMentions[1]?.player;
+      if (primary) {
+        const pName = this.getPlayerShortName(primary);
+        const assistName = secondary ? this.getPlayerShortName(secondary) : null;
+        this.recordLiveEvent('WONDERGOAL', primary.id, secondary ? secondary.id : null, `${pName} lập siêu phẩm: "${text}"`);
+        this.adjustLiveScore('home', 1);
+        window.showToast(`🌟 Siêu phẩm cho ${pName}! Quá đỉnh!`);
       } else {
         this.recordLiveEvent('WONDERGOAL', null, null, `🌟 ${minute}': Siêu phẩm - "${text}"`);
         this.adjustLiveScore('home', 1);
         window.showToast(`🌟 Siêu phẩm từ giọng nói!`);
       }
-    } else if (raw.includes('ghi bàn') || raw.includes('sút vào') || raw.includes('bàn thắng') || raw.includes('lập công') || raw.includes('vào rồi')) {
-      if (primaryPlayer) {
-        this.recordLiveEvent('GOAL', primaryPlayer.id, secondaryPlayer ? secondaryPlayer.id : null, `🎙️ Giọng nói: "${text}"`);
+      handled = true;
+    }
+
+    // D. Bàn thắng đơn lẻ
+    if (!handled && (raw.includes('ghi bàn') || raw.includes('sút vào') || raw.includes('bàn thắng') || raw.includes('lập công') || raw.includes('vào rồi'))) {
+      const primary = cleanMentions[0]?.player;
+      const secondary = cleanMentions[1]?.player;
+      if (primary) {
+        const pName = this.getPlayerShortName(primary);
+        const assistName = secondary ? this.getPlayerShortName(secondary) : null;
+        this.recordLiveEvent('GOAL', primary.id, secondary ? secondary.id : null, `🎙️ Giọng nói: "${text}"`);
         this.adjustLiveScore('home', 1);
-        window.showToast(`⚽ +1 Bàn thắng cho ${primaryPlayer.name}${secondaryPlayer ? ` (Kiến tạo: ${secondaryPlayer.name})` : ''}!`);
+        window.showToast(`⚽ +1 Bàn thắng cho ${pName}${assistName ? ` (Kiến tạo: ${assistName})` : ''}!`);
       } else {
         this.recordLiveEvent('NOTE', null, null, `⚽ ${minute}': Bàn thắng - "${text}"`);
         this.adjustLiveScore('home', 1);
         window.showToast(`⚽ +1 Bàn thắng từ giọng nói!`);
       }
-    } else if (raw.includes('cứu thua') || raw.includes('cản phá') || raw.includes('bắt dính') || raw.includes('xuất thần')) {
-      const p = primaryPlayer || allPlayers.find(pl => pl.position === 'GK') || allPlayers[0];
-      this.recordLiveEvent('SAVE', p ? p.id : null, null, `🎙️ Giọng nói: "${text}"`);
-      window.showToast(`🧤 Cứu thua xuất thần: ${p ? p.name : 'Thủ môn'}!`);
-    } else if (raw.includes('xà ngang') || raw.includes('cột dọc') || raw.includes('trúng xà') || raw.includes('trúng cột')) {
-      this.recordLiveEvent('WOODWORK', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ Giọng nói: "${text}"`);
-      window.showToast(`🪵 Sút trúng xà/cột: ${primaryPlayer ? primaryPlayer.name : ''}!`);
-    } else if (raw.includes('bỏ lỡ') || raw.includes('đệm ra ngoài') || raw.includes('lên trời') || raw.includes('gỗ')) {
-      this.recordLiveEvent('MISS', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ Giọng nói: "${text}"`);
-      window.showToast(`💨 Bỏ lỡ đáng tiếc: ${primaryPlayer ? primaryPlayer.name : ''}!`);
-    } else if (raw.includes('tấu hài') || raw.includes('hài hước') || raw.includes('ngã') || raw.includes('trượt chân')) {
-      this.recordLiveEvent('FUNNY', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ Giọng nói: "${text}"`);
-      window.showToast(`😂 Pha tấu hài: ${primaryPlayer ? primaryPlayer.name : ''}!`);
-    } else if (raw.includes('phòng ngự') || raw.includes('bọc lót') || raw.includes('cắt bóng') || raw.includes('thủ hay')) {
-      this.recordLiveEvent('DEFENSE', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ Giọng nói: "${text}"`);
-      window.showToast(`🧱 Phòng ngự hay: ${primaryPlayer ? primaryPlayer.name : ''}!`);
-    } else {
-      // Lưu dưới dạng ghi chú giọng nói
-      this.recordLiveEvent('NOTE', primaryPlayer ? primaryPlayer.id : null, null, `🎙️ "${text}"`);
+      handled = true;
+    }
+
+    // E. Kiến tạo đơn lẻ
+    if (!handled && (raw.includes('kiến tạo') || raw.includes('dọn cỗ') || raw.includes('chuyền đẹp') || raw.includes('tạt bóng chuẩn'))) {
+      const primary = cleanMentions[0]?.player;
+      if (primary) {
+        const pName = this.getPlayerShortName(primary);
+        this.recordLiveEvent('ASSIST', primary.id, null, `${pName} có đường kiến tạo đẹp`);
+        window.showToast(`👟 +1 Kiến tạo cho ${pName}!`);
+        handled = true;
+      }
+    }
+
+    // F. Cứu thua / Cản phá
+    if (!handled && (raw.includes('cứu thua') || raw.includes('cản phá') || raw.includes('bắt dính') || raw.includes('xuất thần') || raw.includes('đẩy bóng'))) {
+      const p = cleanMentions[0]?.player || allPlayers.find(pl => pl.position === 'GK') || allPlayers[0];
+      const pName = this.getPlayerShortName(p);
+      this.recordLiveEvent('SAVE', p ? p.id : null, null, `${pName} cản phá cứu thua xuất thần`);
+      window.showToast(`🧤 Cứu thua xuất thần: ${pName}!`);
+      handled = true;
+    }
+
+    // G. Xà ngang / Cột dọc
+    if (!handled && (raw.includes('xà ngang') || raw.includes('cột dọc') || raw.includes('trúng xà') || raw.includes('trúng cột') || raw.includes('khung gỗ'))) {
+      const primary = cleanMentions[0]?.player;
+      const pName = primary ? this.getPlayerShortName(primary) : 'Cầu thủ';
+      this.recordLiveEvent('WOODWORK', primary ? primary.id : null, null, `${pName} dứt điểm trúng khung gỗ`);
+      window.showToast(`🪵 Sút trúng xà/cột: ${pName}!`);
+      handled = true;
+    }
+
+    // H. Bỏ lỡ cơ hội
+    if (!handled && (raw.includes('bỏ lỡ') || raw.includes('đệm ra ngoài') || raw.includes('lên trời') || raw.includes('bắn chim') || raw.includes('gỗ'))) {
+      const primary = cleanMentions[0]?.player;
+      const pName = primary ? this.getPlayerShortName(primary) : 'Cầu thủ';
+      this.recordLiveEvent('MISS', primary ? primary.id : null, null, `${pName} bỏ lỡ cơ hội ngon ăn`);
+      window.showToast(`💨 Bỏ lỡ đáng tiếc: ${pName}!`);
+      handled = true;
+    }
+
+    // I. Tấu hài
+    if (!handled && (raw.includes('tấu hài') || raw.includes('hài hước') || raw.includes('vấp cỏ') || raw.includes('trượt chân') || raw.includes('ngã'))) {
+      const primary = cleanMentions[0]?.player;
+      const pName = primary ? this.getPlayerShortName(primary) : 'Cầu thủ';
+      this.recordLiveEvent('FUNNY', primary ? primary.id : null, null, `${pName} tạo khoảnh khắc tấu hài`);
+      window.showToast(`😂 Pha tấu hài: ${pName}!`);
+      handled = true;
+    }
+
+    // J. Phòng ngự / Bọc lót
+    if (!handled && (raw.includes('phòng ngự') || raw.includes('bọc lót') || raw.includes('cắt bóng') || raw.includes('thủ hay') || raw.includes('xoạc bóng'))) {
+      const primary = cleanMentions[0]?.player;
+      const pName = primary ? this.getPlayerShortName(primary) : 'Cầu thủ';
+      this.recordLiveEvent('DEFENSE', primary ? primary.id : null, null, `${pName} phòng ngự chắc chắn`);
+      window.showToast(`🧱 Phòng ngự hay: ${pName}!`);
+      handled = true;
+    }
+
+    // K. Mặc định: Ghi chú diễn biến
+    if (!handled) {
+      const primary = cleanMentions[0]?.player;
+      this.recordLiveEvent('NOTE', primary ? primary.id : null, null, `🎙️ "${text}"`);
       window.showToast(`📝 Đã ghi nhận diễn biến: "${text}"`);
     }
   },
@@ -2764,7 +2916,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     if (grid) {
       grid.innerHTML = eligiblePlayers.map(p => {
-        const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
+        const displayName = this.getPlayerShortName(p);
         return `
           <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${p.id}')">
             <img class="live-picker-avatar" src="${p.avatar}" alt="${displayName}">
@@ -2790,6 +2942,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
   selectPlayerForLiveAction(playerId) {
     const p = window.stateManager.getPlayerById(playerId);
     if (!p) return;
+    const pShort = this.getPlayerShortName(p);
 
     if (this.livePitchState.currentAction === 'GOAL') {
       if (!this.livePitchState.pendingGoalPlayerId) {
@@ -2800,7 +2953,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         const assistBox = document.getElementById('live-assist-prompt-box');
 
         if (tagEl) {
-          tagEl.innerText = `⚽ BÀN THẮNG: ${p.name}`;
+          tagEl.innerText = `⚽ BÀN THẮNG: ${pShort}`;
           tagEl.style.color = '#ef4444';
         }
         if (titleEl) titleEl.innerText = '👟 Ai là người kiến tạo đường chuyền?';
@@ -2814,7 +2967,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         const grid = document.getElementById('live-picker-player-grid');
         if (grid) {
           grid.innerHTML = eligiblePlayers.filter(pl => pl.id !== playerId).map(pl => {
-            const displayName = (pl.nickname && pl.nickname.trim()) ? pl.nickname.trim() : pl.name;
+            const displayName = this.getPlayerShortName(pl);
             return `
               <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${pl.id}')">
                 <img class="live-picker-avatar" src="${pl.avatar}" alt="${displayName}">
@@ -2830,9 +2983,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       } else {
         // Bước 2: Đã chọn người kiến tạo
         const scorer = window.stateManager.getPlayerById(this.livePitchState.pendingGoalPlayerId);
-        this.recordLiveEvent('GOAL', scorer.id, p.id, `${scorer.name} ghi bàn (Kiến tạo: ${p.name})`);
+        const scorerShort = this.getPlayerShortName(scorer);
+        this.recordLiveEvent('GOAL', scorer.id, p.id, `${scorerShort} ghi bàn (Kiến tạo: ${pShort})`);
         this.adjustLiveScore('home', 1);
-        window.showToast(`⚽ +1 Bàn thắng cho ${scorer.name} (Kiến tạo: ${p.name})!`);
+        window.showToast(`⚽ +1 Bàn thắng cho ${scorerShort} (Kiến tạo: ${pShort})!`);
         this.closeLivePlayerPicker();
         return;
       }
@@ -2841,27 +2995,27 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     // Các sự kiện khác
     const action = this.livePitchState.currentAction;
     if (action === 'WONDERGOAL') {
-      this.recordLiveEvent('WONDERGOAL', p.id, null, `${p.name} lập siêu phẩm đẳng cấp solo / sút xa đẹp mắt`);
+      this.recordLiveEvent('WONDERGOAL', p.id, null, `${pShort} lập siêu phẩm solo / sút xa đẹp mắt`);
       this.adjustLiveScore('home', 1);
-      window.showToast(`🌟 +1 Siêu phẩm cho ${p.name}! Quá đẳng cấp!`);
+      window.showToast(`🌟 +1 Siêu phẩm cho ${pShort}! Quá đẳng cấp!`);
     } else if (action === 'ASSIST') {
-      this.recordLiveEvent('ASSIST', p.id, null, `${p.name} có đường chuyền dọn cỗ`);
-      window.showToast(`👟 +1 Kiến tạo cho ${p.name}!`);
+      this.recordLiveEvent('ASSIST', p.id, null, `${pShort} có đường chuyền dọn cỗ`);
+      window.showToast(`👟 +1 Kiến tạo cho ${pShort}!`);
     } else if (action === 'SAVE') {
-      this.recordLiveEvent('SAVE', p.id, null, `${p.name} cản phá xuất thần cứu thua mười mươi`);
-      window.showToast(`🧤 Cứu thua xuất thần: ${p.name}!`);
+      this.recordLiveEvent('SAVE', p.id, null, `${pShort} cản phá xuất thần cứu thua mười mươi`);
+      window.showToast(`🧤 Cứu thua xuất thần: ${pShort}!`);
     } else if (action === 'WOODWORK') {
-      this.recordLiveEvent('WOODWORK', p.id, null, `${p.name} dứt điểm dội xà ngang / cột dọc`);
-      window.showToast(`🪵 Sút trúng xà/cột: ${p.name}!`);
+      this.recordLiveEvent('WOODWORK', p.id, null, `${pShort} dứt điểm dội xà ngang / cột dọc`);
+      window.showToast(`🪵 Sút trúng xà/cột: ${pShort}!`);
     } else if (action === 'MISS') {
-      this.recordLiveEvent('MISS', p.id, null, `${p.name} bỏ lỡ cơ hội đáng tiếc trước gôn`);
-      window.showToast(`💨 Bỏ lỡ đáng tiếc: ${p.name}!`);
+      this.recordLiveEvent('MISS', p.id, null, `${pShort} bỏ lỡ cơ hội đáng tiếc trước gôn`);
+      window.showToast(`💨 Bỏ lỡ đáng tiếc: ${pShort}!`);
     } else if (action === 'DEFENSE') {
-      this.recordLiveEvent('DEFENSE', p.id, null, `${p.name} bọc lót và cắt bóng chuẩn xác`);
-      window.showToast(`🧱 Phòng ngự chắc chắn: ${p.name}!`);
+      this.recordLiveEvent('DEFENSE', p.id, null, `${pShort} bọc lót và cắt bóng chuẩn xác`);
+      window.showToast(`🧱 Phòng ngự chắc chắn: ${pShort}!`);
     } else if (action === 'FUNNY') {
-      this.recordLiveEvent('FUNNY', p.id, null, `${p.name} có pha xử lý tấu hài mang lại tiếng cười`);
-      window.showToast(`😂 Pha tấu hài: ${p.name}!`);
+      this.recordLiveEvent('FUNNY', p.id, null, `${pShort} có pha xử lý tấu hài mang lại tiếng cười`);
+      window.showToast(`😂 Pha tấu hài: ${pShort}!`);
     }
 
     this.closeLivePlayerPicker();
@@ -2871,9 +3025,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     if (this.livePitchState.pendingGoalPlayerId) {
       const scorer = window.stateManager.getPlayerById(this.livePitchState.pendingGoalPlayerId);
       if (scorer) {
-        this.recordLiveEvent('GOAL', scorer.id, null, `${scorer.name} solo lập công (Không có kiến tạo)`);
+        const scorerShort = this.getPlayerShortName(scorer);
+        this.recordLiveEvent('GOAL', scorer.id, null, `${scorerShort} solo lập công (Không có kiến tạo)`);
         this.adjustLiveScore('home', 1);
-        window.showToast(`⚽ +1 Bàn thắng solo cho ${scorer.name}!`);
+        window.showToast(`⚽ +1 Bàn thắng solo cho ${scorerShort}!`);
       }
     }
     this.closeLivePlayerPicker();
@@ -2905,10 +3060,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       typeLabel: cfg.label,
       badgeColor: cfg.badgeColor,
       playerId: p ? p.id : null,
-      playerName: p ? p.name : null,
+      playerName: p ? this.getPlayerShortName(p) : null,
       playerAvatar: p ? p.avatar : null,
       assistPlayerId: assistP ? assistP.id : null,
-      assistPlayerName: assistP ? assistP.name : null,
+      assistPlayerName: assistP ? this.getPlayerShortName(assistP) : null,
       note: extraNote,
       timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     };
@@ -3267,7 +3422,11 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     this.livePitchState.period = Number(draft.period) || 1;
     this.livePitchState.matchId = draft.matchId || null;
     this.livePitchState.events = Array.isArray(draft.events) ? draft.events : [];
-    this.livePitchState.registeredPlayerIds = Array.isArray(draft.registeredPlayerIds) ? draft.registeredPlayerIds : [];
+    if (Array.isArray(draft.registeredPlayerIds) && draft.registeredPlayerIds.length > 0) {
+      this.livePitchState.registeredPlayerIds = draft.registeredPlayerIds;
+    } else if (!this.livePitchState.registeredPlayerIds || this.livePitchState.registeredPlayerIds.length === 0) {
+      this.initLiveRoster();
+    }
     this.updateLiveCompanionUI();
   },
 
@@ -3281,7 +3440,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     this.livePitchState.matchId = null;
 
     // Xóa trên Cloud
-    fetch('/api/live-match/clear', { method: 'POST' }).catch(e => {});
+    fetch('/api/live-match/clear', { method: 'POST' }).catch(e => { });
   }
 };
 

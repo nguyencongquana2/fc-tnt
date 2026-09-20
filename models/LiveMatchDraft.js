@@ -47,6 +47,10 @@ const liveMatchDraftSchema = new mongoose.Schema({
     type: Array,
     default: []
   },
+  registeredPlayerIds: {
+    type: Array,
+    default: []
+  },
   matchId: {
     type: String,
     default: null

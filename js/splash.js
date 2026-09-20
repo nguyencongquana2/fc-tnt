@@ -31,8 +31,8 @@
     },
     {
       category: '🏰 Hòn Đá Tảng',
-      text: 'Côn 35K1 - Trung vệ thòng không chiến số 1, chuyên phá bóng bay thẳng lên nóc nhà!',
-      author: 'Số 69 • Côn 35K1'
+      text: 'Quang Voi - Trung vệ thòng không chiến dũng mãnh, lá chắn thép trước khung thành!',
+      author: 'Số 69 • Quang Voi'
     },
     {
       category: '🎩 Nghệ Sĩ Sân Cỏ',
