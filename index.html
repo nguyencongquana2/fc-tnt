@@ -700,8 +700,11 @@
       </div>
 
       <div class="modal-footer" id="ai-modal-footer">
-        <button class="btn btn-secondary" onclick="window.matchesModule.closeAiRatingModal()">Đóng</button>
-        <button class="btn btn-primary" id="btn-apply-ai-ratings" style="display: none;" onclick="window.matchesModule.applyAiRatingsToMatch()">
+        <button type="button" class="btn btn-secondary" onclick="window.matchesModule.closeAiRatingModal()">Đóng</button>
+        <button type="button" class="btn btn-secondary" id="btn-edit-ai-narration" style="display: none;" onclick="window.matchesModule.editAiInput()">
+          ✍️ Sửa Diễn Biến & Chấm Lại
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-apply-ai-ratings" style="display: none;" onclick="window.matchesModule.applyAiRatingsToMatch()">
           ✅ Áp Dụng Vào Sơ Đồ Sân 3-1-2
         </button>
       </div>
@@ -1323,6 +1326,22 @@
           </div>
         </div>
 
+        <!-- Squad Roster Status Strip (Điểm danh cầu thủ có mặt) -->
+        <div class="live-roster-strip" id="live-roster-strip-btn" onclick="window.matchesModule.openLiveRosterModal()" title="Chạm để chọn danh sách cầu thủ đi đá hôm nay">
+          <div class="live-roster-left">
+            <div class="live-roster-header-row">
+              <span class="live-roster-badge">👥 ĐỘI HÌNH ĐI ĐÁ: <strong id="live-roster-count-badge">0</strong> Cầu thủ</span>
+              <span class="live-roster-hint">Chạm để điểm danh / sửa ✏️</span>
+            </div>
+            <div class="live-roster-names-preview" id="live-roster-names-preview">
+              Chưa chọn cầu thủ có mặt. Hãy bấm để điểm danh!
+            </div>
+          </div>
+          <button type="button" class="live-roster-edit-btn" onclick="event.stopPropagation(); window.matchesModule.openLiveRosterModal()">
+            ✏️ Điểm danh
+          </button>
+        </div>
+
         <!-- Quick Action: Voice Memo Microphone Bar -->
         <div class="live-voice-bar-wrapper" id="live-voice-bar-container">
           <div class="live-voice-top-row">
@@ -1434,11 +1453,53 @@
             <!-- Rendered dynamically -->
           </div>
 
+          <!-- Button to edit registered roster if someone is missing -->
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.matchesModule.openLiveRosterModal()" style="font-size: 0.76rem; width: 100%;">
+              👥 Thêm / Bớt cầu thủ có mặt trên sân
+            </button>
+          </div>
+
           <!-- Step 2 for Assist Picker -->
           <div id="live-assist-prompt-box" style="display: none; padding: 0.75rem; background: rgba(0,0,0,0.4); border-radius: var(--radius-md); margin-top: 0.75rem; text-align: center;">
             <div style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; margin-bottom: 0.5rem;">👟 Ai là người kiến tạo? (Hoặc bấm bỏ qua)</div>
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.matchesModule.skipAssistSelection()" style="font-size: 0.78rem;">
               🚫 Tự ghi bàn (Không kiến tạo)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Squad Registration Modal Overlay (Điểm danh đội hình đi đá) -->
+      <div class="live-roster-overlay" id="live-roster-modal" style="display: none;">
+        <div class="live-roster-sheet">
+          <div class="live-roster-sheet-header">
+            <div>
+              <span class="live-picker-tag" style="color: #60a5fa;">👥 ĐIỂM DANH SÂN CỎ</span>
+              <h4 class="live-picker-title" style="margin-top: 0.2rem;">Cầu Thủ Đi Đá Hôm Nay (<span id="live-roster-selected-count">0</span>)</h4>
+              <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 0.25rem;">
+                Chỉ những người được tích chọn mới được ghi nhận sự kiện & chấm điểm AI.
+              </div>
+            </div>
+            <button type="button" class="live-picker-close-btn" onclick="window.matchesModule.closeLiveRosterModal()">&times;</button>
+          </div>
+
+          <!-- Quick Preset Selection Tools -->
+          <div class="live-roster-quick-tools">
+            <button type="button" class="btn-sample-tag" onclick="window.matchesModule.selectRosterPreset('all')">✓ Chọn Tất Cả</button>
+            <button type="button" class="btn-sample-tag" onclick="window.matchesModule.selectRosterPreset('starters')">⭐ 7 Đá Chính Mặc Định</button>
+            <button type="button" class="btn-sample-tag" onclick="window.matchesModule.selectRosterPreset('clear')">🚫 Bỏ Chọn Hết</button>
+          </div>
+
+          <!-- Player Selection Grid -->
+          <div class="live-roster-grid" id="live-roster-player-grid">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div class="live-roster-sheet-footer">
+            <button type="button" class="btn btn-secondary" onclick="window.matchesModule.closeLiveRosterModal()">Hủy</button>
+            <button type="button" class="btn btn-primary" onclick="window.matchesModule.saveLiveRosterSelection()">
+              ✓ Xác Nhận Đội Hình (<span id="live-roster-confirm-count">0</span> Cầu Thủ)
             </button>
           </div>
         </div>

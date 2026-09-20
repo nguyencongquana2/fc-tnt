@@ -1024,14 +1024,14 @@ function getPlayerAliases(p) {
 }
 
 // BỘ GIẢI THUẬT PHÂN TÍCH & CHẤM ĐIỂM SÂN PHỦI CHUYÊN SÂU (FC TNT AI INTELLIGENCE)
-function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
+function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents }) {
   const rawText = (matchNarration || '').trim();
   const textLower = rawText.toLowerCase();
   const isWin = matchInfo?.result === 'WIN' || (Number(matchInfo?.homeScore) > Number(matchInfo?.awayScore));
   const isLoss = matchInfo?.result === 'LOSS' || (Number(matchInfo?.homeScore) < Number(matchInfo?.awayScore));
 
-  const baseStarterRating = isWin ? 6.8 : isLoss ? 6.0 : 6.5;
-  const baseSubRating = isWin ? 6.5 : isLoss ? 5.8 : 6.2;
+  const baseStarterRating = isWin ? 6.8 : isLoss ? 6.2 : 6.5;
+  const baseSubRating = isWin ? 6.5 : isLoss ? 6.0 : 6.2;
 
   // Bước 1: Quét và lập bản đồ vị trí tên các cầu thủ trong bài mô tả
   const playerMentions = [];
@@ -1042,7 +1042,7 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
       while ((startIndex = textLower.indexOf(alias, startIndex)) !== -1) {
         const prevChar = startIndex > 0 ? textLower[startIndex - 1] : ' ';
         const nextChar = startIndex + alias.length < textLower.length ? textLower[startIndex + alias.length] : ' ';
-        const isWordBoundary = /[\s,.;!?:()\n\r\t]/.test(prevChar) && /[\s,.;!?:()\n\r\t]/.test(nextChar);
+        const isWordBoundary = /[\s,.;!?:()\n\r\t\[\]'"]/.test(prevChar) && /[\s,.;!?:()\n\r\t\[\]'"]/.test(nextChar);
 
         if (isWordBoundary || startIndex === 0 || startIndex + alias.length === textLower.length) {
           playerMentions.push({
@@ -1071,7 +1071,7 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
     }
   });
 
-  // Tách ngữ cảnh độc lập cho từng cầu thủ (xử lý chính xác dấu phẩy, câu ghép và từ nối)
+  // Tách ngữ cảnh độc lập cho từng cầu thủ
   const playerContextMap = {};
   for (let i = 0; i < cleanMentions.length; i++) {
     const cur = cleanMentions[i];
@@ -1080,7 +1080,6 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
     const chunkEnd = nextMention ? nextMention.index : textLower.length;
     let chunk = textLower.substring(chunkStart, chunkEnd);
 
-    // Cặp đồng chủ ngữ: "Quân Kun và Hùng Sứt [hành động chung]"
     const between = nextMention ? textLower.substring(cur.endIndex, nextMention.index).trim() : '';
     let inheritedChunk = '';
     if (nextMention && (between === 'và' || between === 'cùng' || between === 'với' || between === 'và cả' || between === ',')) {
@@ -1098,6 +1097,26 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
     }
   }
 
+  // Thu thập sự kiện trực tiếp từ Live Companion (nếu có)
+  const playerEventsMap = {};
+  if (Array.isArray(liveEvents) && liveEvents.length > 0) {
+    liveEvents.forEach(evt => {
+      if (evt.playerId) {
+        if (!playerEventsMap[evt.playerId]) playerEventsMap[evt.playerId] = [];
+        playerEventsMap[evt.playerId].push(evt);
+      }
+      if (evt.assistPlayerId) {
+        if (!playerEventsMap[evt.assistPlayerId]) playerEventsMap[evt.assistPlayerId] = [];
+        playerEventsMap[evt.assistPlayerId].push({
+          type: 'ASSIST',
+          typeLabel: '👟 Kiến Tạo',
+          minute: evt.minute,
+          note: `Kiến tạo cho ${evt.playerName || 'đồng đội'}`
+        });
+      }
+    });
+  }
+
   let highestScore = -1;
   let motmId = null;
 
@@ -1111,114 +1130,149 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
     const noteItems = [];
     let roleTag = '';
 
+    // 1. Áp dụng sự kiện trực tiếp trên sân (Độ chính xác tuyệt đối)
+    const directEvents = playerEventsMap[p.id] || [];
+    if (directEvents.length > 0) {
+      directEvents.forEach(evt => {
+        if (evt.type === 'WONDERGOAL') {
+          goals += 1;
+          score += 1.8;
+          noteItems.push(evt.note ? `🌟 Siêu phẩm: ${evt.note}` : '🌟 Ghi siêu phẩm đẳng cấp');
+          if (!roleTag) roleTag = '🌟 Siêu Phẩm Đỉnh Cao';
+        } else if (evt.type === 'GOAL') {
+          goals += 1;
+          score += 1.2;
+          noteItems.push(evt.note ? `⚽ Bàn thắng: ${evt.note}` : '⚽ Ghi bàn thắng quý giá');
+          if (!roleTag) roleTag = '⚽ Ghi Bàn';
+        } else if (evt.type === 'ASSIST') {
+          assists += 1;
+          score += 0.9;
+          noteItems.push(evt.note ? `👟 ${evt.note}` : '👟 Kiến tạo dọn cỗ sắc bén');
+          if (!roleTag) roleTag = '👟 Kiến Tạo';
+        } else if (evt.type === 'SAVE') {
+          score += 1.2;
+          noteItems.push(evt.note ? `🧤 Cứu thua: ${evt.note}` : '🧤 Cản phá xuất thần, cứu thua mười mươi');
+          if (!roleTag) roleTag = '🧤 Người Nhện';
+        } else if (evt.type === 'DEFENSE') {
+          score += 0.9;
+          noteItems.push(evt.note ? `🛡️ ${evt.note}` : '🛡️ Bọc lót, cắt bóng then chốt');
+          if (!roleTag) roleTag = '🛡️ Lá Chắn Thép';
+        } else if (evt.type === 'WOODWORK') {
+          score += 0.3;
+          noteItems.push(evt.note ? `🪵 Sút xà/cột: ${evt.note}` : '🪵 Dứt điểm hiểm hóc dội xà ngang/cột dọc');
+          if (!roleTag) roleTag = '⚡ Đen Đủi Xà Cột';
+        } else if (evt.type === 'MISS') {
+          score -= 0.8;
+          noteItems.push(evt.note ? `💨 Bỏ lỡ: ${evt.note}` : '💨 Bỏ lỡ cơ hội ngon ăn');
+          if (!roleTag) roleTag = '💨 Bỏ Lỡ Đáng Tiếc';
+        } else if (evt.type === 'FUNNY') {
+          score -= 0.3;
+          noteItems.push(evt.note ? `😂 Pha tấu hài: ${evt.note}` : '😂 Có pha xử lý tấu hài sân cỏ');
+          if (!roleTag) roleTag = '😂 Cây Hài Sân Cỏ';
+        } else if (evt.note) {
+          noteItems.push(evt.note);
+        }
+      });
+    }
+
+    // 2. Phân tích ngữ cảnh trong văn bản mô tả
     const contextChunks = playerContextMap[p.id];
     const isMentioned = !!contextChunks && contextChunks.length > 0;
     const playerCtx = isMentioned ? contextChunks.join(' ') : '';
 
     if (isMentioned) {
-      // 1. Phân tích Bàn thắng (Chỉ người có tên trong cụm từ mới được tính)
-      if (playerCtx.includes('poker') || playerCtx.includes('4 bàn')) {
-        goals = 4;
-        score += 2.5;
-        noteItems.push('⚽ Lập Poker 4 bàn thắng lịch sử');
-        roleTag = '🔥 Poker Thần Sầu';
-      } else if (playerCtx.includes('hattrick') || playerCtx.includes('3 bàn')) {
-        goals = 3;
-        score += 2.0;
-        noteItems.push('⚽ Lập hat-trick bùng nổ');
-        roleTag = '🎩 Hat-trick Anh Hùng';
-      } else if (playerCtx.includes('cú đúp') || playerCtx.includes('2 bàn')) {
-        goals = 2;
-        score += 1.6;
-        noteItems.push('⚽ Lập cú đúp bàn thắng');
-        roleTag = '⚽ Cú Đúp Đẳng Cấp';
-      } else if (playerCtx.includes('ghi được 1 bàn') || playerCtx.includes('ghi 1 bàn') || (playerCtx.includes('chớp cơ hội') && playerCtx.includes('ghi 1 bàn')) || playerCtx.includes('sút tung lưới') || playerCtx.includes('lập công') || playerCtx.includes('ghi bàn') || playerCtx.includes('nã đại bác') || playerCtx.includes('mở tỉ số') || playerCtx.includes('ấn định')) {
-        goals = 1;
-        score += 1.2;
-        noteItems.push('⚽ Ghi 1 bàn thắng quan trọng');
-        roleTag = '⚽ Ghi Bàn Quý Giá';
+      // Phân tích Bàn thắng bổ sung (nếu chưa có trong directEvents)
+      if (goals === 0) {
+        if (playerCtx.includes('poker') || playerCtx.includes('4 bàn')) {
+          goals = 4;
+          score += 2.5;
+          noteItems.push('⚽ Lập Poker 4 bàn thắng lịch sử');
+          roleTag = '🔥 Poker Thần Sầu';
+        } else if (playerCtx.includes('hattrick') || playerCtx.includes('3 bàn')) {
+          goals = 3;
+          score += 2.0;
+          noteItems.push('⚽ Lập hat-trick bùng nổ');
+          roleTag = '🎩 Hat-trick Anh Hùng';
+        } else if (playerCtx.includes('cú đúp') || playerCtx.includes('2 bàn')) {
+          goals = 2;
+          score += 1.6;
+          noteItems.push('⚽ Lập cú đúp bàn thắng');
+          roleTag = '⚽ Cú Đúp Đẳng Cấp';
+        } else if (playerCtx.includes('siêu phẩm') || playerCtx.includes('solo')) {
+          goals = 1;
+          score += 1.8;
+          noteItems.push('🌟 Ghi siêu phẩm đẳng cấp');
+          if (!roleTag) roleTag = '🌟 Siêu Phẩm Đỉnh Cao';
+        } else if (playerCtx.includes('ghi được 1 bàn') || playerCtx.includes('ghi 1 bàn') || playerCtx.includes('sút tung lưới') || playerCtx.includes('lập công') || playerCtx.includes('ghi bàn') || playerCtx.includes('nã đại bác') || playerCtx.includes('mở tỉ số') || playerCtx.includes('ấn định')) {
+          goals = 1;
+          score += 1.2;
+          noteItems.push('⚽ Ghi 1 bàn thắng quan trọng');
+          if (!roleTag) roleTag = '⚽ Ghi Bàn Quý Giá';
+        }
       }
 
-      // 2. Phân tích Kiến tạo
-      if (playerCtx.includes('2 kiến tạo') || playerCtx.includes('cú đúp kiến tạo')) {
-        assists = 2;
-        score += 1.4;
-        noteItems.push('👟 2 kiến tạo dọn cỗ sắc bén');
-        if (!roleTag) roleTag = '👟 Vua Kiến Tạo';
-      } else if (playerCtx.includes('1 kiến tạo') || playerCtx.includes('kiến tạo') || playerCtx.includes('dọn cỗ') || playerCtx.includes('chọc khe') || playerCtx.includes('tạt bóng chuẩn')) {
-        assists = 1;
-        score += 0.8;
-        noteItems.push('👟 1 kiến tạo chuẩn xác');
-        if (!roleTag) roleTag = '👟 Kiến Tạo Chuẩn Xác';
+      // Phân tích Kiến tạo bổ sung
+      if (assists === 0) {
+        if (playerCtx.includes('2 kiến tạo') || playerCtx.includes('cú đúp kiến tạo')) {
+          assists = 2;
+          score += 1.4;
+          noteItems.push('👟 2 kiến tạo dọn cỗ sắc bén');
+          if (!roleTag) roleTag = '👟 Vua Kiến Tạo';
+        } else if (playerCtx.includes('1 kiến tạo') || playerCtx.includes('kiến tạo') || playerCtx.includes('dọn cỗ') || playerCtx.includes('chọc khe') || playerCtx.includes('tạt bóng chuẩn')) {
+          assists = 1;
+          score += 0.8;
+          noteItems.push('👟 1 kiến tạo chuẩn xác');
+          if (!roleTag) roleTag = '👟 Kiến Tạo Chuẩn Xác';
+        }
       }
 
-      // 3. Phân tích Màn trình diễn Đỉnh cao & Tích cực
+      // Màn trình diễn Đỉnh cao & Tích cực
       if (playerCtx.includes('cực kì tốt') || playerCtx.includes('cực kỳ tốt') || playerCtx.includes('xuất sắc') || playerCtx.includes('gánh đội') || playerCtx.includes('gánh còng lưng') || playerCtx.includes('cháy hết mình')) {
-        score += 1.5;
+        score += 1.2;
         noteItems.push('⭐ Thi đấu cực kì xuất sắc');
         if (!roleTag) roleTag = '⭐ Điểm Sáng Trận Đấu';
       }
-      if (playerCtx.includes('đá thòng cực kì tốt') || playerCtx.includes('đá thòng cực hay') || playerCtx.includes('bọc lót đỉnh cao') || playerCtx.includes('không chiến dũng mãnh') || playerCtx.includes('khóa chặt')) {
-        score += 1.2;
-        noteItems.push('🛡️ Đá thòng bọc lót đỉnh cao');
+      if (playerCtx.includes('đá thòng') || playerCtx.includes('bọc lót') || playerCtx.includes('cắt bóng') || playerCtx.includes('không chiến') || playerCtx.includes('khóa chặt')) {
+        score += 0.8;
+        noteItems.push('🛡️ Phòng ngự bọc lót chắc chắn');
         if (!roleTag) roleTag = '🛡️ Lá Chắn Thép';
       }
-      if (playerCtx.includes('cản phá nhiều cơ hội') || playerCtx.includes('cứu thua') || playerCtx.includes('bắt chắc tay') || playerCtx.includes('bắt dính') || playerCtx.includes('xuất thần')) {
+      if (playerCtx.includes('cản phá') || playerCtx.includes('cứu thua') || playerCtx.includes('bắt chắc tay') || playerCtx.includes('bắt dính') || playerCtx.includes('xuất thần')) {
         score += 0.9;
         noteItems.push('🧤 Cản phá nhiều cơ hội nguy hiểm');
-        if (!roleTag) roleTag = '🧤 Người Nhện Khung Thành';
+        if (!roleTag) roleTag = '🧤 Người Nhện';
       }
-      if (playerCtx.includes('tạo ra nhiều đường tấn công') || playerCtx.includes('phát động tấn công') || playerCtx.includes('cầm nhịp') || playerCtx.includes('chia bài') || playerCtx.includes('làm chủ tuyến giữa')) {
+      if (playerCtx.includes('phát động tấn công') || playerCtx.includes('cầm nhịp') || playerCtx.includes('chia bài') || playerCtx.includes('làm chủ tuyến giữa')) {
         score += 0.8;
-        noteItems.push('Tạo nhiều đường phát động tấn công sắc nét');
+        noteItems.push('🎯 Cầm nhịp và phát động tấn công sắc nét');
         if (!roleTag) roleTag = '🎯 Nhạc Trưởng Tuyến Giữa';
       }
-      if (playerCtx.includes('đúng chiến thuật') || playerCtx.includes('chớp cơ hội') || playerCtx.includes('chớp thời cơ')) {
-        score += 0.5;
-        noteItems.push('Đá đúng chiến thuật, chớp thời cơ tốt');
-      }
-      if (playerCtx.includes('sau dần đá tốt') || playerCtx.includes('càng đá càng tốt') || playerCtx.includes('bắt nhịp tốt')) {
-        score += 0.4;
-        noteItems.push('Về sau dần bắt nhịp và đá tốt');
-      }
 
-      // 4. Mức độ Tròn vai & Ổn định
-      if (playerCtx.includes('tròn vai')) {
-        score = Math.max(score, 6.4);
-        if (goals === 0) noteItems.push('Thi đấu tròn vai');
-        if (!roleTag) roleTag = '⚖️ Tròn Vai';
-      }
-      if (playerCtx.includes('đá ổn') || playerCtx.includes('không quá đột biến') || playerCtx.includes('tạm ổn')) {
-        score = 6.4;
-        noteItems.push('Đá ổn định, chưa có nhiều đột biến');
-        if (!roleTag) roleTag = '⚖️ Ổn Định';
-      }
-
-      // 5. ĐIỂM TRỪ NGHIÊM KHẮC (KHÔNG NỊNH - CHUẨN XÁC)
-      if (playerCtx.includes('triển khai bóng bằng chân yếu') || playerCtx.includes('ảnh hưởng lối chơi') || playerCtx.includes('chân yếu') || playerCtx.includes('bắt bóng lập bập') || playerCtx.includes('ói bóng')) {
+      // Điểm trừ nghiêm khắc
+      if (playerCtx.includes('triển khai bóng bằng chân yếu') || playerCtx.includes('chân yếu') || playerCtx.includes('bắt bóng lập bập') || playerCtx.includes('ói bóng')) {
         score -= 1.1;
-        noteItems.push('⚠️ Triển khai bóng bằng chân yếu, ảnh hưởng lối chơi');
+        noteItems.push('⚠️ Xử lý chân lập bập, ảnh hưởng lối chơi');
         roleTag = '⚠️ Xử Lý Chân Kém';
       }
-      if (playerCtx.includes('đá dưới cơ') || playerCtx.includes('dưới sức') || playerCtx.includes('đuối sức') || playerCtx.includes('hết pin')) {
+      if (playerCtx.includes('bỏ lỡ') || playerCtx.includes('chân gỗ')) {
         score -= 0.8;
-        noteItems.push('⚠️ Thi đấu dưới sức');
-        if (!roleTag) roleTag = '⚠️ Dưới Sức';
+        noteItems.push('💨 Bỏ lỡ cơ hội đáng tiếc');
+        if (!roleTag) roleTag = '💨 Bỏ Lỡ Đáng Tiếc';
       }
-      if (playerCtx.includes('mắc sai lầm') || playerCtx.includes('mắc một vài sai lầm') || playerCtx.includes('lỗi khá nhiều') || playerCtx.includes('lỗi nhiều') || playerCtx.includes('lúc đầu lỗi') || playerCtx.includes('bóp team') || playerCtx.includes('bóp dái')) {
+      if (playerCtx.includes('tấu hài') || playerCtx.includes('vấp cỏ')) {
+        score -= 0.3;
+        noteItems.push('😂 Có pha tấu hài trên sân');
+        if (!roleTag) roleTag = '😂 Cây Hài Sân Cỏ';
+      }
+      if (playerCtx.includes('mắc sai lầm') || playerCtx.includes('lỗi nhiều') || playerCtx.includes('bóp team')) {
         score -= 0.8;
         noteItems.push('⚠️ Mắc sai lầm xử lý bóng');
         if (!roleTag) roleTag = '⚠️ Mắc Sai Lầm';
       }
-      if (playerCtx.includes('bị kèm chặt') || playerCtx.includes('không có nhiều không gian') || playerCtx.includes('mắc võng')) {
-        score -= 0.5;
-        noteItems.push('⚠️ Bị đối phương kèm chặt, thiếu không gian');
-        if (!roleTag) roleTag = '⚠️ Thiếu Không Gian';
-      }
-      if (playerCtx.includes('thiếu sức sống') || playerCtx.includes('không có cảm giác bóng') || playerCtx.includes('chân gỗ') || playerCtx.includes('bỏ lỡ mười mươi')) {
-        score -= 1.1;
-        noteItems.push('⚠️ Thiếu sức sống, không có cảm giác bóng');
-        roleTag = '⚠️ Mất Cảm Giác Bóng';
+      if (playerCtx.includes('dưới sức') || playerCtx.includes('đuối sức') || playerCtx.includes('hết pin')) {
+        score -= 0.8;
+        noteItems.push('⚠️ Thi đấu dưới sức');
+        if (!roleTag) roleTag = '⚠️ Dưới Sức';
       }
 
       // Thẻ phạt
@@ -1232,22 +1286,22 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
         score -= 0.4;
         noteItems.push('🟨 Nhận thẻ vàng');
       }
-    } else {
+    } else if (directEvents.length === 0) {
       if (isStarter) {
         score = baseStarterRating;
-        noteItems.push('Hoàn thành nhiệm vụ trên sân');
-        roleTag = 'Hoàn thành nhiệm vụ';
+        noteItems.push('Thi đấu tròn vai, hoàn thành nhiệm vụ');
+        roleTag = '⚖️ Tròn Vai';
       } else {
         score = baseSubRating;
-        noteItems.push('Dự bị trận đấu');
-        roleTag = 'Dự bị';
+        noteItems.push('Dự bị vào sân thi đấu nỗ lực');
+        roleTag = '🔄 Dự Bị';
       }
     }
 
-    // Giới hạn điểm: từ 4.0 đến 9.9
+    // Khống chế điểm chuẩn xác thang Sofascore: 4.0 -> 9.9
     score = Math.max(4.0, Math.min(9.9, Math.round(score * 10) / 10));
 
-    let finalNote = noteItems.join(' • ');
+    let finalNote = noteItems.length > 0 ? noteItems.join(' • ') : (isStarter ? 'Hoàn thành nhiệm vụ trên sân' : 'Dự bị trận đấu');
 
     if (score > highestScore) {
       highestScore = score;
@@ -1262,7 +1316,7 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
       assists,
       yellowCards,
       redCards,
-      tag: roleTag,
+      tag: roleTag || (isStarter ? '⚖️ Tròn Vai' : '🔄 Dự Bị'),
       note: finalNote
     };
   });
@@ -1273,12 +1327,12 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
   const matchHeadline = isWin 
     ? `🔥 Chiến Thắng Thuyết Phục ${homeScore} - ${awayScore} Trước ${opponent}!` 
     : isLoss 
-    ? `⚡ Trận Cầu Đầy Nỗ Lực Nhưng Chưa May Mắn (${homeScore} - ${awayScore} vs ${opponent})`
+    ? `⚡ Trận Cầu Nỗ Lực (${homeScore} - ${awayScore} vs ${opponent})`
     : `🤝 Màn Rượt Đuổi Tỉ Số Kịch Tính ${homeScore} - ${awayScore} vs ${opponent}`;
 
   const matchSummary = isLoss 
-    ? `Trận đấu gặp ${opponent} kết thúc với tỉ số ${homeScore} - ${awayScore}. Đội bóng thi đấu chưa đúng với phong độ vốn có, còn bộc lộ một số sai lầm cá nhân nhưng cũng có những điểm sáng nỗ lực.`
-    : `Trận đấu giữa FC TNT và ${opponent} diễn ra sôi nổi với tỉ số chung cuộc ${homeScore} - ${awayScore}. Toàn đội đã thể hiện tinh thần quyết tâm và cống hiến hết mình.`;
+    ? `Trận đấu gặp ${opponent} kết thúc với tỉ số ${homeScore} - ${awayScore}. Đội bóng thi đấu nhiệt huyết nhưng còn bộc lộ một số sai sót trước đối thủ, ghi nhận nhiều nỗ lực cá nhân nổi bật.`
+    : `Trận đấu giữa FC TNT và ${opponent} diễn ra sôi nổi với tỉ số chung cuộc ${homeScore} - ${awayScore}. Toàn đội thể hiện tinh thần quyết tâm cao, các cá nhân phối hợp ăn ý và cống hiến hết mình.`;
 
   return {
     matchHeadline,
@@ -1292,7 +1346,7 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration }) {
 // Route POST /api/ai/rate-match
 app.post('/api/ai/rate-match', async (req, res) => {
   try {
-    const { matchInfo, playerList, matchNarration, apiKey } = req.body;
+    const { matchInfo, playerList, matchNarration, liveEvents, apiKey } = req.body;
 
     if (!playerList || !Array.isArray(playerList) || playerList.length === 0) {
       return res.status(400).json({ success: false, error: 'Danh sách cầu thủ không hợp lệ!' });
@@ -1300,41 +1354,51 @@ app.post('/api/ai/rate-match', async (req, res) => {
 
     const geminiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-    // If Gemini key is available, call Google Gemini 1.5 / 2.0 Flash
+    // If Gemini key is available, call Google Gemini Flash
     if (geminiKey) {
       try {
         const playerInfoText = playerList.map(p => 
           `- ID: "${p.id}", Tên: "${p.name}", Biệt danh: "${p.nickname || ''}", Số áo: #${p.number}, Vị trí: ${p.position}, Đá chính: ${p.isStarter !== false ? 'Có' : 'Dự bị'}`
         ).join('\n');
 
+        let eventsText = 'Không có sự kiện thô riêng biệt.';
+        if (Array.isArray(liveEvents) && liveEvents.length > 0) {
+          eventsText = liveEvents.map(e => 
+            `- Phút ${e.minute || 0}': [${e.typeLabel || e.type}] ${e.playerName || 'Đội bóng'} ${e.assistPlayerName ? `(Kiến tạo: ${e.assistPlayerName})` : ''} - ${e.note || ''}`
+          ).join('\n');
+        }
+
         const systemInstruction = `Bạn là Chuyên gia phân tích bóng đá và Bình luận viên giải bóng đá phủi Việt Nam (Sân 7 người) của FC TNT.
 
 QUY TẮC CHẤM ĐIỂM BẮT BUỘC (TUÂN THỦ TUYỆT ĐỐI):
-1. KHÔNG NỊNH NỌT, ĐÁNH GIÁ CÔNG TÂM, KHẮT KHE CHUẨN XÁC theo đúng mô tả của người dùng.
-2. TUYỆT ĐỐI KHÔNG TỰ BỊA BÀN THẮNG HOẶC KIẾN TẠO: Chỉ ghi nhận "goals": 1, 2... hoặc "assists": 1, 2... nếu trong văn bản người dùng NÓI RÕ người đó ghi bàn/kiến tạo! Những người khác BẮT BUỘC "goals": 0, "assists": 0!
-3. THANG ĐIỂM SOFASCORE CHUẨN:
-   - Thi đấu tệ / mắc sai lầm / chân yếu ảnh hưởng lối chơi / mất cảm giác bóng / thiếu sức sống: 4.0 - 5.4 điểm.
-   - Thi đấu dưới sức / bị kèm chặt / chưa có đột biến: 5.5 - 6.2 điểm.
-   - Thi đấu tròn vai / ổn định: 6.4 - 6.8 điểm.
-   - Thi đấu tốt / ghi bàn / kiến tạo / cứu thua: 7.2 - 8.0 điểm.
-   - Xuất sắc nhất trận (gánh đội, đá thòng cực tốt, cản phá nhiều): 8.5 - 9.5 điểm.
+1. ĐÁNH GIÁ CÔNG TÂM, KHẮT KHE CHUẨN XÁC theo đúng diễn biến thực tế được ghi nhận trên sân.
+2. TUÂN THỦ CHÍNH XÁC SỰ KIỆN SÂN CỎ:
+   - Cầu thủ có bàn thắng hoặc siêu phẩm: "goals" >= 1, rating 7.8 - 9.2, tag: "🌟 Siêu Phẩm" hoặc "⚽ Ghi Bàn", note ghi rõ bàn thắng.
+   - Cầu thủ kiến tạo: "assists" >= 1, rating 7.4 - 8.4, tag: "👟 Kiến Tạo", note ghi rõ đường kiến tạo.
+   - Thủ môn/Hậu vệ cứu thua xuất thần: rating 7.8 - 8.8, tag: "🧤 Người Nhện" hoặc "🛡️ Cứu Thua Xuất Thần".
+   - Cắt bóng / bọc lót tốt: rating 7.4 - 8.0, tag: "🛡️ Lá Chắn Thép".
+   - Bỏ lỡ cơ hội ngon ăn: rating 5.5 - 6.2, tag: "💨 Bỏ Lỡ Đáng Tiếc".
+   - Pha tấu hài / vấp bóng: rating 5.8 - 6.5, tag: "😂 Cây Hài Sân Cỏ".
+   - Thi đấu tròn vai không sự kiện nổi bật: Đá chính 6.4 - 6.8, Dự bị 6.0 - 6.5.
+   - Mắc sai lầm / chân yếu / ói bóng: rating 4.5 - 5.5.
+3. TUYỆT ĐỐI KHÔNG TỰ BỊA BÀN THẮNG/KIẾN TẠO nếu không có trong diễn biến!
 4. BẢNG BIỆT DANH FC TNT:
-   - "Duy Vinh" / "Vinh" = Vinh Lê
-   - "Tố Địu" / "Tô Diệu" = ToDiu
-   - "Trí Hoàn" / "Hoàn" = Trí Hoàn
-   - "Quang" / "Côn" = Côn 35K1 (Quang)
-   - "Bắc" = Đức Bắc
-   - "Giang" = Trường Giang
-   - "Dũng" = Công Dũng
-   - "Nam" = Thành Nam
-   - "Thọ" = Tài Thọ
-   - "Hùng" = Hùng Sứt
-   - "Quân" = Quân Kun
+   - "Vinh" / "Duy Vinh" = Vinh Lê
+   - "ToDiu" / "Tố Địu" / "Tô Diệu" = ToDiu
+   - "Hoàn" / "Trí Hoàn" = Trí Hoàn
+   - "Côn" / "Quang" / "Côn 35K1" = Côn 35K1
+   - "Bắc" / "Đức Bắc" = Đức Bắc
+   - "Giang" / "Trường Giang" = Trường Giang
+   - "Dũng" / "Công Dũng" = Công Dũng
+   - "Nam" / "Thành Nam" = Thành Nam
+   - "Thọ" / "Tài Thọ" = Tài Thọ
+   - "Hùng" / "Hùng Sứt" = Hùng Sứt
+   - "Quân" / "Quân Kun" = Quân Kun
 
 Trả về đúng chuẩn JSON không có định dạng markdown hay văn bản thừa:
 {
-  "matchHeadline": "Tiêu đề trận đấu súc tích, thực tế",
-  "matchSummary": "Đoạn tóm tắt nhận định tổng quan 2 câu về trận đấu",
+  "matchHeadline": "Tiêu đề trận đấu súc tích, phản ánh đúng kết quả",
+  "matchSummary": "Tóm tắt nhận định 2-3 câu về trận đấu",
   "motmPlayerId": "ID của cầu thủ xuất sắc nhất trận",
   "ratings": [
     {
@@ -1344,8 +1408,8 @@ Trả về đúng chuẩn JSON không có định dạng markdown hay văn bản
       "assists": 0,
       "yellowCards": 0,
       "redCards": 0,
-      "tag": "🛡️ Lá chắn thép",
-      "note": "1 câu nhận xét chân thực, thẳng thắn, có emoji"
+      "tag": "🛡️ Lá Chắn Thép",
+      "note": "1 câu nhận xét chân thực, sắc sảo, có emoji"
     }
   ]
 }`;
@@ -1355,42 +1419,59 @@ Trả về đúng chuẩn JSON không có định dạng markdown hay văn bản
 - Tỉ số: ${matchInfo?.homeScore ?? 0} - ${matchInfo?.awayScore ?? 0}
 - Kết quả: ${matchInfo?.result || 'LOSS'}
 
-DANH SÁCH CẦU THỦ THAM GIA:
+DANH SÁCH CẦU THỦ RA SÂN:
 ${playerInfoText}
 
-MÔ TẢ DIỄN BIẾN & PHONG ĐỘ CỦA QUẢN TRỊ VIÊN:
+SỰ KIỆN GHI NHẬN TRỰC TIẾP TRÊN SÂN:
+${eventsText}
+
+MÔ TẢ CHI TIẾT & DIỄN BIẾN TRẬN ĐẤU:
 """
 ${matchNarration || 'Đánh giá dựa trên tỉ số và số liệu thống kê thực tế.'}
 """
 
-Hãy chấm điểm toàn bộ cầu thủ trong danh sách đúng theo mô tả và trả về JSON chuẩn xác.`;
+Hãy chấm điểm toàn bộ cầu thủ trong danh sách đúng theo mô tả và sự kiện trên sân rồi trả về JSON chuẩn xác.`;
 
-        const modelName = 'gemini-1.5-flash';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
+        const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+        let geminiData = null;
 
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `${systemInstruction}\n\n${userPrompt}` }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              temperature: 0.1
-            }
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            const parsed = JSON.parse(rawText);
-            return res.json({
-              success: true,
-              ...parsed,
-              source: `Google Gemini AI (${modelName})`
+        for (const modelName of modelsToTry) {
+          try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: `${systemInstruction}\n\n${userPrompt}` }] }],
+                generationConfig: {
+                  responseMimeType: "application/json",
+                  temperature: 0.1
+                }
+              })
             });
+
+            if (response.ok) {
+              const data = await response.json();
+              const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (rawText) {
+                geminiData = {
+                  parsed: JSON.parse(rawText),
+                  modelName
+                };
+                break;
+              }
+            }
+          } catch (mErr) {
+            console.warn(`Model ${modelName} failed:`, mErr.message);
           }
+        }
+
+        if (geminiData) {
+          return res.json({
+            success: true,
+            ...geminiData.parsed,
+            source: `Google Gemini AI (${geminiData.modelName})`
+          });
         }
       } catch (geminiErr) {
         console.warn('Gemini API error, switching to NLP fallback:', geminiErr.message);
@@ -1398,7 +1479,7 @@ Hãy chấm điểm toàn bộ cầu thủ trong danh sách đúng theo mô tả
     }
 
     // Fallback to Smart NLP Engine
-    const fallbackResult = analyzeMatchWithNLP({ matchInfo, playerList, matchNarration });
+    const fallbackResult = analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents });
     return res.json({
       success: true,
       ...fallbackResult
