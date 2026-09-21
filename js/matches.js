@@ -305,6 +305,9 @@ window.matchesModule = {
 
     this.closeCreateMatchModal();
     this.renderMatches();
+    if (this.currentMatchId) {
+      this.openMatchDetailModal(this.currentMatchId);
+    }
     if (window.awardsModule) window.awardsModule.renderAwards();
     if (window.appModule) window.appModule.renderDashboard();
   },
