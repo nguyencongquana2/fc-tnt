@@ -335,9 +335,10 @@ window.matchesModule = {
           ${m.note ? `<div style="font-size: 0.82rem; color: var(--accent-gold); margin-top: 0.25rem;">💬 ${m.note}</div>` : ''}
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          ${(m.date === new Date().toISOString().split('T')[0]) ? `
           <button class="btn btn-emerald btn-sm" onclick="window.matchesModule.openLiveCompanionModal('${m.id}')" title="Mở Trợ lý Sân cỏ trực tiếp để ghi nhận sự kiện trên sân">
             🏟️ Trợ Lý Sân Cỏ
-          </button>
+          </button>` : ''}
           <button class="btn btn-secondary btn-sm" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
             💰 Tiền Sân & Chia Tiền
           </button>
@@ -1947,11 +1948,16 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     const modal = document.getElementById('live-companion-modal');
     if (!modal) return;
 
-    this.livePitchState.matchId = matchId;
-
     if (matchId) {
       const m = window.stateManager.getMatchById(matchId);
       if (m) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (m.date && m.date < todayStr) {
+          const ok = window.confirm(`⚠️ CẢNH BÁO: Trận gặp "${m.opponent}" đã diễn ra ngày ${m.date}.\nBạn có chắc chắn muốn mở Trợ lý Sân Cỏ cho trận này không?`);
+          if (!ok) return;
+        }
+        this.livePitchState.matchId = matchId;
+        this.livePitchState.date = m.date; // Bảo lưu ngày gốc của trận đấu
         this.livePitchState.opponent = m.opponent || 'FC Đối Thủ';
         this.livePitchState.venue = m.venue || 'Sân bóng';
         this.livePitchState.homeScore = Number(m.homeScore) || 0;
@@ -1995,8 +2001,18 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         }
       }
     } else {
+      this.livePitchState.matchId = null;
+      this.livePitchState.date = null;
       // Đọc bản nháp từ Cloud/Local để đồng bộ tiếp tục trận đấu
       await this.loadLiveDraft();
+      // Nếu bản nháp chứa matchId của một trận trong quá khứ, loại bỏ matchId để tránh ghi đè
+      if (this.livePitchState.matchId) {
+        const oldM = window.stateManager.getMatchById(this.livePitchState.matchId);
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (oldM && oldM.date && oldM.date < todayStr) {
+          this.livePitchState.matchId = null;
+        }
+      }
     }
 
     // Khởi tạo danh sách cầu thủ có mặt nếu chưa có
@@ -3307,19 +3323,28 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     const playerStats = Object.values(playerStatsMap);
 
+    const existingMatch = this.livePitchState.matchId
+      ? window.stateManager.getMatchById(this.livePitchState.matchId)
+      : null;
+
     const matchPayload = {
-      date: new Date().toISOString().split('T')[0],
-      time: '19:30',
+      date: existingMatch?.date || this.livePitchState.date || new Date().toISOString().split('T')[0],
+      time: existingMatch?.time || '19:30',
       opponent,
-      venue: this.livePitchState.venue || 'Sân bóng Tân Triều',
-      type: '7',
-      formation: '3-1-2',
+      venue: this.livePitchState.venue || existingMatch?.venue || 'Sân bóng Tân Triều',
+      type: existingMatch?.type || '7',
+      formation: existingMatch?.formation || '3-1-2',
       homeScore,
       awayScore,
       result,
       note: `Ghi nhận trực tiếp ngoài sân (${attendingPlayers.length} cầu thủ có mặt • ${this.livePitchState.events.length} sự kiện)`,
       playerStats
     };
+
+    // Bảo toàn nguyên vẹn dữ liệu quỹ & tiền sân nếu trận đã có sẵn
+    if (existingMatch && existingMatch.finance) {
+      matchPayload.finance = existingMatch.finance;
+    }
 
     let savedMatch;
     if (this.livePitchState.matchId) {
