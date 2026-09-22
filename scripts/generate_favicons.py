@@ -157,46 +157,40 @@ def create_fc_tnt_logo(size=512):
 if __name__ == "__main__":
     import os
     
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    assets_dir = os.path.join(base_dir, "assets")
-    os.makedirs(assets_dir, exist_ok=True)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    icons_dir = os.path.join(base_dir, "assets", "icons")
+    images_dir = os.path.join(base_dir, "assets", "images")
+    os.makedirs(icons_dir, exist_ok=True)
+    os.makedirs(images_dir, exist_ok=True)
     
     # 512x512 Master Logo
     logo_512 = create_fc_tnt_logo(512)
-    logo_512.save(os.path.join(assets_dir, "logo-512.png"), format="PNG")
-    logo_512.save(os.path.join(assets_dir, "logo.png"), format="PNG")
+    logo_512.save(os.path.join(images_dir, "logo-512.png"), format="PNG")
+    logo_512.save(os.path.join(images_dir, "logo.png"), format="PNG")
     
     # 192x192 Icon
     logo_192 = logo_512.resize((192, 192), Image.Resampling.LANCZOS)
-    logo_192.save(os.path.join(assets_dir, "favicon-192.png"), format="PNG")
-    logo_192.save(os.path.join(base_dir, "favicon.png"), format="PNG")
+    logo_192.save(os.path.join(icons_dir, "favicon-192.png"), format="PNG")
+    logo_192.save(os.path.join(icons_dir, "favicon.png"), format="PNG")
     
     # 180x180 Apple Touch Icon
     logo_180 = logo_512.resize((180, 180), Image.Resampling.LANCZOS)
-    logo_180.save(os.path.join(assets_dir, "apple-touch-icon.png"), format="PNG")
-    logo_180.save(os.path.join(base_dir, "apple-touch-icon.png"), format="PNG")
+    logo_180.save(os.path.join(icons_dir, "apple-touch-icon.png"), format="PNG")
     
     # 48x48 Icon for Google Search Favicon requirement (multiple of 48px)
     logo_48 = logo_512.resize((48, 48), Image.Resampling.LANCZOS)
-    logo_48.save(os.path.join(assets_dir, "favicon-48.png"), format="PNG")
-    logo_48.save(os.path.join(base_dir, "favicon-48.png"), format="PNG")
+    logo_48.save(os.path.join(icons_dir, "favicon-48.png"), format="PNG")
     
     # Favicon.ico with multi-size (16, 32, 48, 64)
     logo_16 = logo_512.resize((16, 16), Image.Resampling.LANCZOS)
     logo_32 = logo_512.resize((32, 32), Image.Resampling.LANCZOS)
     logo_64 = logo_512.resize((64, 64), Image.Resampling.LANCZOS)
     
-    ico_path = os.path.join(base_dir, "favicon.ico")
+    ico_path = os.path.join(icons_dir, "favicon.ico")
     logo_512.save(
         ico_path,
         format="ICO",
         sizes=[(16, 16), (32, 32), (48, 48), (64, 64)]
     )
-    # Also save in assets/favicon.ico
-    logo_512.save(
-        os.path.join(assets_dir, "favicon.ico"),
-        format="ICO",
-        sizes=[(16, 16), (32, 32), (48, 48), (64, 64)]
-    )
     
-    print("Successfully generated all favicon & logo assets!")
+    print("Successfully generated all favicon & logo assets in assets/icons and assets/images!")

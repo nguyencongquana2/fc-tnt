@@ -73,9 +73,12 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 
 ---
 
-## 🤖 7. Hệ Thống Trí Tuệ Nhân Tạo (FC TNT AI Intelligence) 💡 *(Ý tưởng mới)*
-* **Mục đích**: Ứng dụng AI (Gemini / OpenAI) làm trợ lý ảo thông minh cho đội bóng, tăng tính chuyên nghiệp và tương tác giải trí.
-* **Tính năng chi tiết**:
+## 🤖 7. Hệ Thống Trí Tuệ Nhân Tạo (FC TNT AI Intelligence)
+* **Mục đích**: Ứng dụng AI (Gemini Flash & NLP Rules) làm trợ lý ảo thông minh cho đội bóng, tăng tính chuyên nghiệp, công tâm và tính tương tác giải trí.
+* **Các tính năng đã hoàn thiện**:
+  - ✅ **AI Match Rating (Chấm điểm phong độ thang điểm 10 Sofascore)**: Tự động phân tích diễn biến và sự kiện trực tiếp trên sân để chấm điểm từng cầu thủ, phát hiện bàn thắng, kiến tạo, MOTM, pha tấu hài và cứu thua (`/api/ai/rate-match`).
+  - ✅ **AI Pitch & Weather Consultant (Cố vấn thời tiết & mặt sân AKKA)**: Tự động phân tích lượng mưa, độ ẩm, tốc độ róc nước của nền sân đá mi AKKA để tư vấn trang phục, loại giày đinh TF và khả năng thi đấu (`/api/weather/ai-consultant`).
+* **Ý tưởng mở rộng tương lai**:
   - **AI Match Reporter**: Tự động sinh bài báo tổng thuật trận đấu siêu cuốn, giật tít hài hước theo phong cách BLV Tạ Biên Cương / VTV để chia sẻ lên nhóm Zalo/Facebook.
   - **AI Team Balancer**: Tự động chia 2 đội hình đá tập nội bộ cân bằng sức mạnh và vị trí dựa trên danh sách điểm danh.
   - **AI FIFA Rating & Card**: Tự động tính chỉ số cầu thủ (OVR, Sút, Chuyền, Thể lực...) dựa trên dữ liệu thi đấu thực tế.
@@ -89,7 +92,7 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 * **Tính năng chi tiết**:
   - ⚽ **Thông báo Kèo Đấu Mới & Kêu Gọi Điểm Danh**:
     - Khi Admin tạo lịch thi đấu mới -> Bot tự động gửi tin nhắn vào nhóm Zalo:
-      > *"📢 [FC TNT - LỊCH ĐẤU MỚI] ⚽*\n*• Thời gian: 19:30 - Thứ 6 (12/09)*\n*• Sân: Sân bóng Tân Triều*\n*• Đối thủ: FC Bạn Hữu*\n*👉 Anh em truy cập web bấm Điểm danh gấp nhé: https://fc-tnt.vercel.app"*
+      > *"📢 [FC TNT - LỊCH ĐẤU MỚI] ⚽*\n*• Thời gian: 19:30 - Thứ 6 (12/09)*\n*• Sân: Sân bóng Tân Triều*\n*• Đối thủ: FC Bạn Hữu*\n*👉 Anh em truy cập web bấm Điểm danh gấp nhé: https://fc-tnt.onrender.com/"*
   - ⏱️ **Nhắc nhở tự động trước giờ bóng lăn (24h & 4h)**:
     - Báo cáo số lượng anh em đã bấm "Đi được", "Đi muộn" hoặc "Vắng" để chốt quân số kịp thời.
   - 🏆 **Báo cáo Kết quả & Chia sẻ Poster Sau Trận**:
@@ -113,5 +116,5 @@ Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương
 
 ---
 
-*📅 Ngày cập nhật: 15/09/2026 • Đội bóng: FC TNT*
+*📅 Ngày cập nhật: 22/09/2026 • Đội bóng: FC TNT*
 
