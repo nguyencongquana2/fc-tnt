@@ -373,32 +373,34 @@ window.matchesModule = {
 
     const infoHeader = document.getElementById('match-detail-info-header');
     infoHeader.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 0.85rem 1rem; border-radius: var(--radius-lg); margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-        <div>
-          <div style="font-weight: 800; font-size: 1.15rem; color: #fff;">
-            ${teamInfo?.name || 'Đội nhà'} <span style="color: var(--accent-emerald);">${m.homeScore}</span> : <span style="color: #f87171;">${m.awayScore}</span> ${m.opponent}
+      <div class="match-detail-header-compact">
+        <div class="match-detail-header-left">
+          <div class="match-detail-header-teams">
+            ${teamInfo?.name || 'Đội nhà'} <span class="score-win-highlight">${m.homeScore}</span> : <span class="score-loss-highlight">${m.awayScore}</span> ${m.opponent}
           </div>
-          <div style="font-size: 0.82rem; color: var(--text-dim); margin-top: 0.15rem;">
-            📅 ${m.date} • 📍 ${m.venue || 'Sân bóng'} • <span style="color: var(--accent-gold); font-weight:700;">Sơ đồ Sân 7: 3-1-2 (3 Hậu vệ • 1 Giữa • 2 Cánh)</span>
+          <div class="match-detail-header-sub">
+            <span>📅 ${m.date}</span>
+            <span>📍 ${m.venue || 'Sân bóng'}</span>
+            <span class="formation-tag">Sân 7 • 3-1-2</span>
+            ${m.note ? `<span class="note-tag" title="${m.note}">💬 ${m.note}</span>` : ''}
           </div>
-          ${m.note ? `<div style="font-size: 0.82rem; color: var(--accent-gold); margin-top: 0.25rem;">💬 ${m.note}</div>` : ''}
         </div>
-        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-          <button class="btn btn-secondary btn-sm" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
-            💰 Tiền Sân & Chia Tiền
+        <div class="match-detail-header-actions">
+          <button class="btn btn-secondary btn-sm" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); padding: 0.25rem 0.55rem; font-size: 0.78rem;">
+            💰 Tiền Sân
           </button>
-          <button class="btn btn-ai-sparkle btn-sm" onclick="window.matchesModule.openAiRatingModal('${m.id}')" title="Tự động chấm điểm & viết nhận xét bằng AI">
+          <button class="btn btn-ai-sparkle btn-sm" onclick="window.matchesModule.openAiRatingModal('${m.id}')" title="Tự động chấm điểm & viết nhận xét bằng AI" style="padding: 0.25rem 0.55rem; font-size: 0.78rem;">
             🤖 AI Chấm Điểm
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.scrollToReviews()" title="Xem toàn bộ nhận xét chi tiết của từng cầu thủ">
-            💬 Xem Nhận Xét
+          <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.scrollToReviews()" title="Xem toàn bộ nhận xét chi tiết của từng cầu thủ" style="padding: 0.25rem 0.55rem; font-size: 0.78rem;">
+            💬 Nhận Xét
           </button>
-          <button class="btn btn-gold btn-sm" onclick="window.posterModule.openPosterModal('${m.id}')" title="Xuất Poster Ảnh Khoe Mạng Xã Hội">
-            🎨 Xuất Poster Match Card
+          <button class="btn btn-gold btn-sm" onclick="window.posterModule.openPosterModal('${m.id}')" title="Xuất Poster Ảnh Khoe Mạng Xã Hội" style="padding: 0.25rem 0.55rem; font-size: 0.78rem;">
+            🎨 Poster
           </button>
           ${window.stateManager.isAdmin ? `
-            <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.requestEditMatch('${m.id}')">✏️ Sửa Tỉ Số / Đội Hình</button>
-            <button class="btn btn-danger btn-sm" onclick="window.matchesModule.requestDeleteMatch('${m.id}')">🗑️ Xóa Trận</button>
+            <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.requestEditMatch('${m.id}')" style="padding: 0.25rem 0.55rem; font-size: 0.78rem;">✏️ Sửa</button>
+            <button class="btn btn-danger btn-sm" onclick="window.matchesModule.requestDeleteMatch('${m.id}')" style="padding: 0.25rem 0.55rem; font-size: 0.78rem;">🗑️ Xóa</button>
           ` : ''}
         </div>
       </div>
@@ -508,7 +510,7 @@ window.matchesModule = {
         <div class="match-detail-split-layout">
           <!-- CỘT TRÁI: SÂN BÓNG 3-1-2 TRỌN VẸN (KÉO THẢ ĐỔI VỊ TRÍ) -->
           <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.4rem;">
               <span style="font-family: var(--font-display); font-size: 0.85rem; font-weight: 800; color: var(--accent-gold); letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.4rem;">
                 🏟️ SƠ ĐỒ 3-1-2 TRÊN SÂN
                 <span style="background: rgba(16,185,129,0.2); color: var(--accent-emerald); font-size: 0.7rem; padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid rgba(16,185,129,0.4);">

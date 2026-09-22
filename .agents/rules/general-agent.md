@@ -2,7 +2,11 @@
 trigger: always_on
 ---
 
-- Không tự động quét toàn bộ codebase trừ khi được yêu cầu rõ ràng.
-- Với các câu hỏi chào hỏi hoặc giao tiếp đơn giản: trả lời ngay lập tức, không gọi bất kỳ công cụ (tools) nào.
-- Chỉ đọc hoặc chỉnh sửa các file được nhắc tên cụ thể trong câu lệnh.
-- Bỏ qua các thư mục build/cache như node_modules, target, dist, .git khi phân tích.
+# Core Rules for Agent
+- Architecture Reference: Always refer to ARCHITECTURE.md before exploring or modifying the codebase.
+- Scope Limitation: Only read or edit files explicitly mentioned in the user prompt or strictly necessary for the request.
+- Ignore Non-Code Assets: Never search or read files inside node_modules, assets, or icons unless explicitly instructed.
+- Performance:
+  - For conversational greetings or simple questions, answer directly without executing terminal tools or file scans.
+  - Follow the existing project structure defined in ARCHITECTURE.md.
+  - Update FEATURE_ROADMAP.md only when a major feature is completed and requested by user.

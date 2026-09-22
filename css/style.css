@@ -596,10 +596,73 @@ body {
 /* ==========================================================================
    2-COLUMN MATCH DETAIL LAYOUT (PITCH LEFT + BENCH/EDIT RIGHT)
    ========================================================================== */
+.match-detail-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 0.45rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.match-detail-header-teams {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.score-win-highlight {
+  color: var(--accent-emerald);
+}
+
+.score-loss-highlight {
+  color: #f87171;
+}
+
+.match-detail-header-sub {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.1rem;
+}
+
+.formation-tag {
+  color: var(--accent-gold);
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.note-tag {
+  color: var(--accent-gold);
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.match-detail-header-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .match-detail-split-layout {
   display: grid;
   grid-template-columns: 58% 40%;
-  gap: 1.5rem;
+  gap: 1.25rem;
   align-items: start;
 }
 
@@ -608,16 +671,16 @@ body {
   background-image:
     repeating-linear-gradient(0deg,
       #2b5030,
-      #2b5030 45px,
-      #254529 45px,
-      #254529 90px);
+      #2b5030 40px,
+      #254529 40px,
+      #254529 80px);
   border: 2px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--radius-xl);
   position: relative;
   width: 100%;
-  height: 520px;
-  min-height: 520px;
-  padding: 1.5rem 1rem 1.5rem;
+  height: clamp(450px, 58vh, 500px);
+  min-height: 440px;
+  padding: 0.85rem 0.85rem 1rem;
   box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5), var(--shadow-md);
   overflow: visible;
   display: flex;
@@ -641,8 +704,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 95px;
-  height: 95px;
+  width: 80px;
+  height: 80px;
   border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
   pointer-events: none;
@@ -653,8 +716,8 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 230px;
-  height: 65px;
+  width: 210px;
+  height: 52px;
   border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-top: none;
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
@@ -666,8 +729,8 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 230px;
-  height: 65px;
+  width: 210px;
+  height: 52px;
   border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-bottom: none;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
@@ -1085,6 +1148,19 @@ body {
 .modal-container.modal-xl {
   max-width: 1220px;
   width: 96vw;
+  max-height: 96vh;
+}
+
+.modal-container.modal-xl .modal-header {
+  padding: 0.75rem 1.25rem;
+}
+
+.modal-container.modal-xl .modal-body {
+  padding: 0.65rem 1.25rem;
+}
+
+.modal-container.modal-xl .modal-footer {
+  padding: 0.65rem 1.25rem;
 }
 
 @keyframes modalScaleUp {
@@ -1151,6 +1227,24 @@ body {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-emerald);
 }
 
 .modal-footer {
