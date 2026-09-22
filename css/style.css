@@ -7010,13 +7010,62 @@ body {
   text-transform: uppercase;
 }
 
+.live-action-category {
+  margin-bottom: 0.85rem;
+}
+
+.live-category-header {
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+}
+
+.live-category-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.badge-red {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.badge-green {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-orange {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
 .live-actions-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
-@media (min-width: 520px) {
+@media (min-width: 480px) {
+  .live-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
   .live-actions-grid {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -7025,59 +7074,67 @@ body {
 .live-action-btn {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 0.85rem;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem;
   background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
-  min-height: 52px;
+  min-height: 48px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .live-action-btn:active {
   transform: scale(0.95);
-  filter: brightness(1.2);
+  filter: brightness(1.25);
 }
 
 .live-action-icon {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   line-height: 1;
   flex-shrink: 0;
 }
 
 .live-action-label {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 800;
   color: #fff;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
+/* 1. Nhóm Tấn Công */
 .live-action-btn.goal {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.08) 100%);
-  border-color: rgba(239, 68, 68, 0.35);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(220, 38, 38, 0.08) 100%);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 .live-action-btn.goal .live-action-label { color: #fca5a5; }
 
-.live-action-btn.assist {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(14, 165, 233, 0.08) 100%);
-  border-color: rgba(6, 182, 212, 0.35);
+.live-action-btn.own-goal {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.2) 0%, rgba(190, 18, 60, 0.1) 100%);
+  border-color: rgba(244, 63, 94, 0.45);
 }
-.live-action-btn.assist .live-action-label { color: #67e8f9; }
-
-.live-action-btn.save {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.08) 100%);
-  border-color: rgba(245, 158, 11, 0.35);
-}
-.live-action-btn.save .live-action-label { color: #fde047; }
+.live-action-btn.own-goal .live-action-label { color: #fda4af; }
 
 .live-action-btn.wondergoal {
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%);
   border-color: rgba(251, 191, 36, 0.45);
-  box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
 }
 .live-action-btn.wondergoal .live-action-label { color: #fde68a; }
+
+.live-action-btn.assist {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(14, 165, 233, 0.08) 100%);
+  border-color: rgba(6, 182, 212, 0.4);
+}
+.live-action-btn.assist .live-action-label { color: #67e8f9; }
+
+.live-action-btn.long-shot {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.18) 0%, rgba(234, 88, 12, 0.08) 100%);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+.live-action-btn.long-shot .live-action-label { color: #fdba74; }
 
 .live-action-btn.woodwork {
   background: linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(180, 83, 9, 0.08) 100%);
@@ -7091,23 +7148,74 @@ body {
 }
 .live-action-btn.miss .live-action-label { color: #cbd5e1; }
 
+/* 2. Nhóm Tuyến Giữa */
+.live-action-btn.keypass {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 165, 233, 0.08) 100%);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+.live-action-btn.keypass .live-action-label { color: #7dd3fc; }
+
+.live-action-btn.pressing-escape {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.18) 0%, rgba(139, 92, 246, 0.08) 100%);
+  border-color: rgba(167, 139, 250, 0.4);
+}
+.live-action-btn.pressing-escape .live-action-label { color: #c4b5fd; }
+
+.live-action-btn.intercept {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.18) 0%, rgba(20, 184, 166, 0.08) 100%);
+  border-color: rgba(45, 212, 191, 0.4);
+}
+.live-action-btn.intercept .live-action-label { color: #5eead4; }
+
+/* 3. Nhóm Phòng Ngự & Thủ Môn */
+.live-action-btn.save {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.08) 100%);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.live-action-btn.save .live-action-label { color: #fde047; }
+
+.live-action-btn.gk-blunder {
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.2) 0%, rgba(225, 29, 72, 0.1) 100%);
+  border-color: rgba(251, 113, 133, 0.45);
+}
+.live-action-btn.gk-blunder .live-action-label { color: #fecdd3; }
+
 .live-action-btn.defense {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%);
-  border-color: rgba(16, 185, 129, 0.35);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.08) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
 }
 .live-action-btn.defense .live-action-label { color: #6ee7b7; }
 
-.live-action-btn.funny {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(147, 51, 234, 0.08) 100%);
-  border-color: rgba(168, 85, 247, 0.35);
+.live-action-btn.tackle {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.18) 0%, rgba(202, 138, 4, 0.08) 100%);
+  border-color: rgba(234, 179, 8, 0.4);
 }
-.live-action-btn.funny .live-action-label { color: #d8b4fe; }
+.live-action-btn.tackle .live-action-label { color: #fef08a; }
 
-.live-action-btn.card {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(202, 138, 4, 0.08) 100%);
-  border-color: rgba(234, 179, 8, 0.35);
+.live-action-btn.tactical-foul {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.18) 0%, rgba(234, 88, 12, 0.08) 100%);
+  border-color: rgba(251, 146, 60, 0.4);
 }
-.live-action-btn.card .live-action-label { color: #fef08a; }
+.live-action-btn.tactical-foul .live-action-label { color: #fed7aa; }
+
+/* 4. Nhóm Tình Huống Phủi & Cảm Xúc */
+.live-action-btn.won-foul {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.18) 0%, rgba(16, 185, 129, 0.08) 100%);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+.live-action-btn.won-foul .live-action-label { color: #a7f3d0; }
+
+.live-action-btn.turnover {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.18) 0%, rgba(225, 29, 72, 0.08) 100%);
+  border-color: rgba(244, 63, 94, 0.4);
+}
+.live-action-btn.turnover .live-action-label { color: #fca5a5; }
+
+.live-action-btn.funny {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.18) 0%, rgba(147, 51, 234, 0.08) 100%);
+  border-color: rgba(192, 132, 252, 0.4);
+}
+.live-action-btn.funny .live-action-label { color: #e9d5ff; }
 
 /* Timeline Section */
 .live-timeline-section {

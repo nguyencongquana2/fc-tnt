@@ -77,7 +77,7 @@
   <meta name="apple-mobile-web-app-title" content="FC TNT">
   <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css?v=3.7">
+  <link rel="stylesheet" href="css/style.css?v=3.8">
 
   <!-- Standard Favicons for Browsers & Google Search Engine Crawler -->
   <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico">
@@ -1535,50 +1535,134 @@
           </div>
         </div>
 
-        <!-- Big Touch Quick Action Matrix (Nút sự kiện nhanh) -->
+        <!-- Big Touch Quick Action Matrix (Nút sự kiện nhanh phân nhóm) -->
         <div class="live-quick-actions-section">
-          <div class="live-section-subtitle">⚡ GHI NHANH SỰ KIỆN 1-CHẠM:</div>
-          <div class="live-actions-grid">
-            <button type="button" class="live-action-btn goal"
-              onclick="window.matchesModule.openLivePlayerPicker('GOAL')">
-              <span class="live-action-icon">⚽</span>
-              <span class="live-action-label">+1 Bàn Thắng</span>
-            </button>
-            <button type="button" class="live-action-btn assist"
-              onclick="window.matchesModule.openLivePlayerPicker('ASSIST')">
-              <span class="live-action-icon">👟</span>
-              <span class="live-action-label">+1 Kiến Tạo</span>
-            </button>
-            <button type="button" class="live-action-btn save"
-              onclick="window.matchesModule.openLivePlayerPicker('SAVE')">
-              <span class="live-action-icon">🧤</span>
-              <span class="live-action-label">Cứu Thua Xuất Thần</span>
-            </button>
-            <button type="button" class="live-action-btn wondergoal"
-              onclick="window.matchesModule.openLivePlayerPicker('WONDERGOAL')">
-              <span class="live-action-icon">🌟</span>
-              <span class="live-action-label">Siêu Phẩm / Solo</span>
-            </button>
-            <button type="button" class="live-action-btn woodwork"
-              onclick="window.matchesModule.openLivePlayerPicker('WOODWORK')">
-              <span class="live-action-icon">🪵</span>
-              <span class="live-action-label">Sút Xà / Cột</span>
-            </button>
-            <button type="button" class="live-action-btn miss"
-              onclick="window.matchesModule.openLivePlayerPicker('MISS')">
-              <span class="live-action-icon">💨</span>
-              <span class="live-action-label">Bỏ Lỡ Đáng Tiếc</span>
-            </button>
-            <button type="button" class="live-action-btn defense"
-              onclick="window.matchesModule.openLivePlayerPicker('DEFENSE')">
-              <span class="live-action-icon">🧱</span>
-              <span class="live-action-label">Bọc Lót / Cắt Bóng</span>
-            </button>
-            <button type="button" class="live-action-btn funny"
-              onclick="window.matchesModule.openLivePlayerPicker('FUNNY')">
-              <span class="live-action-icon">😂</span>
-              <span class="live-action-label">Pha Tấu Hài</span>
-            </button>
+          <div class="live-section-subtitle">⚡ GHI NHANH SỰ KIỆN 1-CHẠM (CHẠM ĐỂ GHI NHẬN TỨC THÌ):</div>
+
+          <!-- Nhóm 1: Tấn công & Bàn thắng -->
+          <div class="live-action-category">
+            <div class="live-category-header">
+              <span class="live-category-badge badge-red">🔴 Tấn Công & Bàn Thắng</span>
+            </div>
+            <div class="live-actions-grid">
+              <button type="button" class="live-action-btn goal"
+                onclick="window.matchesModule.openLivePlayerPicker('GOAL')">
+                <span class="live-action-icon">⚽</span>
+                <span class="live-action-label">+1 Bàn Thắng</span>
+              </button>
+              <button type="button" class="live-action-btn own-goal"
+                onclick="window.matchesModule.openLivePlayerPicker('OWN_GOAL')">
+                <span class="live-action-icon">🤦‍♂️</span>
+                <span class="live-action-label">Phản Lưới (OG)</span>
+              </button>
+              <button type="button" class="live-action-btn wondergoal"
+                onclick="window.matchesModule.openLivePlayerPicker('WONDERGOAL')">
+                <span class="live-action-icon">🌟</span>
+                <span class="live-action-label">Siêu Phẩm / Solo</span>
+              </button>
+              <button type="button" class="live-action-btn assist"
+                onclick="window.matchesModule.openLivePlayerPicker('ASSIST')">
+                <span class="live-action-icon">👟</span>
+                <span class="live-action-label">+1 Kiến Tạo</span>
+              </button>
+              <button type="button" class="live-action-btn long-shot"
+                onclick="window.matchesModule.openLivePlayerPicker('LONG_SHOT')">
+                <span class="live-action-icon">🚀</span>
+                <span class="live-action-label">Nã Đại Bác / Sút Xa</span>
+              </button>
+              <button type="button" class="live-action-btn woodwork"
+                onclick="window.matchesModule.openLivePlayerPicker('WOODWORK')">
+                <span class="live-action-icon">🪵</span>
+                <span class="live-action-label">Sút Xà / Cột</span>
+              </button>
+              <button type="button" class="live-action-btn miss"
+                onclick="window.matchesModule.openLivePlayerPicker('MISS')">
+                <span class="live-action-icon">💨</span>
+                <span class="live-action-label">Bỏ Lỡ Đáng Tiếc</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Nhóm 2: Tuyến Giữa & Nhạc Trưởng -->
+          <div class="live-action-category">
+            <div class="live-category-header">
+              <span class="live-category-badge badge-purple">🟣 Tuyến Giữa & Nhạc Trưởng</span>
+            </div>
+            <div class="live-actions-grid">
+              <button type="button" class="live-action-btn keypass"
+                onclick="window.matchesModule.openLivePlayerPicker('KEYPASS')">
+                <span class="live-action-icon">🎯</span>
+                <span class="live-action-label">Chọc Khe Xé Gió</span>
+              </button>
+              <button type="button" class="live-action-btn pressing-escape"
+                onclick="window.matchesModule.openLivePlayerPicker('PRESSING_ESCAPE')">
+                <span class="live-action-icon">🌪️</span>
+                <span class="live-action-label">Thoát Pressing</span>
+              </button>
+              <button type="button" class="live-action-btn intercept"
+                onclick="window.matchesModule.openLivePlayerPicker('INTERCEPT')">
+                <span class="live-action-icon">🧲</span>
+                <span class="live-action-label">Đánh Chặn Trục Giữa</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Nhóm 3: Phòng Ngự & Thủ Môn -->
+          <div class="live-action-category">
+            <div class="live-category-header">
+              <span class="live-category-badge badge-green">🟢 Phòng Ngự & Thủ Môn</span>
+            </div>
+            <div class="live-actions-grid">
+              <button type="button" class="live-action-btn save"
+                onclick="window.matchesModule.openLivePlayerPicker('SAVE')">
+                <span class="live-action-icon">🧤</span>
+                <span class="live-action-label">Cứu Thua Xuất Thần</span>
+              </button>
+              <button type="button" class="live-action-btn gk-blunder"
+                onclick="window.matchesModule.openLivePlayerPicker('GK_BLUNDER')">
+                <span class="live-action-icon">🧤❌</span>
+                <span class="live-action-label">Sai Lầm Thủ Môn</span>
+              </button>
+              <button type="button" class="live-action-btn defense"
+                onclick="window.matchesModule.openLivePlayerPicker('DEFENSE')">
+                <span class="live-action-icon">🧱</span>
+                <span class="live-action-label">Bọc Lót / Cắt Bóng</span>
+              </button>
+              <button type="button" class="live-action-btn tackle"
+                onclick="window.matchesModule.openLivePlayerPicker('TACKLE')">
+                <span class="live-action-icon">💥</span>
+                <span class="live-action-label">Tranh Chấp Lửa / Xoạc</span>
+              </button>
+              <button type="button" class="live-action-btn tactical-foul"
+                onclick="window.matchesModule.openLivePlayerPicker('TACTICAL_FOUL')">
+                <span class="live-action-icon">🛑</span>
+                <span class="live-action-label">Phạm Lỗi Chiến Thuật</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Nhóm 4: Tình Huống Phủi & Sai Lầm -->
+          <div class="live-action-category">
+            <div class="live-category-header">
+              <span class="live-category-badge badge-orange">🟠 Tình Huống Phủi & Cảm Xúc</span>
+            </div>
+            <div class="live-actions-grid">
+              <button type="button" class="live-action-btn won-foul"
+                onclick="window.matchesModule.openLivePlayerPicker('WON_FOUL')">
+                <span class="live-action-icon">🤕</span>
+                <span class="live-action-label">Kiếm Đá Phạt / Pen</span>
+              </button>
+              <button type="button" class="live-action-btn turnover"
+                onclick="window.matchesModule.openLivePlayerPicker('TURNOVER')">
+                <span class="live-action-icon">⚠️</span>
+                <span class="live-action-label">Mất Bóng Nguy Hiểm</span>
+              </button>
+              <button type="button" class="live-action-btn funny"
+                onclick="window.matchesModule.openLivePlayerPicker('FUNNY')">
+                <span class="live-action-icon">😂</span>
+                <span class="live-action-label">Pha Tấu Hài</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1708,7 +1792,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/state.js?v=3.5"></script>
   <script src="js/players.js?v=3.5"></script>
-  <script src="js/matches.js?v=3.7"></script>
+  <script src="js/matches.js?v=3.8"></script>
   <script src="js/finance.js?v=3.5"></script>
   <script src="js/awards.js?v=3.5"></script>
   <script src="js/poster.js?v=3.5"></script>

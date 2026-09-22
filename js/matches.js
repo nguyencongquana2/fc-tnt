@@ -1802,6 +1802,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             score += 1.2;
             noteItems.push(evt.note ? `⚽ Bàn thắng: ${evt.note}` : '⚽ Ghi bàn thắng quý giá');
             if (!roleTag) roleTag = '⚽ Ghi Bàn';
+          } else if (evt.type === 'OWN_GOAL') {
+            score -= 1.5;
+            noteItems.push(evt.note ? `🤦‍♂️ ${evt.note}` : '🤦‍♂️ Vô tình phản lưới nhà đáng tiếc');
+            if (!roleTag) roleTag = '🤦‍♂️ Phản Lưới Nhà';
           } else if (evt.type === 'ASSIST') {
             assists += 1;
             score += 0.9;
@@ -1811,10 +1815,46 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             score += 1.2;
             noteItems.push(evt.note ? `🧤 Cứu thua: ${evt.note}` : '🧤 Cản phá xuất thần, cứu thua mười mươi');
             if (!roleTag) roleTag = '🧤 Người Nhện';
+          } else if (evt.type === 'GK_BLUNDER') {
+            score -= 1.4;
+            noteItems.push(evt.note ? `🧤❌ ${evt.note}` : '🧤❌ Sai lầm bắt bóng lỗi');
+            if (!roleTag) roleTag = '🧤❌ Mắc Sai Lầm';
+          } else if (evt.type === 'KEYPASS') {
+            score += 0.8;
+            noteItems.push(evt.note ? `🎯 ${evt.note}` : '🎯 Chọc khe vượt tuyến sắc lẹm');
+            if (!roleTag) roleTag = '🎯 Nhạc Trưởng';
+          } else if (evt.type === 'PRESSING_ESCAPE') {
+            score += 0.7;
+            noteItems.push(evt.note ? `🌪️ ${evt.note}` : '🌪️ Thoát pressing cầm nhịp xuất sắc');
+            if (!roleTag) roleTag = '🌪️ Thoát Pressing';
+          } else if (evt.type === 'INTERCEPT') {
+            score += 0.7;
+            noteItems.push(evt.note ? `🧲 ${evt.note}` : '🧲 Đánh chặn trục giữa chuẩn xác');
+            if (!roleTag) roleTag = '🧲 Máy Quét Tuyến Giữa';
+          } else if (evt.type === 'LONG_SHOT') {
+            score += 0.5;
+            noteItems.push(evt.note ? `🚀 ${evt.note}` : '🚀 Nã đại bác từ xa uy lực');
+            if (!roleTag) roleTag = '🚀 Nã Đại Bác';
           } else if (evt.type === 'DEFENSE') {
             score += 0.9;
             noteItems.push(evt.note ? `🛡️ ${evt.note}` : '🛡️ Bọc lót, cắt bóng then chốt');
             if (!roleTag) roleTag = '🛡️ Lá Chắn Thép';
+          } else if (evt.type === 'TACKLE') {
+            score += 0.7;
+            noteItems.push(evt.note ? `💥 ${evt.note}` : '💥 Tranh chấp lăn xả dũng mãnh');
+            if (!roleTag) roleTag = '💥 Chiến Binh Thép';
+          } else if (evt.type === 'TACTICAL_FOUL') {
+            score += 0.2;
+            noteItems.push(evt.note ? `🛑 ${evt.note}` : '🛑 Phạm lỗi chiến thuật bẻ gãy phản công');
+            if (!roleTag) roleTag = '🛑 Phá Phản Công';
+          } else if (evt.type === 'WON_FOUL') {
+            score += 0.4;
+            noteItems.push(evt.note ? `🤕 ${evt.note}` : '🤕 Kiếm về quả đá phạt nguy hiểm');
+            if (!roleTag) roleTag = '🤕 Khắc Tinh Hậu Vệ';
+          } else if (evt.type === 'TURNOVER') {
+            score -= 0.8;
+            noteItems.push(evt.note ? `⚠️ ${evt.note}` : '⚠️ Để mất bóng nguy hiểm phần sân nhà');
+            if (!roleTag) roleTag = '⚠️ Mất Bóng Nguy Hiểm';
           } else if (evt.type === 'WOODWORK') {
             score += 0.3;
             noteItems.push(evt.note ? `🪵 Sút xà/cột: ${evt.note}` : '🪵 Dứt điểm hiểm hóc dội xà ngang/cột dọc');
@@ -3103,13 +3143,23 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     const actionConfig = {
       GOAL: { tag: '⚽ BÀN THẮNG (+1)', title: 'Ai là người ghi bàn?', color: '#ef4444' },
+      OWN_GOAL: { tag: '🤦‍♂️ PHẢN LƯỚI NHÀ (OG)', title: 'Ai vô tình phản lưới nhà (+1 cho đội bạn)?', color: '#f87171' },
       ASSIST: { tag: '👟 KIẾN TẠO (+1)', title: 'Ai là người kiến tạo?', color: '#06b6d4' },
       SAVE: { tag: '🧤 CỨU THUA XUẤT THẦN', title: 'Ai là người cản phá cứu thua?', color: '#f59e0b' },
+      GK_BLUNDER: { tag: '🧤❌ SAI LẦM THỦ MÔN', title: 'Thủ môn nào mắc sai lầm bắt bóng lỗi?', color: '#fb7185' },
       WONDERGOAL: { tag: '🌟 SIÊU PHẨM / SOLO', title: 'Ai vừa lập siêu phẩm / solo qua người?', color: '#fbbf24' },
+      LONG_SHOT: { tag: '🚀 NÃ ĐẠI BÁC / SÚT XA', title: 'Ai vừa tung cú sút xa / nã đại bác uy lực?', color: '#f97316' },
       WOODWORK: { tag: '🪵 SÚT XÀ / CỘT DỌC', title: 'Ai sút bóng trúng khung gỗ?', color: '#d97706' },
       MISS: { tag: '💨 BỎ LỠ ĐÁNG TIẾC', title: 'Ai vừa bỏ lỡ cơ hội ngon ăn?', color: '#94a3b8' },
-      DEFENSE: { tag: '🧱 BỌC LÓT / CẮT BÓNG HAY', title: 'Ai vừa phòng ngự / cản phá hay?', color: '#10b981' },
-      FUNNY: { tag: '😂 PHA TẤU HÀI SÂN CỎ', title: 'Ai vừa tạo khoảnh khắc tấu hài?', color: '#a855f7' }
+      KEYPASS: { tag: '🎯 CHỌC KHE XÉ GIÓ', title: 'Ai vừa tung đường chuyền chọc khe xé gió?', color: '#38bdf8' },
+      PRESSING_ESCAPE: { tag: '🌪️ THOÁT PRESSING', title: 'Ai vừa xoay sở thoát pressing đẳng cấp?', color: '#a78bfa' },
+      INTERCEPT: { tag: '🧲 ĐÁNH CHẶN TRỤC GIỮA', title: 'Ai vừa phán đoán cắt bóng / đánh chặn trục giữa?', color: '#2dd4bf' },
+      DEFENSE: { tag: '🧱 BỌC LÓT / CẮT BÓNG HAY', title: 'Ai vừa phòng ngự / bọc lót hay?', color: '#10b981' },
+      TACKLE: { tag: '💥 TRANH CHẤP LỬA / XOẠC', title: 'Ai vừa lăn xả tranh chấp / xoạc bóng đoạt lại bóng?', color: '#eab308' },
+      TACTICAL_FOUL: { tag: '🛑 PHẠM LỖI CHIẾN THUẬT', title: 'Ai vừa phạm lỗi chiến thuật bẻ gãy phản công?', color: '#fb923c' },
+      WON_FOUL: { tag: '🤕 KIẾM ĐÁ PHẠT / PEN', title: 'Ai vừa bị phạm lỗi mang về quả phạt nguy hiểm?', color: '#34d399' },
+      TURNOVER: { tag: '⚠️ MẤT BÓNG NGUY HIỂM', title: 'Ai vừa để mất bóng nguy hiểm sân nhà?', color: '#f43f5e' },
+      FUNNY: { tag: '😂 PHA TẤU HÀI SÂN CỎ', title: 'Ai vừa tạo khoảnh khắc tấu hài mang lại tiếng cười?', color: '#c084fc' }
     };
 
     const cfg = actionConfig[actionType] || { tag: '⚡ SỰ KIỆN', title: 'Chọn cầu thủ liên quan:', color: '#fff' };
@@ -3207,21 +3257,52 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       this.recordLiveEvent('WONDERGOAL', p.id, null, `${pShort} lập siêu phẩm solo / sút xa đẹp mắt`);
       this.adjustLiveScore('home', 1);
       window.showToast(`🌟 +1 Siêu phẩm cho ${pShort}! Quá đẳng cấp!`);
+    } else if (action === 'OWN_GOAL') {
+      this.recordLiveEvent('OWN_GOAL', p.id, null, `${pShort} vô tình phản lưới nhà (OG)`);
+      this.adjustLiveScore('away', 1);
+      window.showToast(`🤦‍♂️ Bàn phản lưới nhà của ${pShort}! (+1 bàn cho đối thủ)`, 'warning');
     } else if (action === 'ASSIST') {
       this.recordLiveEvent('ASSIST', p.id, null, `${pShort} có đường chuyền dọn cỗ`);
       window.showToast(`👟 +1 Kiến tạo cho ${pShort}!`);
     } else if (action === 'SAVE') {
       this.recordLiveEvent('SAVE', p.id, null, `${pShort} cản phá xuất thần cứu thua mười mươi`);
       window.showToast(`🧤 Cứu thua xuất thần: ${pShort}!`);
+    } else if (action === 'GK_BLUNDER') {
+      this.recordLiveEvent('GK_BLUNDER', p.id, null, `Thủ môn ${pShort} mắc sai lầm bắt bóng lỗi`);
+      window.showToast(`🧤❌ Sai lầm thủ môn: ${pShort}!`, 'warning');
+    } else if (action === 'LONG_SHOT') {
+      this.recordLiveEvent('LONG_SHOT', p.id, null, `${pShort} nã đại bác sút xa uy lực`);
+      window.showToast(`🚀 Nã đại bác sút xa: ${pShort}!`);
     } else if (action === 'WOODWORK') {
       this.recordLiveEvent('WOODWORK', p.id, null, `${pShort} dứt điểm dội xà ngang / cột dọc`);
       window.showToast(`🪵 Sút trúng xà/cột: ${pShort}!`);
     } else if (action === 'MISS') {
       this.recordLiveEvent('MISS', p.id, null, `${pShort} bỏ lỡ cơ hội đáng tiếc trước gôn`);
       window.showToast(`💨 Bỏ lỡ đáng tiếc: ${pShort}!`);
+    } else if (action === 'KEYPASS') {
+      this.recordLiveEvent('KEYPASS', p.id, null, `${pShort} có đường chọc khe vượt tuyến sắc lẹm`);
+      window.showToast(`🎯 Chọc khe xé gió: ${pShort}!`);
+    } else if (action === 'PRESSING_ESCAPE') {
+      this.recordLiveEvent('PRESSING_ESCAPE', p.id, null, `${pShort} xoay sở thoát pressing đẳng cấp`);
+      window.showToast(`🌪️ Thoát pressing: ${pShort}!`);
+    } else if (action === 'INTERCEPT') {
+      this.recordLiveEvent('INTERCEPT', p.id, null, `${pShort} phán đoán đánh chặn trục giữa chuẩn xác`);
+      window.showToast(`🧲 Đánh chặn trục giữa: ${pShort}!`);
     } else if (action === 'DEFENSE') {
       this.recordLiveEvent('DEFENSE', p.id, null, `${pShort} bọc lót và cắt bóng chuẩn xác`);
       window.showToast(`🧱 Phòng ngự chắc chắn: ${pShort}!`);
+    } else if (action === 'TACKLE') {
+      this.recordLiveEvent('TACKLE', p.id, null, `${pShort} tranh chấp lăn xả quyết liệt đoạt lại bóng`);
+      window.showToast(`💥 Tranh chấp lửa: ${pShort}!`);
+    } else if (action === 'TACTICAL_FOUL') {
+      this.recordLiveEvent('TACTICAL_FOUL', p.id, null, `${pShort} phạm lỗi chiến thuật bẻ gãy đợt phản công`);
+      window.showToast(`🛑 Phạm lỗi chiến thuật: ${pShort}!`);
+    } else if (action === 'WON_FOUL') {
+      this.recordLiveEvent('WON_FOUL', p.id, null, `${pShort} bị phạm lỗi mang về quả đá phạt nguy hiểm`);
+      window.showToast(`🤕 Kiếm đá phạt: ${pShort}!`);
+    } else if (action === 'TURNOVER') {
+      this.recordLiveEvent('TURNOVER', p.id, null, `${pShort} để mất bóng nguy hiểm`);
+      window.showToast(`⚠️ Mất bóng nguy hiểm: ${pShort}!`, 'warning');
     } else if (action === 'FUNNY') {
       this.recordLiveEvent('FUNNY', p.id, null, `${pShort} có pha xử lý tấu hài mang lại tiếng cười`);
       window.showToast(`😂 Pha tấu hài: ${pShort}!`);
@@ -3250,13 +3331,23 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     const typeConfig = {
       GOAL: { label: '⚽ Bàn Thắng', badgeColor: '#ef4444' },
+      OWN_GOAL: { label: '🤦‍♂️ Phản Lưới', badgeColor: '#f87171' },
       ASSIST: { label: '👟 Kiến Tạo', badgeColor: '#06b6d4' },
       SAVE: { label: '🧤 Cứu Thua', badgeColor: '#f59e0b' },
+      GK_BLUNDER: { label: '🧤❌ Lỗi Thủ Môn', badgeColor: '#fb7185' },
       WONDERGOAL: { label: '🌟 Siêu Phẩm', badgeColor: '#fbbf24' },
+      LONG_SHOT: { label: '🚀 Sút Xa', badgeColor: '#f97316' },
       WOODWORK: { label: '🪵 Xà/Cột', badgeColor: '#d97706' },
       MISS: { label: '💨 Bỏ Lỡ', badgeColor: '#94a3b8' },
+      KEYPASS: { label: '🎯 Chọc Khe', badgeColor: '#38bdf8' },
+      PRESSING_ESCAPE: { label: '🌪️ Thoát Press', badgeColor: '#a78bfa' },
+      INTERCEPT: { label: '🧲 Đánh Chặn', badgeColor: '#2dd4bf' },
       DEFENSE: { label: '🧱 Bọc Lót', badgeColor: '#10b981' },
-      FUNNY: { label: '😂 Tấu Hài', badgeColor: '#a855f7' },
+      TACKLE: { label: '💥 Tranh Chấp', badgeColor: '#eab308' },
+      TACTICAL_FOUL: { label: '🛑 Phạm Lỗi', badgeColor: '#fb923c' },
+      WON_FOUL: { label: '🤕 Kiếm Phạt', badgeColor: '#34d399' },
+      TURNOVER: { label: '⚠️ Mất Bóng', badgeColor: '#f43f5e' },
+      FUNNY: { label: '😂 Tấu Hài', badgeColor: '#c084fc' },
       NOTE: { label: '📝 Ghi Chú', badgeColor: '#64748b' }
     };
 

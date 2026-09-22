@@ -1,120 +1,171 @@
-# 🌟 FC TNT - LỘ TRÌNH Ý TƯỞNG & TÍNH NĂNG TƯƠNG LAI (FEATURE ROADMAP)
+# 🌟 FC TNT - LỘ TRÌNH TÍNH NĂNG & ĐỊNH HƯỚNG PHÁT TRIỂN (FEATURE ROADMAP)
 
-Tài liệu này lưu trữ các ý tưởng nâng cấp và tính năng tương lai được lên kế hoạch cho hệ thống quản trị đội bóng **FC TNT**.
+Tài liệu này tổng hợp toàn bộ các tính năng cốt lõi của hệ thống quản trị đội bóng **FC TNT**: phân loại rõ ràng giữa các tính năng **Đã hoàn thiện (Production Ready)** và các tính năng **Kế hoạch tương lai (Future Roadmap)**.
 
 ---
 
-## 📸 1. Khoảnh Khắc & Kỷ Niệm Đội Bóng (FC TNT Moments) ✅ *(Đã hoàn thiện)*
-* **Mục đích**: Lưu giữ những kỷ niệm, tình cảm gắn kết của anh em ngoài sân cỏ (ăn uống, liên hoan, du đấu, đặt áo đấu mới, sinh nhật thành viên...).
+## 🟢 PHẦN I: CÁC TÍNH NĂNG ĐÃ HOÀN THIỆN (COMPLETED FEATURES)
+
+### ⚡ 1. Trợ Lý Sân Cỏ Live & Ghi Nhận Diễn Biến Trực Tiếp (Live Match Engine) ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Giúp người quản lý bên ngoài đường biên ghi nhận mọi diễn biến trận đấu theo thời gian thực (realtime) cực kỳ nhanh chóng và nhàn hạ.
 * **Tính năng chi tiết**:
-  - **Dòng thời gian (Timeline / Feed mini)**: Hiển thị các sự kiện theo ngày tháng, tiêu đề và địa điểm.
-  - **Đa phương tiện**: Hỗ trợ đăng Album nhiều ảnh (grid ảnh Facebook & Lightbox phóng to HD) và nhúng Video / Vlog kỷ niệm.
-  - **Gắn thẻ (Tag) cầu thủ**: Gắn tên và avatar các thành viên có mặt trong buổi kỷ niệm.
-  - **Tương tác**: Thả cảm xúc bia/tim/bóng/lửa (🍻, ❤️, ⚽, 🔥) và khung bình luận "chém gió", troll vui vẻ giữa các thành viên.
+  - **Nhận diện giọng nói (Voice-to-Text)**: Bấm mic nói tự nhiên (VD: *"Quân vừa sút xa ghi bàn, Tuấn Anh kiến tạo"*, *"Hùng cản phá xuất thần cứu thua"*) -> Hệ thống tự động phân tích cú pháp NLP và ghi nhận sự kiện ngay lập tức.
+  - **Bàn phím 1-chạm 18 sự kiện thực chiến (18 Quick Event Chips)**: Phân thành 4 nhóm màu trực quan (Tấn công, Tuyến giữa, Phòng ngự, Tình huống phủi), tối ưu kích thước lớn cho tay ướt mồ hôi. Bao gồm cả Phản lưới nhà (+1 đội bạn), Sai lầm thủ môn, Chọc khe xé gió, Thoát pressing, Đánh chặn trục giữa, Nã đại bác sút xa, Xoạc bóng, Phạm lỗi chiến thuật, Kiếm đá phạt, Mất bóng nguy hiểm...
+  - **Bộ chọn đội hình nhanh (Live Roster Sheet)**: 1-chạm chọn nhanh 7 cầu thủ đá chính mặc định, chọn tất cả hoặc tùy chỉnh quân số có mặt trên sân.
+  - **Đồng bộ thời gian thực (Realtime Sync & Draft)**: Sử dụng Socket.IO và MongoDB `LiveMatchDraft` lưu vết liên tục, chống mất dữ liệu khi mất mạng hoặc tải lại trang.
+  - **📋 Copy Gửi Nhóm Zalo**: 1-chạm sao chép toàn bộ tóm tắt tỷ số và danh sách người ghi bàn/kiến tạo theo định dạng văn bản đẹp mắt để gửi vào nhóm chat Zalo của đội.
+  - **🤖 1-Chạm Đẩy Sang AI Chấm Điểm**: Chuyển toàn bộ chuỗi sự kiện thực tế trong trận sang Gemini AI để tự động chấm điểm chi tiết.
 
 ---
 
-## 💰 2. Sổ Quỹ Đội Bóng Minh Bạch (Team Fund & Fee Tracker)
-* **Mục đích**: Quản lý thu chi quỹ đội công khai, rõ ràng, giúp thủ quỹ và đội trưởng nhẹ đầu.
+### 🏟️ 2. Sơ Đồ Chiến Thuật Sân 7 (3-1-2) Chuẩn Sofascore & Kéo Thả (Drag & Drop) ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Trực quan hóa đội hình thi đấu sân 7 chuyên nghiệp, khoa học theo phong cách bảng điểm Sofascore quốc tế.
 * **Tính năng chi tiết**:
-  - **Thống kê quỹ thời gian thực**: Hiển thị số dư quỹ hiện tại, tổng thu, tổng chi.
-  - **Theo dõi đóng quỹ hàng tháng**: Danh sách cầu thủ đã đóng / chưa đóng hoặc còn thiếu.
-  - **Nhật ký chi tiêu từng trận**: Tiền thuê sân, tiền nước, tiền in ấn áo đấu, thưởng thắng trận, tiền phạt thẻ hoặc đi muộn.
+  - **Mặt sân cỏ nhân tạo thực tế**: Sơ đồ chiến thuật chuẩn 3-1-2 gồm 4 tuyến rõ ràng:
+    - 🧤 Tuyến 1: Thủ môn (1 GK)
+    - 🛡️ Tuyến 2: 3 Hậu vệ (Cánh trái - Thòng giữa - Cánh phải)
+    - ⚙️ Tuyến 3: 1 Tiền vệ giữa (1 MF)
+    - ⚡ Tuyến 4: 2 Tiền đạo cánh (2 FW)
+  - **Kéo thả mượt mà (Drag & Drop)**: Dễ dàng kéo đổi vị trí giữa các cầu thủ trên sân, hoặc kéo từ **Băng ghế dự bị (Bench)** vào sân để thực hiện quyền thay người.
+  - **Hiệu ứng Radar AI Quét Sân (AI Tactical Radar Live)**: Hiệu ứng tia quét laser và sóng radar công nghệ cao chuyển động dọc sân bóng.
+  - **Thông số trực quan trên từng cầu thủ**: Hiển thị avatar tròn, họ tên, điểm phong độ (rating) kèm huy hiệu số bàn thắng (⚽) và kiến tạo (👟).
 
 ---
 
-## 🗳️ 3. Điểm Danh & Khảo Sát Đi Đá (Match Attendance Poll)
-* **Mục đích**: Nắm bắt quân số trước mỗi trận đấu để chủ động sắp xếp đội hình hoặc gọi thêm viện binh.
+### 💰 3. Quản Lý Tiền Sân, Chia Tiền & Tạo Mã VietQR Động ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Xử lý bài toán tế nhị về tài chính sau mỗi trận đấu một cách công bằng, minh bạch và tiện lợi nhất.
 * **Tính năng chi tiết**:
-  - **Khảo sát trước trận (1-2 ngày)**: Tạo thông báo lịch đấu (thời gian, địa điểm, đối thủ).
-  - **3 nút bấm nhanh**: `✅ Đi được`, `⏱️ Đi muộn 15-20p`, `❌ Xin nghỉ bận việc`.
-  - **Đếm quân số tự động**: Cảnh báo đội trưởng nếu quân số < 7 người để kịp gọi thêm người đá cùng.
+  - **Bảng kê chi phí trận đấu**: Nhập tiền thuê sân, tiền nước uống, tiền bóng, tiền phụ phí phát sinh.
+  - **Chia tiền tự động**: Tự động chia đều tổng số tiền cho danh sách các cầu thủ thực tế có mặt ra sân.
+  - **Theo dõi trạng thái đóng tiền**: Đánh dấu trực quan ai đã nộp (`Đã thanh toán`), ai còn nợ (`Chưa thanh toán`).
+  - **Tạo mã VietQR chuyển khoản 1-chạm**: Tự động sinh mã VietQR chuẩn ngân hàng kèm số tiền chính xác và nội dung chuyển khoản (VD: `FC TNT Tien san tran 21-09`), hỗ trợ quét mã chuyển khoản tức thì qua mọi app ngân hàng.
 
 ---
 
-## 🎨 4. Tự Động Xuất Poster "Ảnh Khoe Mạng Xã Hội" (Shareable Match Cards) ✅ *(Đã hoàn thiện)*
-* **Mục đích**: Giúp anh em có ảnh đẹp, xịn xò để đăng Facebook, Zalo, Story khoe thành tích và chiến thắng.
+### 🏆 4. Bảng Vinh Danh & Thẻ Cầu Thủ FIFA (Awards & Hall of Fame) ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Tôn vinh thành tích của các cá nhân xuất sắc, thúc đẩy tinh thần thi đấu nhiệt huyết của anh em trong toàn mùa giải.
 * **Tính năng chi tiết**:
-  - **Tạo poster 1 chạm (Canvas Generator)**: Tự động ghép logo FC TNT, tỉ số chung cuộc, tên đối thủ, ảnh cầu thủ ghi bàn / kiến tạo / MVP thành một bức ảnh đồ họa cực đẹp.
-  - **Tải ảnh độ phân giải cao**: Tải trực tiếp về điện thoại/máy tính dưới dạng file ảnh `.png` chuẩn tỉ lệ 1:1 (Feed FB/Zalo) hoặc 9:16 (Story/TikTok/Reels).
-  - **Hỗ trợ 4 phong cách**: Cyber Neon, Gold Champion, Emerald Pitch, Crimson Fire.
-  - **1 chạm sao chép**: Copy ảnh thẳng vào Clipboard để paste vào Zalo/Messenger/Facebook siêu nhanh.
+  - **Bục vinh danh Podium 3D**: Trao cúp Vàng 🥇, cúp Bạc 🥈, cúp Đồng 🥉 cho top 3 cầu thủ dẫn đầu.
+  - **Các hạng mục vinh danh**:
+    - 👑 **Vua Phá Lưới (Golden Boot)**: Thống kê tổng số bàn thắng ghi được.
+    - 👟 **Vua Kiến Tạo (Playmaker King)**: Thống kê số đường chuyền dọn cỗ thành bàn.
+    - ⭐ **Cầu Thủ Xuất Sắc Nhất (MVP / MOTM)**: Cầu thủ đạt danh hiệu Cầu thủ xuất sắc nhất trận nhiều lần nhất.
+    - 🧤 **Găng Tay Vàng (Golden Glove)**: Dành riêng cho thủ môn có số pha cứu thua xuất thần nhiều nhất.
+    - 🛡️ **Chiến Binh Bền Bỉ**: Cầu thủ có số lần ra sân cống hiến nhiều nhất mùa giải.
+  - **Thẻ cầu thủ FIFA Hologram**: Thiết kế thẻ bài FIFA Ultimate Team kèm hiệu ứng nghiêng 3D Holographic Parallax khi rê chuột.
 
 ---
 
-## 🏅 5. Phòng Truyền Thống & Kỷ Lục CLB (Hall of Records)
-* **Mục đích**: Tôn vinh lịch sử, thành tích và các dấu ấn đáng nhớ của FC TNT qua các năm.
+### 🎨 5. Tự Động Xuất Poster "Ảnh Khoe Mạng Xã Hội" (Shareable Match Cards) ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Giúp anh em có ảnh đồ họa xịn xò để đăng Story, Facebook, Zalo khoe thành tích chiến thắng sau trận đấu.
 * **Tính năng chi tiết**:
-  - **Tủ cúp & Huy chương**: Lưu giữ các danh hiệu tại các giải đấu phủi phong trào đã tham gia.
-  - **Bảng vàng kỷ lục CLB**:
-    - Trận thắng đậm nhất lịch sử (VD: 9 - 1)
-    - Chuỗi trận bất bại dài nhất
-    - Cầu thủ ghi nhiều bàn nhất trong 1 trận (Hat-trick, Poker...)
-    - Bàn thắng nhanh nhất trận đấu.
+  - **Tạo poster tự động (HTML5 Canvas Engine)**: Ghép logo FC TNT, tên đối thủ, tỷ số, ngày giờ, sân đấu và danh sách cầu thủ lập công thành ảnh đồ họa sắc nét.
+  - **4 phong cách đồ họa đỉnh cao**: Cyber Neon, Gold Champion, Emerald Pitch, Crimson Fire.
+  - **Tải ảnh chuẩn kích thước**: Xuất ảnh `.png` chất lượng cao chuẩn tỷ lệ vuông 1:1 hoặc tỷ lệ dọc 9:16 (Story/Reels).
+  - **1 chạm sao chép vào Clipboard**: Dán trực tiếp vào khung chat Zalo/Messenger cực nhanh.
 
 ---
 
-## 📚 6. Học Viện Kỹ Năng & Chiến Thuật (FC TNT Academy / Video Hub) 💡 *(Ý tưởng mới)*
-* **Mục đích**: Nâng tầm tư duy chơi bóng và kỹ năng cá nhân cho toàn đội. Là kho tàng video bài giảng, mẹo chiến thuật thực chiến sân 7 và sân 5 được tuyển chọn từ các nguồn uy tín trên Internet (YouTube, TikTok, Facebook).
-* **Phân loại danh mục (Categories)**:
-  - 🧠 **Chiến thuật sân 7 / sân 5**: Cách di chuyển không bóng, bài tập thoát pressing, bọc lót phòng ngự khu vực, các bài phối hợp cố định (đá biên, phạt góc, đá phạt hàng rào), bài chuyển trạng thái phản công nhanh.
-  - ⚽ **Kỹ năng cá nhân theo vị trí**:
-    - *Tiền đạo (FW)*: Chạy chỗ phá bẫy việt vị, đỡ bóng 1 chạm mở góc sút, dứt điểm một chạm, tì đè giữ bóng.
-    - *Tiền vệ (MF)*: Quan sát xoay xở khi bị áp sát, chuyền bóng xuyên tuyến, tỉa bóng khe nách, điều tiết nhịp độ.
-    - *Hậu vệ (DF)*: Kỹ năng tranh chấp tay đôi, khép góc không phạm lỗi, bọc lót khi đồng đội dâng cao, chuyền bóng an toàn.
-    - *Thủ môn (GK)*: Khép góc đối mặt 1vs1, phản xạ bóng sệt, kỹ năng làm chủ vòng cấm và ném bóng phản công.
-  - 🏃 **Thể lực, Dinh dưỡng & Khởi động**: Các bài tập bổ trợ tim mạch (HIIT), chống căng cơ/chuột rút sau hiệp 2, chế độ ăn uống bổ sung nước/khoáng chất trước và sau trận đấu.
+### 📸 6. Khoảnh Khắc & Kỷ Niệm Đội Bóng (FC TNT Moments) ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Lưu giữ những kỷ niệm, tình cảm anh em ngoài sân cỏ (ăn uống, liên hoan, sinh nhật, du đấu, giao lưu...).
 * **Tính năng chi tiết**:
-  - **Nhúng Video Đa Nguồn**: Dán link trực tiếp từ YouTube (Video & Shorts), TikTok, Facebook Reels, Google Drive hoặc tải video trực tiếp.
-  - **Ghi chú & Mẹo thực chiến (Coach's Pro Tips)**: Kèm lời dặn của Đội trưởng / HLV dưới mỗi video (VD: *"Anh em xem kỹ phút 01:20: Hậu vệ thòng luôn giữ cự ly, không được vào bóng vội"*).
-  - **Lọc theo vị trí thi đấu**: Tiền đạo (ST), Tiền vệ (MF), Hậu vệ (DF), Thủ môn (GK).
-  - **Đánh dấu yêu thích & Đã học**: Thành viên tự lưu video tâm đắc để xem lại trước giờ ra sân.
-  - **Thảo luận & Đặt câu hỏi**: Cho phép anh em bình luận, trao đổi ý kiến dưới từng bài học chiến thuật.
+  - **Dòng thời gian (Timeline / Mini Feed)**: Hiển thị bài viết theo ngày tháng, địa điểm và câu chuyện.
+  - **Album ảnh & Video**: Đăng nhiều ảnh cùng lúc, xem ảnh phóng to Lightbox sắc nét, hỗ trợ nhúng video kỷ niệm.
+  - **Gắn thẻ (Tag) thành viên**: Đính kèm danh sách anh em có mặt trong sự kiện.
+  - **Tương tác**: Thả cảm xúc bia/tim/bóng/lửa (🍻, ❤️, ⚽, 🔥) và bình luận "chém gió", troll vui vẻ.
 
 ---
 
-## 🤖 7. Hệ Thống Trí Tuệ Nhân Tạo (FC TNT AI Intelligence)
-* **Mục đích**: Ứng dụng AI (Gemini Flash & NLP Rules) làm trợ lý ảo thông minh cho đội bóng, tăng tính chuyên nghiệp, công tâm và tính tương tác giải trí.
-* **Các tính năng đã hoàn thiện**:
-  - ✅ **AI Match Rating (Chấm điểm phong độ thang điểm 10 Sofascore)**: Tự động phân tích diễn biến và sự kiện trực tiếp trên sân để chấm điểm từng cầu thủ, phát hiện bàn thắng, kiến tạo, MOTM, pha tấu hài và cứu thua (`/api/ai/rate-match`).
-  - ✅ **AI Pitch & Weather Consultant (Cố vấn thời tiết & mặt sân AKKA)**: Tự động phân tích lượng mưa, độ ẩm, tốc độ róc nước của nền sân đá mi AKKA để tư vấn trang phục, loại giày đinh TF và khả năng thi đấu (`/api/weather/ai-consultant`).
-* **Ý tưởng mở rộng tương lai**:
-  - **AI Match Reporter**: Tự động sinh bài báo tổng thuật trận đấu siêu cuốn, giật tít hài hước theo phong cách BLV Tạ Biên Cương / VTV để chia sẻ lên nhóm Zalo/Facebook.
-  - **AI Team Balancer**: Tự động chia 2 đội hình đá tập nội bộ cân bằng sức mạnh và vị trí dựa trên danh sách điểm danh.
-  - **AI FIFA Rating & Card**: Tự động tính chỉ số cầu thủ (OVR, Sút, Chuyền, Thể lực...) dựa trên dữ liệu thi đấu thực tế.
-  - **AI Caption Generator**: Gợi ý caption, status siêu mặn khi đăng ảnh/video khoảnh khắc nhậu nhẹt, du đấu.
-  - **Chatbot TNT Assistant**: Hỏi đáp nhanh lịch thi đấu, tiền quỹ, đối đầu và tạo tin nhắn nhắc quỹ khéo léo.
-
----
-
-## 📱 8. Tích Hợp Bot Gửi Tin Nhắn Zalo / Telegram Tự Động (Auto Notification Bot & Webhook) 💡 *(Ý tưởng mới)*
-* **Mục đích**: Tự động đồng bộ các thông báo quan trọng từ Website thẳng vào Nhóm Zalo của FC TNT để toàn bộ anh em nắm thông tin tức thì mà không cần phải vào web kiểm tra thường xuyên.
+### 🌦️ 7. Dự Báo Thời Tiết 7 Ngày & AI Thẩm Định Sân AKKA ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Giúp đội chủ động kiểm tra thời tiết tại sân nhà **AKKA (68 Chu Văn An, Thanh Liệt, Hà Nội)**.
 * **Tính năng chi tiết**:
-  - ⚽ **Thông báo Kèo Đấu Mới & Kêu Gọi Điểm Danh**:
-    - Khi Admin tạo lịch thi đấu mới -> Bot tự động gửi tin nhắn vào nhóm Zalo:
-      > *"📢 [FC TNT - LỊCH ĐẤU MỚI] ⚽*\n*• Thời gian: 19:30 - Thứ 6 (12/09)*\n*• Sân: Sân bóng Tân Triều*\n*• Đối thủ: FC Bạn Hữu*\n*👉 Anh em truy cập web bấm Điểm danh gấp nhé: https://fc-tnt.onrender.com/"*
-  - ⏱️ **Nhắc nhở tự động trước giờ bóng lăn (24h & 4h)**:
-    - Báo cáo số lượng anh em đã bấm "Đi được", "Đi muộn" hoặc "Vắng" để chốt quân số kịp thời.
-  - 🏆 **Báo cáo Kết quả & Chia sẻ Poster Sau Trận**:
-    - Ngay sau khi cập nhật tỉ số -> Bot tự động gửi thông báo kết quả chung cuộc, Cầu thủ xuất sắc nhất (MOM), kèm link tải ảnh Poster để anh em tải về khoe Facebook/Story.
-  - 💰 **Thông báo Thu Chi Quỹ Đội Minh Bạch**:
-    - Khi có giao dịch đóng quỹ hoặc chi tiêu lớn (mua bóng, in áo đấu, liên hoan) -> Bot thông báo công khai số dư quỹ hiện tại.
-  - 🎂 **Tự Động Chúc Mừng Sinh Nhật Thành Viên**:
-    - Đúng 08:00 sáng ngày sinh nhật của cầu thủ -> Bot tự động gửi lời chúc mừng sinh nhật kèm hình ảnh/avatar cầu thủ vào nhóm Zalo để anh em cùng chúc mừng.
+  - **Dự báo 7 ngày chuyên biệt 2 Slot Vàng**: Slot 20:45 – 22:15 và Slot 22:15 – 23:45 trích xuất từ Open-Meteo API.
+  - **Chỉ số đá bóng MPI (Match Playing Index)**: Đánh giá điểm thời tiết 0 - 100% kèm nhãn Hoàn hảo 🟢, Cân nhắc 🟡, Cảnh báo mưa 🔴.
+  - **Radar diễn biến mưa theo giờ (17:00 - 23:00)**: Theo dõi thời điểm mưa/tạnh để biết sân có kịp khô ráo trước giờ lăn bóng.
+  - **AI Cố Vấn Mặt Sân AKKA**: Tự động tính toán lượng mưa và thời gian róc nước của nền đá mi sân AKKA để trả lời mọi câu hỏi của anh em.
+  - **Tư vấn chọn đinh giày (Boot Advisor)**: Gợi ý chọn giày TF bám sân chống trượt hay TF mỏng tốc độ.
 
 ---
 
-## 🌦️ 9. Dự Báo Thời Tiết 7 Ngày & AI Thẩm Định Sân AKKA ✅ *(Đã hoàn thiện)*
-* **Mục đích**: Giúp đội chọn ngày bắt đối và kiểm tra chính xác thời tiết tại **Sân bóng đá AKKA (68 Đại Lộ Chu Văn An, Thanh Liệt, Hà Nội)**.
+### 🤖 8. Hệ Thống Trí Tuệ Nhân Tạo (FC TNT AI Core) ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Tận dụng Google Gemini AI để tự động hóa nghiệp vụ chuyên môn và tăng tính công tâm, giải trí.
 * **Tính năng chi tiết**:
-  - **Dự báo 7 ngày theo 2 Slot Vàng**: Lọc riêng biệt 2 khung giờ thi đấu **Slot 20:45 - 22:15** và **Slot 22:15 - 23:45** từ Open-Meteo API.
-  - **Chỉ số đá bóng (MPI Score)**: Đánh giá điểm 0 - 100%, phân loại Hoàn hảo 🟢, Cân nhắc 🟡, Cảnh báo mưa 🔴.
-  - **Radar diễn biến theo giờ (17:00 – 23:00)**: Theo dõi trực quan thời điểm mưa và thời điểm tạnh ráo để dự đoán độ ẩm sân cỏ nhân tạo.
-  - **Gợi ý chọn đinh giày (Boot Advisor)**: Tư vấn chọn giày đinh TF bám sân chống trượt xoạc hay TF mỏng tốc độ.
-  - **Trợ lý AI Thẩm Định Mặt Sân**: Tự động tính toán lượng mưa và thời gian róc nước của nền đá mi sân AKKA (30-45 phút sau mưa) để trả lời chi tiết mọi câu hỏi của anh em (kèm 4 quick chips 1-chạm).
-  - **Live Weather Widget trên Dashboard**: Huy hiệu thời tiết trực quan ngay tại trang chủ để cả đội nắm nhanh tình hình trận tối nay.
+  - **AI Match Rating (Chấm điểm phong độ)**: Đọc chuỗi sự kiện trận đấu (bàn thắng, kiến tạo, cứu thua, lỗi vị trí, tấu hài...) để chấm điểm từng cầu thủ thang điểm 10 chuẩn xác, công tâm kèm lời nhận xét hóm hỉnh.
+  - **AI Pitch & Weather Consultant**: Thẩm định tình trạng sân bãi và đưa ra lời khuyên chiến thuật, trang phục thi đấu.
+
+---
+
+### 🔒 9. Bảo Mật Quản Trị Phân Quyền Bằng Mã PIN (Admin Security & Multi-device) ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Phân định rõ ràng giữa người xem bình thường và Quản trị viên (Đội trưởng / Thủ quỹ).
+* **Tính năng chi tiết**:
+  - **Đăng nhập PIN 6 số an toàn**: Mã hóa bảo mật, cấp token quản trị lưu an toàn trên trình duyệt.
+  - **Phân quyền chặt chẽ**: Chỉ Admin mới có quyền thêm/sửa/xóa trận đấu, chỉnh sửa điểm số, quản lý tiền nong và thay đổi thông tin đội.
+  - **Chức năng đổi mã PIN trực tiếp**: Admin có thể đổi PIN nhanh ngay trên giao diện web.
+
+---
+
+### 📱 10. Ứng Dụng Web Tiến Bộ (PWA) & Trải Nghiệm Thể Thao Đỉnh Cao ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Mang lại trải nghiệm mượt mà, cảm giác như dùng ứng dụng cài đặt từ App Store / Google Play.
+* **Tính năng chi tiết**:
+  - **Hỗ trợ cài đặt PWA (Add to Home Screen)**: Cài đặt trực tiếp lên màn hình chính điện thoại, khởi chạy toàn màn hình không có thanh địa chỉ trình duyệt.
+  - **Giao diện Bottom Navigation Bar**: Thanh điều hướng ngón tay cái thuận tiện cho thao tác một tay trên điện thoại.
+  - **Splash Screen & Minigame tâng bóng**: Màn hình chào sân rực lửa kèm minigame chạm tâng bóng giải trí trong lúc tải dữ liệu.
+  - **Thẻ trận đấu phân loại trực quan (Accent Left Border)**: Viền màu và vệt sáng gradient phân biệt rõ ràng giữa Thắng (Xanh ngọc lục bảo), Hòa (Vàng hổ phách), Thua (Đỏ hồng Crimson).
+
+---
+
+## 🔮 PHẦN II: LỘ TRÌNH PHÁT TRIỂN TƯƠNG LAI (UPCOMING ROADMAP)
+
+### 💰 11. Sổ Quỹ Đội Bóng Minh Bạch Dài Hạn (Team Fund & Fee Tracker) ⏳ *(Kế hoạch sắp tới)*
+* **Mục đích**: Quản lý thu chi quỹ đội dài hạn theo từng tháng/quý/năm, tách biệt với tiền sân từng trận.
+* **Tính năng chi tiết**:
+  - **Thống kê số dư quỹ tổng**: Quản lý quỹ chung của cả đội bóng qua các tháng.
+  - **Bảng đóng quỹ định kỳ**: Danh sách thành viên đã đóng / còn thiếu tiền quỹ tháng.
+  - **Nhật ký thu chi ngoài sân**: Mua bóng thi đấu, in thêm áo đấu mới, quỹ liên hoan, thăm hỏi thành viên ốm đau hoặc mừng sinh nhật.
+
+---
+
+### 🗳️ 12. Điểm Danh & Khảo Sát Đi Đá (Match Attendance Poll) ⏳ *(Kế hoạch sắp tới)*
+* **Mục đích**: Nắm bắt số lượng quân số trước mỗi trận đấu (trước 1 - 2 ngày) để chủ động sắp xếp đội hình hoặc tìm người đá tăng cường.
+* **Tính năng chi tiết**:
+  - **Khảo sát trước trận 1 chạm**: Lựa chọn nhanh giữa `✅ Đi được`, `⏱️ Đi muộn 15-20p`, `❌ Xin nghỉ bận việc`.
+  - **Đếm quân số tự động**: Cảnh báo đội trưởng nếu quân số dưới 7 người để kịp thời gọi viện binh.
+
+---
+
+### 🏅 13. Phòng Truyền Thống & Kỷ Lục CLB (Hall of Records) ⏳ *(Kế hoạch sắp tới)*
+* **Mục đích**: Ghi lại lịch sử, bảng vàng và những kỷ lục vô tiền khoáng hậu của FC TNT qua các mùa giải.
+* **Tính năng chi tiết**:
+  - **Tủ cúp & Huy chương**: Lưu trữ các giải đấu phong trào đã tham dự.
+  - **Kỷ lục vô tiền khoáng hậu**: Trận thắng đậm nhất lịch sử, chuỗi trận bất bại dài nhất, cầu thủ ghi nhiều bàn nhất trong một trận đấu (Hat-trick, Poker, Re-poker).
+
+---
+
+### 📚 14. Học Viện Kỹ Năng & Chiến Thuật (FC TNT Academy / Video Hub) 💡 *(Ý tưởng nghiên cứu)*
+* **Mục đích**: Nâng tầm tư duy chơi bóng và kỹ năng cá nhân cho toàn đội thông qua kho bài giảng, video phân tích tình huống thực chiến.
+* **Tính năng chi tiết**:
+  - **Phân loại bài học theo vị trí**: Mẹo di chuyển cho Tiền đạo (FW), Tiền vệ (MF), Hậu vệ (DF) và Thủ môn (GK).
+  - **Chiến thuật sân 7**: Bài tập thoát pressing, bọc lót khu vực, các bài phối hợp cố định khi đá biên, phạt góc.
+  - **Nhúng Video đa nền tảng**: Nhúng video hữu ích từ YouTube Shorts, TikTok, Facebook Reels.
+
+---
+
+### 📱 15. Bot Tự Động Nhắn Tin Zalo / Telegram (Auto Notification Bot & Webhook) 💡 *(Ý tưởng nghiên cứu)*
+* **Mục đích**: Tự động thông báo lịch đấu mới, nhắc nhở trước giờ bóng lăn và chia sẻ poster kết quả trận đấu thẳng vào nhóm Zalo của FC TNT.
+* **Tính năng chi tiết**:
+  - **Tự động nhắc điểm danh**: Gửi link điểm danh vào nhóm Zalo 24h và 4h trước giờ thi đấu.
+  - **Tự động đăng kết quả & Poster**: Ngay sau khi trận đấu kết thúc, bot gửi ảnh poster và kết quả chung cuộc vào nhóm.
+  - **Nhắc nhở sinh nhật thành viên**: Chúc mừng sinh nhật anh em vào đúng 08:00 sáng ngày sinh nhật.
+
+---
+
+### 🤖 16. Mở Rộng Hệ Thống Trí Tuệ Nhân Tạo (AI Expansion) 💡 *(Ý tưởng nghiên cứu)*
+* **Mục đích**: Bổ sung thêm nhiều tiện ích thông minh và giải trí từ AI.
+* **Tính năng chi tiết**:
+  - **AI Match Reporter**: Tự động viết bài phóng sự tổng thuật trận đấu siêu hài hước theo phong cách bình luận viên VTV/Tạ Biên Cương.
+  - **AI Team Balancer**: Tự động chia 2 đội hình đá tập nội bộ cân bằng sức mạnh dựa trên danh sách điểm danh thực tế.
+  - **AI Caption Generator**: Gợi ý caption, status siêu mặn khi đăng ảnh/video khoảnh khắc kỷ niệm.
 
 ---
 
 *📅 Ngày cập nhật: 22/09/2026 • Đội bóng: FC TNT*
-

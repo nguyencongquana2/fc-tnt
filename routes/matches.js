@@ -237,6 +237,10 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
           score += 1.2;
           noteItems.push(evt.note ? `⚽ Bàn thắng: ${evt.note}` : '⚽ Ghi bàn thắng quý giá');
           if (!roleTag) roleTag = '⚽ Ghi Bàn';
+        } else if (evt.type === 'OWN_GOAL') {
+          score -= 1.5;
+          noteItems.push(evt.note ? `🤦‍♂️ ${evt.note}` : '🤦‍♂️ Vô tình phản lưới nhà đáng tiếc');
+          if (!roleTag) roleTag = '🤦‍♂️ Phản Lưới Nhà';
         } else if (evt.type === 'ASSIST') {
           assists += 1;
           score += 0.9;
@@ -246,10 +250,46 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
           score += 1.2;
           noteItems.push(evt.note ? `🧤 Cứu thua: ${evt.note}` : '🧤 Cản phá xuất thần, cứu thua mười mươi');
           if (!roleTag) roleTag = '🧤 Người Nhện';
+        } else if (evt.type === 'GK_BLUNDER') {
+          score -= 1.4;
+          noteItems.push(evt.note ? `🧤❌ ${evt.note}` : '🧤❌ Sai lầm bắt bóng lỗi');
+          if (!roleTag) roleTag = '🧤❌ Mắc Sai Lầm';
+        } else if (evt.type === 'KEYPASS') {
+          score += 0.8;
+          noteItems.push(evt.note ? `🎯 ${evt.note}` : '🎯 Chọc khe vượt tuyến sắc lẹm');
+          if (!roleTag) roleTag = '🎯 Nhạc Trưởng';
+        } else if (evt.type === 'PRESSING_ESCAPE') {
+          score += 0.7;
+          noteItems.push(evt.note ? `🌪️ ${evt.note}` : '🌪️ Thoát pressing cầm nhịp xuất sắc');
+          if (!roleTag) roleTag = '🌪️ Thoát Pressing';
+        } else if (evt.type === 'INTERCEPT') {
+          score += 0.7;
+          noteItems.push(evt.note ? `🧲 ${evt.note}` : '🧲 Đánh chặn trục giữa chuẩn xác');
+          if (!roleTag) roleTag = '🧲 Máy Quét Tuyến Giữa';
+        } else if (evt.type === 'LONG_SHOT') {
+          score += 0.5;
+          noteItems.push(evt.note ? `🚀 ${evt.note}` : '🚀 Nã đại bác từ xa uy lực');
+          if (!roleTag) roleTag = '🚀 Nã Đại Bác';
         } else if (evt.type === 'DEFENSE') {
           score += 0.9;
           noteItems.push(evt.note ? `🛡️ ${evt.note}` : '🛡️ Bọc lót, cắt bóng then chốt');
           if (!roleTag) roleTag = '🛡️ Lá Chắn Thép';
+        } else if (evt.type === 'TACKLE') {
+          score += 0.7;
+          noteItems.push(evt.note ? `💥 ${evt.note}` : '💥 Tranh chấp lăn xả dũng mãnh');
+          if (!roleTag) roleTag = '💥 Chiến Binh Thép';
+        } else if (evt.type === 'TACTICAL_FOUL') {
+          score += 0.2;
+          noteItems.push(evt.note ? `🛑 ${evt.note}` : '🛑 Phạm lỗi chiến thuật bẻ gãy phản công');
+          if (!roleTag) roleTag = '🛑 Phá Phản Công';
+        } else if (evt.type === 'WON_FOUL') {
+          score += 0.4;
+          noteItems.push(evt.note ? `🤕 ${evt.note}` : '🤕 Kiếm về quả đá phạt nguy hiểm');
+          if (!roleTag) roleTag = '🤕 Khắc Tinh Hậu Vệ';
+        } else if (evt.type === 'TURNOVER') {
+          score -= 0.8;
+          noteItems.push(evt.note ? `⚠️ ${evt.note}` : '⚠️ Để mất bóng nguy hiểm phần sân nhà');
+          if (!roleTag) roleTag = '⚠️ Mất Bóng Nguy Hiểm';
         } else if (evt.type === 'WOODWORK') {
           score += 0.3;
           noteItems.push(evt.note ? `🪵 Sút xà/cột: ${evt.note}` : '🪵 Dứt điểm hiểm hóc dội xà ngang/cột dọc');
@@ -636,11 +676,20 @@ QUY TẮC CHẤM ĐIỂM BẮT BUỘC (TUÂN THỦ TUYỆT ĐỐI):
    - Cầu thủ có bàn thắng hoặc siêu phẩm: "goals" >= 1, rating 7.8 - 9.2, tag: "🌟 Siêu Phẩm" hoặc "⚽ Ghi Bàn", note ghi rõ bàn thắng.
    - Cầu thủ kiến tạo: "assists" >= 1, rating 7.4 - 8.4, tag: "👟 Kiến Tạo", note ghi rõ đường kiến tạo.
    - Thủ môn/Hậu vệ cứu thua xuất thần: rating 7.8 - 8.8, tag: "🧤 Người Nhện" hoặc "🛡️ Cứu Thua Xuất Thần".
+   - Thủ môn mắc sai lầm / ói bóng / đẻ trứng: rating 4.8 - 5.5, tag: "🧤❌ Mắc Sai Lầm", note nhắc nhở rút kinh nghiệm.
+   - Phản lưới nhà (OWN_GOAL): rating 4.8 - 5.6, tag: "🤦‍♂️ Phản Lưới Nhà", note ghi rõ đốt lưới nhà đáng tiếc.
+   - Chọc khe xé gió / Kiến tạo cơ hội (KEYPASS): rating 7.5 - 8.3, tag: "🎯 Chọc Khe Xé Gió", note khen ngợi nhãn quan sắc bén.
+   - Thoát pressing (PRESSING_ESCAPE): rating 7.4 - 8.2, tag: "🌪️ Thoát Pressing", note khen khả năng xoay sở cầm nhịp.
+   - Đánh chặn trục giữa (INTERCEPT): rating 7.4 - 8.0, tag: "🧲 Đánh Chặn Trục Giữa", note khen khả năng phán đoán cắt bóng.
+   - Nã đại bác sút xa (LONG_SHOT): rating 7.2 - 7.8, tag: "🚀 Nã Đại Bác", note khen ngợi cú sút uy lực từ xa.
+   - Tranh chấp lăn xả / Xoạc bóng (TACKLE): rating 7.4 - 8.0, tag: "💥 Tranh Chấp Lửa", note khen tinh thần chiến binh.
    - Cắt bóng / bọc lót tốt: rating 7.4 - 8.0, tag: "🛡️ Lá Chắn Thép".
+   - Phạm lỗi chiến thuật (TACTICAL_FOUL): rating 6.4 - 6.8, tag: "🛑 Phá Phản Công", note ghi nhận pha phạm lỗi cần thiết.
+   - Kiếm đá phạt / penalty (WON_FOUL): rating 7.2 - 7.6, tag: "🤕 Kiếm Đá Phạt".
+   - Mất bóng nguy hiểm (TURNOVER): rating 5.2 - 6.0, tag: "⚠️ Mất Bóng Nguy Hiểm".
    - Bỏ lỡ cơ hội ngon ăn: rating 5.5 - 6.2, tag: "💨 Bỏ Lỡ Đáng Tiếc".
    - Pha tấu hài / vấp bóng: rating 5.8 - 6.5, tag: "😂 Cây Hài Sân Cỏ".
    - Thi đấu tròn vai không sự kiện nổi bật: Đá chính 6.4 - 6.8, Dự bị 6.0 - 6.5.
-   - Mắc sai lầm / chân yếu / ói bóng: rating 4.5 - 5.5.
 3. TUYỆT ĐỐI KHÔNG TỰ BỊA BÀN THẮNG/KIẾN TẠO nếu không có trong diễn biến!
 4. BẢNG BIỆT DANH FC TNT (Phải nhận diện chuẩn xác):
    - "Vinh" / "Duy Vinh" / "Vinh Lê" = Vinh Lê
