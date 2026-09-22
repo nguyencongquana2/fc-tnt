@@ -7031,14 +7031,14 @@ body {
   background: rgba(16, 185, 129, 0.3);
 }
 
-/* Voice Bar */
+/* Voice Bar - Minimalist Capsule Design */
 .live-voice-bar-wrapper {
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
   border: 1.5px solid rgba(6, 182, 212, 0.35);
-  border-radius: 16px;
-  padding: 0.85rem 1rem;
+  border-radius: 50px; /* Bo tròn hoàn toàn hai đầu (Capsule) */
+  padding: 0.4rem 0.6rem;
   transition: all 0.25s ease;
   position: relative;
   overflow: visible;
@@ -7047,27 +7047,27 @@ body {
   box-sizing: border-box;
 }
 
-.live-voice-top-row {
+.live-voice-top-row.capsule-design {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 0.75rem;
   width: 100%;
 }
 
-/* Mic Button */
+/* Mic Button - Smaller & Sleek */
 .live-voice-mic-btn {
   position: relative;
-  width: 52px;
-  height: 52px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border: 2px solid rgba(6, 182, 212, 0.6);
+  border: 1.5px solid rgba(6, 182, 212, 0.6);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
   outline: none;
@@ -7076,11 +7076,11 @@ body {
 .live-voice-mic-btn:hover {
   transform: scale(1.05);
   border-color: #06b6d4;
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.45);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.45);
 }
 
 .live-voice-mic-btn .mic-icon {
-  font-size: 1.45rem;
+  font-size: 1.15rem;
   transition: transform 0.2s ease;
   z-index: 2;
 }
@@ -7117,34 +7117,43 @@ body {
 .live-voice-info {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
 .live-voice-title {
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .live-voice-hint {
-  font-size: 0.78rem;
-  color: #94a3b8;
-  line-height: 1.35;
-  white-space: normal;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .live-voice-keyboard-btn {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #cbd5e1;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0.4rem 0.65rem;
-  border-radius: 8px;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 50%;
   cursor: pointer;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .live-voice-keyboard-btn:hover {
@@ -7153,49 +7162,7 @@ body {
   color: #fff;
 }
 
-/* Quick Suggestion Chips */
-.live-voice-quick-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.65rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.live-voice-chip-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #38bdf8;
-  margin-right: 0.2rem;
-}
-
-.live-voice-chip {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
-  font-size: 0.74rem;
-  font-weight: 600;
-  padding: 0.25rem 0.55rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.live-voice-chip:hover {
-  background: rgba(6, 182, 212, 0.25);
-  border-color: #06b6d4;
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-.live-voice-chip:active {
-  transform: translateY(0);
-}
+/* Quick Suggestion Chips removed for minimalist design */
 
 .live-voice-controls-row {
   display: flex;

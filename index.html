@@ -77,7 +77,7 @@
   <meta name="apple-mobile-web-app-title" content="FC TNT">
   <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css?v=3.9">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
 
   <!-- Standard Favicons for Browsers & Google Search Engine Crawler -->
   <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico">
@@ -1481,56 +1481,32 @@
 
         <!-- Quick Action: Voice Memo Microphone Bar -->
         <div class="live-voice-bar-wrapper" id="live-voice-bar-container">
-          <div class="live-voice-top-row">
+          <div class="live-voice-top-row capsule-design">
             <button type="button" class="live-voice-mic-btn" id="live-voice-mic-btn"
-              onclick="window.matchesModule.toggleVoiceRecording()" title="Bấm để nói bằng giọng nói (Tiếng Việt)">
+              onclick="window.matchesModule.toggleVoiceRecording()" title="Chạm để nói sự kiện">
               <div class="mic-wave-ring" id="live-mic-wave"></div>
               <span class="mic-icon" id="live-mic-icon">🎙️</span>
             </button>
             <div class="live-voice-info">
-              <div class="live-voice-title" id="live-voice-status">🎙️ Chạm Mic & Nói Sự Kiện Sân Cỏ</div>
-              <div class="live-voice-hint" id="live-voice-transcript">Nói tự nhiên: "Quân vừa sút xa ghi bàn, Vinh kiến
-                tạo" hoặc "ToDiu cứu thua xuất sắc"</div>
+              <div class="live-voice-title" id="live-voice-status">Chạm mic để nói sự kiện...</div>
+              <div class="live-voice-hint" id="live-voice-transcript" style="display:none;"></div>
             </div>
             <button type="button" class="live-voice-keyboard-btn" id="live-voice-keyboard-btn"
-              onclick="window.matchesModule.toggleVoiceManualInput()"
-              title="Nhập câu lệnh bằng bàn phím / phím mic điện thoại">
-              ⌨️ Gõ nhanh
+              onclick="window.matchesModule.toggleVoiceManualInput()" title="Gõ phím">
+              ⌨️
             </button>
-          </div>
-
-          <!-- Quick Suggestion Chips for Fast Tap -->
-          <div class="live-voice-quick-chips" id="live-voice-quick-chips">
-            <span class="live-voice-chip-label">⚡ Mẫu nói nhanh:</span>
-            <button type="button" class="live-voice-chip"
-              onclick="window.matchesModule.quickVoicePreset('Quân vừa sút xa ghi bàn')">⚽ Quân ghi bàn</button>
-            <button type="button" class="live-voice-chip"
-              onclick="window.matchesModule.quickVoicePreset('Vinh kiến tạo đẹp mắt')">👟 Vinh kiến tạo</button>
-            <button type="button" class="live-voice-chip"
-              onclick="window.matchesModule.quickVoicePreset('ToDiu cản phá cứu thua 1vs1')">🧤 ToDiu cứu thua</button>
-            <button type="button" class="live-voice-chip"
-              onclick="window.matchesModule.quickVoicePreset('Siêu phẩm sút xa góc chữ A')">🌟 Siêu phẩm</button>
-            <button type="button" class="live-voice-chip"
-              onclick="window.matchesModule.quickVoicePreset('Sút bóng trúng xà ngang')">🪵 Trúng xà ngang</button>
-            <button type="button" class="live-voice-chip"
-              onclick="window.matchesModule.quickVoicePreset('Quang phòng ngự bọc lót chắc chắn')">🧱 Quang thủ
-              hay</button>
           </div>
 
           <!-- Controls row: Cancel & Submit buttons -->
           <div class="live-voice-controls-row" id="live-voice-controls-row" style="display: none;">
             <input type="text" class="live-voice-input-edit" id="live-voice-input-edit"
-              placeholder="Nội dung sự kiện (hoặc dùng phím mic 🎙️ trên bàn phím điện thoại)..."
+              placeholder="Nội dung sự kiện..."
               onkeydown="if(event.key==='Enter') window.matchesModule.submitVoiceRecording()">
             <div class="live-voice-btn-group">
               <button type="button" class="live-voice-cancel-btn" onclick="window.matchesModule.cancelVoiceRecording()"
-                title="Hủy bỏ câu nói này">
-                ✕ Hủy Bỏ
-              </button>
+                title="Hủy bỏ câu nói này">✕</button>
               <button type="button" class="live-voice-submit-btn" onclick="window.matchesModule.submitVoiceRecording()"
-                title="Ghi nhận sự kiện ngay">
-                ✓ Ghi Nhận Sự Kiện
-              </button>
+                title="Ghi nhận sự kiện ngay">✓ Ghi nhận</button>
             </div>
           </div>
         </div>
@@ -1792,7 +1768,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/state.js?v=3.5"></script>
   <script src="js/players.js?v=3.5"></script>
-  <script src="js/matches.js?v=3.9"></script>
+  <script src="js/matches.js?v=4.0"></script>
   <script src="js/finance.js?v=3.5"></script>
   <script src="js/awards.js?v=3.5"></script>
   <script src="js/poster.js?v=3.5"></script>
