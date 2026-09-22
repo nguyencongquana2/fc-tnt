@@ -119,8 +119,8 @@ window.matchesModule = {
               <span class="match-venue">📍 ${m.venue || 'Sân bóng'} (Sân 7 • 3-1-2)</span>
             </div>
             
-            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;" onclick="event.stopPropagation()">
-              <button class="btn btn-secondary btn-sm" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.6rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
+            <div class="match-meta-right" onclick="event.stopPropagation()">
+              <button class="btn btn-secondary btn-sm match-finance-btn" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.55rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
                 💰 Tiền Sân ${m.finance && m.finance.payments && m.finance.payments.length > 0 ? `(${m.finance.payments.filter(p => p.isPaid).length}/${m.finance.payments.length})` : ''}
               </button>
               <span class="match-result-badge ${resultClass}">${resultText}</span>
@@ -130,7 +130,7 @@ window.matchesModule = {
           <div class="match-scoreboard">
             <div class="team-box home">
               <span class="team-title">${teamInfo?.name || 'FC TNT'}</span>
-              <div class="brand-icon-box" style="width:36px; height:36px; font-size:1.1rem;">⚽</div>
+              <div class="brand-icon-box">⚽</div>
             </div>
 
             <div class="score-display">
@@ -140,25 +140,25 @@ window.matchesModule = {
             </div>
 
             <div class="team-box away">
-              <div class="brand-icon-box" style="width:36px; height:36px; font-size:1.1rem; background: #334155; box-shadow: none;">🛡️</div>
+              <div class="brand-icon-box away-brand">🛡️</div>
               <span class="team-title">${m.opponent}</span>
             </div>
           </div>
 
           <div class="match-card-bottom">
-            <div style="color: var(--text-dim); font-size: 0.85rem; font-style: italic;">
+            <div class="match-note-text">
               ${m.note ? `"${m.note}"` : 'Sơ đồ 3 Hậu Vệ - 1 Giữa - 2 Cánh Tiền Đạo'}
             </div>
 
-            <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="match-bottom-details">
               ${motm && highestRating >= 7.0 ? `
                 <div class="motm-badge-preview">
                   <img class="motm-avatar-small" src="${motm.avatar}" alt="${motm.name}">
                   <span>MOTM: ${(motm.nickname && motm.nickname.trim()) ? motm.nickname.trim() : motm.name} (${highestRating}⭐)</span>
                 </div>
-              ` : ''}
+              ` : '<div></div>'}
               
-              <div style="font-size: 0.85rem; color: var(--accent-emerald); font-weight: 700;">
+              <div class="match-view-detail-btn">
                 🏟️ Xem Sơ Đồ 3-1-2 & Chấm Điểm →
               </div>
             </div>
