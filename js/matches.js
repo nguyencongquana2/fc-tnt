@@ -109,9 +109,10 @@ window.matchesModule = {
 
       const resultClass = m.result === 'WIN' ? 'result-win' : m.result === 'DRAW' ? 'result-draw' : 'result-loss';
       const resultText = m.result === 'WIN' ? 'THẮNG' : m.result === 'DRAW' ? 'HÒA' : 'THUA';
+      const cardResultClass = m.result === 'WIN' ? 'match-win' : m.result === 'DRAW' ? 'match-draw' : 'match-loss';
 
       return `
-        <div class="match-card" onclick="window.matchesModule.openMatchDetailModal('${m.id}')">
+        <div class="match-card ${cardResultClass}" onclick="window.matchesModule.openMatchDetailModal('${m.id}')">
           <div class="match-card-top-bar">
             <div class="match-meta-left">
               <span class="match-date-badge">📅 ${m.date} • ${m.time || '19:30'}</span>

@@ -1809,19 +1809,58 @@ body {
 }
 
 .match-card {
+  position: relative;
   background: var(--bg-card);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
+  border-left: 5px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   padding: 1.5rem;
   transition: all var(--transition-fast);
   cursor: pointer;
+  overflow: hidden;
 }
 
 .match-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(16, 185, 129, 0.4);
   box-shadow: var(--shadow-md);
+}
+
+/* Match Accent Left Border & Subtle Background Gradient by Result */
+.match-card.match-win {
+  border-color: rgba(16, 185, 129, 0.25);
+  border-left: 5px solid #10b981;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 28%, var(--bg-card) 65%);
+}
+
+.match-card.match-win:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+  border-left-color: #34d399;
+  box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.2), var(--shadow-md);
+}
+
+.match-card.match-loss {
+  border-color: rgba(244, 63, 94, 0.22);
+  border-left: 5px solid #f43f5e;
+  background: linear-gradient(90deg, rgba(244, 63, 94, 0.08) 0%, rgba(244, 63, 94, 0.02) 28%, var(--bg-card) 65%);
+}
+
+.match-card.match-loss:hover {
+  border-color: rgba(244, 63, 94, 0.45);
+  border-left-color: #fb7185;
+  box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.16), var(--shadow-md);
+}
+
+.match-card.match-draw {
+  border-color: rgba(245, 158, 11, 0.22);
+  border-left: 5px solid #f59e0b;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 28%, var(--bg-card) 65%);
+}
+
+.match-card.match-draw:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  border-left-color: #fbbf24;
+  box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.16), var(--shadow-md);
 }
 
 .match-card-top-bar {
