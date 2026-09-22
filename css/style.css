@@ -516,9 +516,57 @@ body {
   user-select: none;
 }
 
-.lineup-item-label:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-emerald);
+.lineup-item-label.selected-item {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+/* Active Live Match Banner */
+.active-live-match-banner {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.16) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+  transition: all var(--transition-fast);
+}
+
+.active-live-match-banner:hover {
+  transform: translateY(-2px);
+  border-color: rgba(239, 68, 68, 0.8);
+  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.25);
+}
+
+.pulse-live-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  animation: pulseLiveDot 1.5s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes pulseLiveDot {
+  0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 4px #ef4444; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 14px #ef4444; }
+  100% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 4px #ef4444; }
+}
+
+.pin-verify-match-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.85rem;
 }
 
 .lineup-item-label input[type="checkbox"] {
