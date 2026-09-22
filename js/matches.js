@@ -122,15 +122,7 @@ window.matchesModule = {
               <button class="btn btn-secondary btn-sm" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.6rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
                 💰 Tiền Sân ${m.finance && m.finance.payments && m.finance.payments.length > 0 ? `(${m.finance.payments.filter(p => p.isPaid).length}/${m.finance.payments.length})` : ''}
               </button>
-              <button class="btn btn-secondary btn-sm" onclick="window.posterModule.openPosterModal('${m.id}')" title="Xuất Poster Ảnh Khoe Mạng Xã Hội" style="padding: 0.25rem 0.6rem; color: var(--accent-gold); border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1);">
-                🎨 Poster
-              </button>
               <span class="match-result-badge ${resultClass}">${resultText}</span>
-              ${window.stateManager.isAdmin ? `
-                <button class="btn btn-secondary btn-sm" onclick="window.matchesModule.requestEditMatch('${m.id}', event)" title="Sửa thông tin trận đấu này (Yêu cầu mã PIN)" style="padding: 0.25rem 0.6rem;">
-                  ✏️ Sửa
-                </button>
-              ` : ''}
             </div>
           </div>
 
