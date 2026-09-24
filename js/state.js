@@ -162,22 +162,41 @@ class StateManager {
         const parsed = JSON.parse(saved);
         if (parsed.players && parsed.players.length > 0) {
           if (!parsed.moments) parsed.moments = [];
+          if (!parsed.matches) parsed.matches = [];
           return parsed;
         }
       }
     } catch (e) {
       console.error('Failed to parse state from localStorage', e);
     }
-    this.saveData(DEFAULT_DATA);
     return JSON.parse(JSON.stringify(DEFAULT_DATA));
   }
 
   saveData(dataToSave = this.data) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-      this.notify();
+      // Tách dữ liệu nhẹ lưu cache LocalStorage (loại bỏ media nặng của moments để không bao giờ vượt quota 5MB)
+      const lightCache = {
+        teamInfo: dataToSave.teamInfo,
+        players: dataToSave.players,
+        matches: dataToSave.matches,
+        moments: Array.isArray(dataToSave.moments) ? dataToSave.moments.map(m => ({
+          ...m,
+          images: [],
+          video: null
+        })) : []
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lightCache));
     } catch (e) {
-      console.error('Failed to save state to localStorage', e);
+      console.warn('LocalStorage cache warning (quota):', e);
+      try {
+        const miniCache = {
+          teamInfo: dataToSave.teamInfo,
+          matches: dataToSave.matches
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(miniCache));
+      } catch (e2) {}
+    } finally {
+      this.notify();
     }
   }
 

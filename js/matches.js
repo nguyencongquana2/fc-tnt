@@ -95,76 +95,84 @@ window.matchesModule = {
     }
 
     container.innerHTML = liveBannerHtml + matches.map(m => {
-      let motm = null;
-      let highestRating = -1;
-      if (m.playerStats && m.playerStats.length > 0) {
-        m.playerStats.forEach(ps => {
-          const r = Number(ps.rating) || 0;
-          if (r > highestRating) {
-            highestRating = r;
-            motm = window.stateManager.getPlayerById(ps.playerId);
-          }
-        });
-      }
+      try {
+        let motm = null;
+        let highestRating = -1;
+        if (m.playerStats && Array.isArray(m.playerStats) && m.playerStats.length > 0) {
+          m.playerStats.forEach(ps => {
+            const r = Number(ps.rating) || 0;
+            if (r > highestRating) {
+              highestRating = r;
+              motm = window.stateManager.getPlayerById(ps.playerId);
+            }
+          });
+        }
 
-      const resultClass = m.result === 'WIN' ? 'result-win' : m.result === 'DRAW' ? 'result-draw' : 'result-loss';
-      const resultText = m.result === 'WIN' ? 'THẮNG' : m.result === 'DRAW' ? 'HÒA' : 'THUA';
-      const cardResultClass = m.result === 'WIN' ? 'match-win' : m.result === 'DRAW' ? 'match-draw' : 'match-loss';
+        const resultClass = m.result === 'WIN' ? 'result-win' : m.result === 'DRAW' ? 'result-draw' : 'result-loss';
+        const resultText = m.result === 'WIN' ? 'THẮNG' : m.result === 'DRAW' ? 'HÒA' : 'THUA';
+        const cardResultClass = m.result === 'WIN' ? 'match-win' : m.result === 'DRAW' ? 'match-draw' : 'match-loss';
+        const homeScore = m.homeScore ?? 0;
+        const awayScore = m.awayScore ?? 0;
+        const opponentName = m.opponent || 'FC Đối Thủ';
 
-      return `
-        <div class="match-card ${cardResultClass}" onclick="window.matchesModule.openMatchDetailModal('${m.id}')">
-          <div class="match-card-top-bar">
-            <div class="match-meta-left">
-              <span class="match-date-badge">📅 ${m.date} • ${m.time || '19:30'}</span>
-              <span class="match-venue">📍 ${m.venue || 'Sân bóng'} (Sân 7 • 3-1-2)</span>
-            </div>
-            
-            <div class="match-meta-right" onclick="event.stopPropagation()">
-              <button class="btn btn-secondary btn-sm match-finance-btn" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.55rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
-                💰 Tiền Sân ${m.finance && m.finance.payments && m.finance.payments.length > 0 ? `(${m.finance.payments.filter(p => p.isPaid).length}/${m.finance.payments.length})` : ''}
-              </button>
-              <span class="match-result-badge ${resultClass}">${resultText}</span>
-            </div>
-          </div>
-
-          <div class="match-scoreboard">
-            <div class="team-box home">
-              <span class="team-title">${teamInfo?.name || 'FC TNT'}</span>
-              <div class="brand-icon-box">⚽</div>
-            </div>
-
-            <div class="score-display">
-              <span class="score-num ${m.homeScore > m.awayScore ? 'win' : ''}">${m.homeScore}</span>
-              <span class="score-divider">-</span>
-              <span class="score-num ${m.awayScore > m.homeScore ? 'win' : ''}">${m.awayScore}</span>
-            </div>
-
-            <div class="team-box away">
-              <div class="brand-icon-box away-brand">🛡️</div>
-              <span class="team-title">${m.opponent}</span>
-            </div>
-          </div>
-
-          <div class="match-card-bottom">
-            <div class="match-note-text">
-              ${m.note ? `"${m.note}"` : 'Sơ đồ 3 Hậu Vệ - 1 Giữa - 2 Cánh Tiền Đạo'}
-            </div>
-
-            <div class="match-bottom-details">
-              ${motm && highestRating >= 7.0 ? `
-                <div class="motm-badge-preview">
-                  <img class="motm-avatar-small" src="${motm.avatar}" alt="${motm.name}">
-                  <span>MOTM: ${(motm.nickname && motm.nickname.trim()) ? motm.nickname.trim() : motm.name} (${highestRating}⭐)</span>
-                </div>
-              ` : '<div></div>'}
+        return `
+          <div class="match-card ${cardResultClass}" onclick="window.matchesModule.openMatchDetailModal('${m.id}')">
+            <div class="match-card-top-bar">
+              <div class="match-meta-left">
+                <span class="match-date-badge">📅 ${m.date || '---'} • ${m.time || '19:30'}</span>
+                <span class="match-venue">📍 ${m.venue || 'Sân bóng'} (Sân 7 • 3-1-2)</span>
+              </div>
               
-              <div class="match-view-detail-btn">
-                🏟️ Xem Sơ Đồ 3-1-2 & Chấm Điểm →
+              <div class="match-meta-right" onclick="event.stopPropagation()">
+                <button class="btn btn-secondary btn-sm match-finance-btn" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.55rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
+                  💰 Tiền Sân ${m.finance && Array.isArray(m.finance.payments) && m.finance.payments.length > 0 ? `(${m.finance.payments.filter(p => p.isPaid).length}/${m.finance.payments.length})` : ''}
+                </button>
+                <span class="match-result-badge ${resultClass}">${resultText}</span>
+              </div>
+            </div>
+
+            <div class="match-scoreboard">
+              <div class="team-box home">
+                <span class="team-title">${teamInfo?.name || 'FC TNT'}</span>
+                <div class="brand-icon-box">⚽</div>
+              </div>
+
+              <div class="score-display">
+                <span class="score-num ${homeScore > awayScore ? 'win' : ''}">${homeScore}</span>
+                <span class="score-divider">-</span>
+                <span class="score-num ${awayScore > homeScore ? 'win' : ''}">${awayScore}</span>
+              </div>
+
+              <div class="team-box away">
+                <div class="brand-icon-box away-brand">🛡️</div>
+                <span class="team-title">${opponentName}</span>
+              </div>
+            </div>
+
+            <div class="match-card-bottom">
+              <div class="match-note-text">
+                ${m.note ? `"${m.note}"` : 'Sơ đồ 3 Hậu Vệ - 1 Giữa - 2 Cánh Tiền Đạo'}
+              </div>
+
+              <div class="match-bottom-details">
+                ${motm && highestRating >= 7.0 ? `
+                  <div class="motm-badge-preview">
+                    <img class="motm-avatar-small" src="${motm.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="${motm.name || 'Cầu thủ'}">
+                    <span>MOTM: ${(motm.nickname && motm.nickname.trim()) ? motm.nickname.trim() : (motm.name || 'Cầu thủ')} (${highestRating}⭐)</span>
+                  </div>
+                ` : '<div></div>'}
+                
+                <div class="match-view-detail-btn">
+                  🏟️ Xem Sơ Đồ 3-1-2 & Chấm Điểm →
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
+      } catch (err) {
+        console.error('Error rendering match card:', m, err);
+        return '';
+      }
     }).join('');
   },
 
@@ -2005,88 +2013,6 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
           score = baseStarterRating;
           noteItems.push(isWin ? 'Thi đấu tròn vai, hoàn thành tốt nhiệm vụ' : 'Thi đấu tròn vai trên sân');
           roleTag = isWin ? '⚖️ Tròn Vai Thắng Trận' : '⚖️ Tròn Vai';
-        } else {
-          score = baseSubRating;
-          noteItems.push('Dự bị vào sân thi đấu nỗ lực');
-          roleTag = '🔄 Dự Bị';
-        }
-      }
-
-      score = Math.max(4.0, Math.min(9.9, Math.round(score * 10) / 10));
-      let finalNote = noteItems.length > 0 ? noteItems.join(' • ') : (isStarter ? 'Hoàn thành nhiệm vụ trên sân' : 'Dự bị trận đấu');
-
-      if (score > highestScore) {
-        highestScore = score;
-        motmId = p.id;
-      }
-
-      return {
-        playerId: p.id,
-        name: p.name,
-        rating: score,
-        goals,
-        assists,
-        yellowCards,
-        redCards,
-        tag: roleTag || (isStarter ? '⚖️ Tròn Vai' : '🔄 Dự Bị'),
-        note: finalNote
-      };
-    });
-
-    return {
-      matchHeadline: isWin ? `🔥 Chiến Thắng Thuyết Phục Trước ${m.opponent}!` : `⚡ Trận Cầu ${m.homeScore} - ${m.awayScore} Trước ${m.opponent}`,
-      matchSummary: isLoss
-        ? `Trận đấu gặp ${m.opponent} kết thúc với tỉ số ${m.homeScore} - ${m.awayScore}. Đội bóng thi đấu nhiệt huyết nhưng còn bộc lộ một số sai sót trước đối thủ, ghi nhận nhiều nỗ lực cá nhân nổi bật.`
-        : `Trận đấu giữa FC TNT và ${m.opponent} diễn ra sôi nổi với tỉ số chung cuộc ${m.homeScore} - ${m.awayScore}. Toàn đội thể hiện tinh thần quyết tâm cao, các cá nhân phối hợp ăn ý và cống hiến hết mình.`,
-      motmPlayerId: motmId,
-      ratings,
-      source: 'Smart Football Analysis Engine'
-    };
-  },oteItems.push('🎯 Cầm nhịp và phát động tấn công sắc nét');
-          if (!roleTag) roleTag = '🎯 Nhạc Trưởng Tuyến Giữa';
-        }
-
-        if (playerCtx.includes('triển khai bóng bằng chân yếu') || playerCtx.includes('chân yếu') || playerCtx.includes('bắt bóng lập bập') || playerCtx.includes('ói bóng')) {
-          score -= 1.1;
-          noteItems.push('⚠️ Xử lý chân lập bập, ảnh hưởng lối chơi');
-          roleTag = '⚠️ Xử Lý Chân Kém';
-        }
-        if (playerCtx.includes('bỏ lỡ') || playerCtx.includes('chân gỗ')) {
-          score -= 0.8;
-          noteItems.push('💨 Bỏ lỡ cơ hội đáng tiếc');
-          if (!roleTag) roleTag = '💨 Bỏ Lỡ Đáng Tiếc';
-        }
-        if (playerCtx.includes('tấu hài') || playerCtx.includes('vấp cỏ')) {
-          score -= 0.3;
-          noteItems.push('😂 Có pha tấu hài trên sân');
-          if (!roleTag) roleTag = '😂 Cây Hài Sân Cỏ';
-        }
-        if (playerCtx.includes('mắc sai lầm') || playerCtx.includes('lỗi nhiều') || playerCtx.includes('bóp team')) {
-          score -= 0.8;
-          noteItems.push('⚠️ Mắc sai lầm xử lý bóng');
-          if (!roleTag) roleTag = '⚠️ Mắc Sai Lầm';
-        }
-        if (playerCtx.includes('dưới sức') || playerCtx.includes('đuối sức') || playerCtx.includes('hết pin')) {
-          score -= 0.8;
-          noteItems.push('⚠️ Thi đấu dưới sức');
-          if (!roleTag) roleTag = '⚠️ Dưới Sức';
-        }
-
-        if (playerCtx.includes('thẻ đỏ')) {
-          redCards = 1;
-          score -= 2.0;
-          noteItems.push('🟥 Nhận thẻ đỏ');
-          roleTag = '🟥 Thẻ Đỏ Truất Quyền';
-        } else if (playerCtx.includes('thẻ vàng')) {
-          yellowCards = 1;
-          score -= 0.4;
-          noteItems.push('🟨 Nhận thẻ vàng');
-        }
-      } else if (directEvents.length === 0) {
-        if (isStarter) {
-          score = baseStarterRating;
-          noteItems.push('Thi đấu tròn vai, hoàn thành nhiệm vụ');
-          roleTag = '⚖️ Tròn Vai';
         } else {
           score = baseSubRating;
           noteItems.push('Dự bị vào sân thi đấu nỗ lực');
