@@ -1688,11 +1688,17 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
   clientSideAiEvaluation(m, playerList, narration, liveEvents) {
     const rawText = (narration || '').trim();
     const textLower = rawText.toLowerCase();
-    const isWin = m.result === 'WIN' || (Number(m.homeScore) > Number(m.awayScore));
-    const isLoss = m.result === 'LOSS' || (Number(m.homeScore) < Number(m.awayScore));
 
-    const baseStarterRating = isWin ? 6.8 : isLoss ? 6.2 : 6.5;
-    const baseSubRating = isWin ? 6.5 : isLoss ? 6.0 : 6.2;
+    const homeScore = Number(m?.homeScore ?? 0);
+    const awayScore = Number(m?.awayScore ?? 0);
+    const isWin = m?.result === 'WIN' || (homeScore > awayScore);
+    const isLoss = m?.result === 'LOSS' || (homeScore < awayScore);
+    const isDraw = !isWin && !isLoss;
+    const isHeavyLoss = isLoss && ((awayScore - homeScore >= 2) || awayScore >= 4);
+
+    // Thang điểm nền tảng theo kết quả trận (tránh cào bằng 7.0)
+    const baseStarterRating = isWin ? 7.0 : isDraw ? 6.6 : (isHeavyLoss ? 6.0 : 6.3);
+    const baseSubRating = isWin ? 6.6 : isDraw ? 6.3 : (isHeavyLoss ? 5.7 : 6.0);
 
     const playerMentions = [];
     playerList.forEach(p => {
@@ -1780,6 +1786,12 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     const ratings = playerList.map(p => {
       const isStarter = p.isStarter !== false;
+      const pos = (p.position || '').toUpperCase();
+      const isGK = pos === 'GK' || pos.includes('THỦ MÔN');
+      const isDF = pos === 'DF' || pos === 'CB' || pos === 'LB' || pos === 'RB' || pos.includes('HẬU VỆ');
+      const isMF = pos === 'MF' || pos === 'CM' || pos === 'LM' || pos === 'RM' || pos === 'CDM' || pos === 'CAM' || pos.includes('TIỀN VỆ');
+      const isFW = pos === 'FW' || pos === 'CF' || pos === 'ST' || pos.includes('TIỀN ĐẠO');
+
       let score = isStarter ? baseStarterRating : baseSubRating;
       let goals = 0;
       let assists = 0;
@@ -1799,24 +1811,24 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             if (!roleTag) roleTag = '🌟 Siêu Phẩm Đỉnh Cao';
           } else if (evt.type === 'GOAL') {
             goals += 1;
-            score += 1.2;
+            score += 1.3;
             noteItems.push(evt.note ? `⚽ Bàn thắng: ${evt.note}` : '⚽ Ghi bàn thắng quý giá');
             if (!roleTag) roleTag = '⚽ Ghi Bàn';
           } else if (evt.type === 'OWN_GOAL') {
-            score -= 1.5;
+            score -= 1.8;
             noteItems.push(evt.note ? `🤦‍♂️ ${evt.note}` : '🤦‍♂️ Vô tình phản lưới nhà đáng tiếc');
             if (!roleTag) roleTag = '🤦‍♂️ Phản Lưới Nhà';
           } else if (evt.type === 'ASSIST') {
             assists += 1;
-            score += 0.9;
+            score += 1.0;
             noteItems.push(evt.note ? `👟 ${evt.note}` : '👟 Kiến tạo dọn cỗ sắc bén');
             if (!roleTag) roleTag = '👟 Kiến Tạo';
           } else if (evt.type === 'SAVE') {
-            score += 1.2;
+            score += 1.4;
             noteItems.push(evt.note ? `🧤 Cứu thua: ${evt.note}` : '🧤 Cản phá xuất thần, cứu thua mười mươi');
             if (!roleTag) roleTag = '🧤 Người Nhện';
           } else if (evt.type === 'GK_BLUNDER') {
-            score -= 1.4;
+            score -= 1.8;
             noteItems.push(evt.note ? `🧤❌ ${evt.note}` : '🧤❌ Sai lầm bắt bóng lỗi');
             if (!roleTag) roleTag = '🧤❌ Mắc Sai Lầm';
           } else if (evt.type === 'KEYPASS') {
@@ -1828,7 +1840,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             noteItems.push(evt.note ? `🌪️ ${evt.note}` : '🌪️ Thoát pressing cầm nhịp xuất sắc');
             if (!roleTag) roleTag = '🌪️ Thoát Pressing';
           } else if (evt.type === 'INTERCEPT') {
-            score += 0.7;
+            score += 0.8;
             noteItems.push(evt.note ? `🧲 ${evt.note}` : '🧲 Đánh chặn trục giữa chuẩn xác');
             if (!roleTag) roleTag = '🧲 Máy Quét Tuyến Giữa';
           } else if (evt.type === 'LONG_SHOT') {
@@ -1836,11 +1848,11 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             noteItems.push(evt.note ? `🚀 ${evt.note}` : '🚀 Nã đại bác từ xa uy lực');
             if (!roleTag) roleTag = '🚀 Nã Đại Bác';
           } else if (evt.type === 'DEFENSE') {
-            score += 0.9;
+            score += 1.0;
             noteItems.push(evt.note ? `🛡️ ${evt.note}` : '🛡️ Bọc lót, cắt bóng then chốt');
             if (!roleTag) roleTag = '🛡️ Lá Chắn Thép';
           } else if (evt.type === 'TACKLE') {
-            score += 0.7;
+            score += 0.8;
             noteItems.push(evt.note ? `💥 ${evt.note}` : '💥 Tranh chấp lăn xả dũng mãnh');
             if (!roleTag) roleTag = '💥 Chiến Binh Thép';
           } else if (evt.type === 'TACTICAL_FOUL') {
@@ -1852,15 +1864,15 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             noteItems.push(evt.note ? `🤕 ${evt.note}` : '🤕 Kiếm về quả đá phạt nguy hiểm');
             if (!roleTag) roleTag = '🤕 Khắc Tinh Hậu Vệ';
           } else if (evt.type === 'TURNOVER') {
-            score -= 0.8;
-            noteItems.push(evt.note ? `⚠️ ${evt.note}` : '⚠️ Để mất bóng nguy hiểm phần sân nhà');
-            if (!roleTag) roleTag = '⚠️ Mất Bóng Nguy Hiểm';
+            score -= isDF ? 1.0 : 0.8;
+            noteItems.push(evt.note ? `⚠️ ${evt.note}` : '⚠️ Để mất bóng nguy hiểm');
+            if (!roleTag) roleTag = isDF ? '⚠️ Sai Lầm Hàng Thủ' : '⚠️ Mất Bóng Nguy Hiểm';
           } else if (evt.type === 'WOODWORK') {
-            score += 0.3;
+            score += 0.4;
             noteItems.push(evt.note ? `🪵 Sút xà/cột: ${evt.note}` : '🪵 Dứt điểm hiểm hóc dội xà ngang/cột dọc');
             if (!roleTag) roleTag = '⚡ Đen Đủi Xà Cột';
           } else if (evt.type === 'MISS') {
-            score -= 0.8;
+            score -= 0.9;
             noteItems.push(evt.note ? `💨 Bỏ lỡ: ${evt.note}` : '💨 Bỏ lỡ cơ hội ngon ăn');
             if (!roleTag) roleTag = '💨 Bỏ Lỡ Đáng Tiếc';
           } else if (evt.type === 'FUNNY') {
@@ -1873,7 +1885,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         });
       }
 
-      // 2. Phân tích ngữ cảnh văn bản
+      // 2. Phân tích ngữ cảnh trong văn bản mô tả
       const contextChunks = playerContextMap[p.id];
       const isMentioned = !!contextChunks && contextChunks.length > 0;
       const playerCtx = isMentioned ? contextChunks.join(' ') : '';
@@ -1882,12 +1894,12 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         if (goals === 0) {
           if (playerCtx.includes('poker') || playerCtx.includes('4 bàn')) {
             goals = 4;
-            score += 2.5;
+            score += 2.6;
             noteItems.push('⚽ Lập Poker 4 bàn thắng lịch sử');
             roleTag = '🔥 Poker Thần Sầu';
           } else if (playerCtx.includes('hattrick') || playerCtx.includes('3 bàn')) {
             goals = 3;
-            score += 2.0;
+            score += 2.1;
             noteItems.push('⚽ Lập hat-trick bùng nổ');
             roleTag = '🎩 Hat-trick Anh Hùng';
           } else if (playerCtx.includes('cú đúp') || playerCtx.includes('2 bàn')) {
@@ -1902,7 +1914,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             if (!roleTag) roleTag = '🌟 Siêu Phẩm Đỉnh Cao';
           } else if (playerCtx.includes('ghi được 1 bàn') || playerCtx.includes('ghi 1 bàn') || playerCtx.includes('sút tung lưới') || playerCtx.includes('lập công') || playerCtx.includes('ghi bàn') || playerCtx.includes('nã đại bác') || playerCtx.includes('mở tỉ số') || playerCtx.includes('ấn định')) {
             goals = 1;
-            score += 1.2;
+            score += 1.3;
             noteItems.push('⚽ Ghi 1 bàn thắng quan trọng');
             if (!roleTag) roleTag = '⚽ Ghi Bàn Quý Giá';
           }
@@ -1911,12 +1923,12 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         if (assists === 0) {
           if (playerCtx.includes('2 kiến tạo') || playerCtx.includes('cú đúp kiến tạo')) {
             assists = 2;
-            score += 1.4;
+            score += 1.5;
             noteItems.push('👟 2 kiến tạo dọn cỗ sắc bén');
             if (!roleTag) roleTag = '👟 Vua Kiến Tạo';
           } else if (playerCtx.includes('1 kiến tạo') || playerCtx.includes('kiến tạo') || playerCtx.includes('dọn cỗ') || playerCtx.includes('chọc khe') || playerCtx.includes('tạt bóng chuẩn')) {
             assists = 1;
-            score += 0.8;
+            score += 0.9;
             noteItems.push('👟 1 kiến tạo chuẩn xác');
             if (!roleTag) roleTag = '👟 Kiến Tạo Chuẩn Xác';
           }
@@ -1928,18 +1940,109 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
           if (!roleTag) roleTag = '⭐ Điểm Sáng Trận Đấu';
         }
         if (playerCtx.includes('đá thòng') || playerCtx.includes('bọc lót') || playerCtx.includes('cắt bóng') || playerCtx.includes('không chiến') || playerCtx.includes('khóa chặt')) {
-          score += 0.8;
+          score += 0.9;
           noteItems.push('🛡️ Phòng ngự bọc lót chắc chắn');
           if (!roleTag) roleTag = '🛡️ Lá Chắn Thép';
         }
         if (playerCtx.includes('cản phá') || playerCtx.includes('cứu thua') || playerCtx.includes('bắt chắc tay') || playerCtx.includes('bắt dính') || playerCtx.includes('xuất thần')) {
-          score += 0.9;
+          score += 1.1;
           noteItems.push('🧤 Cản phá nhiều cơ hội nguy hiểm');
           if (!roleTag) roleTag = '🧤 Người Nhện';
         }
         if (playerCtx.includes('phát động tấn công') || playerCtx.includes('cầm nhịp') || playerCtx.includes('chia bài') || playerCtx.includes('làm chủ tuyến giữa')) {
-          score += 0.8;
+          score += 0.9;
           noteItems.push('🎯 Cầm nhịp và phát động tấn công sắc nét');
+          if (!roleTag) roleTag = '🎯 Nhạc Trưởng Tuyến Giữa';
+        }
+
+        if (playerCtx.includes('triển khai bóng bằng chân yếu') || playerCtx.includes('chân yếu') || playerCtx.includes('bắt bóng lập bập') || playerCtx.includes('ói bóng')) {
+          score -= 1.3;
+          noteItems.push('⚠️ Bắt bóng lập bập / xử lý chân yếu');
+          roleTag = '⚠️ Xử Lý Kém';
+        }
+        if (playerCtx.includes('bỏ lỡ') || playerCtx.includes('chân gỗ')) {
+          score -= 0.9;
+          noteItems.push('💨 Bỏ lỡ cơ hội ngon ăn');
+          if (!roleTag) roleTag = '💨 Bỏ Lỡ Đáng Tiếc';
+        }
+        if (playerCtx.includes('tấu hài') || playerCtx.includes('vấp cỏ')) {
+          score -= 0.3;
+          noteItems.push('😂 Có pha tấu hài trên sân');
+          if (!roleTag) roleTag = '😂 Cây Hài Sân Cỏ';
+        }
+        if (playerCtx.includes('mắc sai lầm') || playerCtx.includes('lỗi nhiều') || playerCtx.includes('bóp team')) {
+          score -= 1.0;
+          noteItems.push('⚠️ Mắc sai lầm xử lý bóng');
+          if (!roleTag) roleTag = '⚠️ Mắc Sai Lầm';
+        }
+        if (playerCtx.includes('dưới sức') || playerCtx.includes('đuối sức') || playerCtx.includes('hết pin')) {
+          score -= 0.8;
+          noteItems.push('⚠️ Thi đấu dưới sức');
+          if (!roleTag) roleTag = '⚠️ Dưới Sức';
+        }
+
+        if (playerCtx.includes('thẻ đỏ')) {
+          redCards = 1;
+          score -= 2.0;
+          noteItems.push('🟥 Nhận thẻ đỏ');
+          roleTag = '🟥 Thẻ Đỏ Truất Quyền';
+        } else if (playerCtx.includes('thẻ vàng')) {
+          yellowCards = 1;
+          score -= 0.4;
+          noteItems.push('🟨 Nhận thẻ vàng');
+        }
+      } else if (directEvents.length === 0) {
+        // Điều chỉnh theo vị trí khi không có sự kiện nổi bật
+        if (isGK && awayScore >= 3) {
+          score = Math.max(5.8, score - 0.3);
+          noteItems.push(`Bị thủng lưới ${awayScore} bàn nhưng đã thi đấu nỗ lực`);
+          roleTag = '🧤 Nỗ Lực Giữ Khung Thành';
+        } else if (isFW && isHeavyLoss && goals === 0) {
+          score = Math.max(5.5, score - 0.4);
+          noteItems.push('Đói bóng trên hàng công, tịt ngòi đáng tiếc');
+          roleTag = '💨 Tịt Ngòi';
+        } else if (isStarter) {
+          score = baseStarterRating;
+          noteItems.push(isWin ? 'Thi đấu tròn vai, hoàn thành tốt nhiệm vụ' : 'Thi đấu tròn vai trên sân');
+          roleTag = isWin ? '⚖️ Tròn Vai Thắng Trận' : '⚖️ Tròn Vai';
+        } else {
+          score = baseSubRating;
+          noteItems.push('Dự bị vào sân thi đấu nỗ lực');
+          roleTag = '🔄 Dự Bị';
+        }
+      }
+
+      score = Math.max(4.0, Math.min(9.9, Math.round(score * 10) / 10));
+      let finalNote = noteItems.length > 0 ? noteItems.join(' • ') : (isStarter ? 'Hoàn thành nhiệm vụ trên sân' : 'Dự bị trận đấu');
+
+      if (score > highestScore) {
+        highestScore = score;
+        motmId = p.id;
+      }
+
+      return {
+        playerId: p.id,
+        name: p.name,
+        rating: score,
+        goals,
+        assists,
+        yellowCards,
+        redCards,
+        tag: roleTag || (isStarter ? '⚖️ Tròn Vai' : '🔄 Dự Bị'),
+        note: finalNote
+      };
+    });
+
+    return {
+      matchHeadline: isWin ? `🔥 Chiến Thắng Thuyết Phục Trước ${m.opponent}!` : `⚡ Trận Cầu ${m.homeScore} - ${m.awayScore} Trước ${m.opponent}`,
+      matchSummary: isLoss
+        ? `Trận đấu gặp ${m.opponent} kết thúc với tỉ số ${m.homeScore} - ${m.awayScore}. Đội bóng thi đấu nhiệt huyết nhưng còn bộc lộ một số sai sót trước đối thủ, ghi nhận nhiều nỗ lực cá nhân nổi bật.`
+        : `Trận đấu giữa FC TNT và ${m.opponent} diễn ra sôi nổi với tỉ số chung cuộc ${m.homeScore} - ${m.awayScore}. Toàn đội thể hiện tinh thần quyết tâm cao, các cá nhân phối hợp ăn ý và cống hiến hết mình.`,
+      motmPlayerId: motmId,
+      ratings,
+      source: 'Smart Football Analysis Engine'
+    };
+  },oteItems.push('🎯 Cầm nhịp và phát động tấn công sắc nét');
           if (!roleTag) roleTag = '🎯 Nhạc Trưởng Tuyến Giữa';
         }
 
@@ -2543,8 +2646,13 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     }
     const mins = Math.floor(this.livePitchState.timerSeconds / 60);
     this.recordLiveEvent('NOTE', null, null, `🏁 Trọng tài / Hai đội kết thúc trận đấu (Tổng thời gian: ${mins} phút)`);
-    window.showToast(`🏁 Hết giờ thi đấu (${mins} phút)! Giờ bạn có thể bấm "🤖 AI Chấm Điểm" hoặc "📋 Copy Gửi Zalo".`);
     this.saveLiveDraft();
+
+    if (confirm(`🏁 Hết giờ thi đấu (${mins} phút)!\n\nBạn có muốn chuyển sang AI Chấm Điểm và lưu trận ngay bây giờ không?`)) {
+      this.finishAndGenerateAiRatings();
+    } else {
+      window.showToast(`🏁 Đã ghi nhận kết thúc (${mins} phút)! Bạn có thể bấm "🤖 AI Chấm Điểm" hoặc "💾 Hoàn Tất & Lưu".`);
+    }
   },
 
   resetLiveTimer() {
@@ -3476,20 +3584,27 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       }
     }
 
+    if (this.livePitchState.isTimerRunning) {
+      this.toggleLiveTimer();
+    }
+
     // Sao chép sự kiện thực tế để đưa vào đánh giá AI
     const liveEventsSnapshot = [...this.livePitchState.events];
     this.pendingLiveEvents = liveEventsSnapshot;
 
     // Tự động lưu trận trước
     const savedMatch = this.saveAndPublishLiveMatch(false);
-    if (!savedMatch) return;
+    if (!savedMatch || !savedMatch.id) {
+      window.showToast('⚠️ Không thể khởi tạo trận đấu để chấm điểm AI', 'error');
+      return;
+    }
 
     // Tổng hợp narration phong phú từ toàn bộ sự kiện trên sân
     const teamInfo = window.stateManager.data.teamInfo;
     const teamName = teamInfo?.name || 'FC TNT';
     const opponent = this.livePitchState.opponent || 'FC Đối Thủ';
-    const homeScore = this.livePitchState.homeScore;
-    const awayScore = this.livePitchState.awayScore;
+    const homeScore = Number(this.livePitchState.homeScore) || 0;
+    const awayScore = Number(this.livePitchState.awayScore) || 0;
     const isWin = homeScore > awayScore;
     const isLoss = homeScore < awayScore;
     const resultStr = isWin ? 'Thắng' : isLoss ? 'Thua' : 'Hòa';
@@ -3502,7 +3617,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       // Sắp xếp sự kiện theo phút tăng dần
       const sortedEvents = [...liveEventsSnapshot].sort((a, b) => (a.minute || 0) - (b.minute || 0));
       sortedEvents.forEach(evt => {
-        narration += `- Phút ${evt.minute}': [${evt.typeLabel}] ${evt.playerName || 'Đội bóng'} ${evt.assistPlayerName ? `(Kiến tạo: ${evt.assistPlayerName})` : ''}${evt.note ? ` - ${evt.note}` : ''}\n`;
+        narration += `- Phút ${evt.minute}': [${evt.typeLabel || evt.type}] ${evt.playerName || 'Đội bóng'} ${evt.assistPlayerName ? `(Kiến tạo: ${evt.assistPlayerName})` : ''}${evt.note ? ` - ${evt.note}` : ''}\n`;
       });
 
       // Tóm tắt theo từng cầu thủ
@@ -3511,7 +3626,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       sortedEvents.forEach(evt => {
         const name = evt.playerName || 'Đội bóng';
         if (!playerHighlights[name]) playerHighlights[name] = [];
-        playerHighlights[name].push(`${evt.typeLabel}${evt.note ? ` (${evt.note})` : ''}`);
+        playerHighlights[name].push(`${evt.typeLabel || evt.type}${evt.note ? ` (${evt.note})` : ''}`);
         if (evt.assistPlayerName) {
           if (!playerHighlights[evt.assistPlayerName]) playerHighlights[evt.assistPlayerName] = [];
           playerHighlights[evt.assistPlayerName].push(`👟 Kiến tạo cho ${evt.playerName}`);
@@ -3541,10 +3656,14 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
   },
 
   saveAndPublishLiveMatch(showSuccessToast = true) {
+    if (this.livePitchState.isTimerRunning) {
+      this.toggleLiveTimer();
+    }
+
     const allPlayers = window.stateManager.getPlayers();
-    const opponent = this.livePitchState.opponent || 'FC Đối Thủ';
-    const homeScore = this.livePitchState.homeScore;
-    const awayScore = this.livePitchState.awayScore;
+    const opponent = (this.livePitchState.opponent || 'FC Đối Thủ').trim();
+    const homeScore = Number(this.livePitchState.homeScore) || 0;
+    const awayScore = Number(this.livePitchState.awayScore) || 0;
 
     let result = 'DRAW';
     if (homeScore > awayScore) result = 'WIN';
@@ -3555,7 +3674,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     if (!Array.isArray(attendingPlayerIds) || attendingPlayerIds.length === 0) {
       // Nếu chưa chọn, lấy các cầu thủ có sự kiện hoặc 7 cầu thủ đầu tiên
       const activeFromEvents = new Set();
-      this.livePitchState.events.forEach(e => {
+      (this.livePitchState.events || []).forEach(e => {
         if (e.playerId) activeFromEvents.add(e.playerId);
         if (e.assistPlayerId) activeFromEvents.add(e.assistPlayerId);
       });
@@ -3583,7 +3702,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       };
     });
 
-    this.livePitchState.events.forEach(evt => {
+    (this.livePitchState.events || []).forEach(evt => {
       if (evt.playerId && playerStatsMap[evt.playerId]) {
         if (evt.type === 'GOAL' || evt.type === 'WONDERGOAL') playerStatsMap[evt.playerId].goals += 1;
         if (evt.type === 'ASSIST') playerStatsMap[evt.playerId].assists += 1;
@@ -3596,9 +3715,14 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       }
     });
 
+    // Trích xuất danh sách thống kê cầu thủ hợp lệ
+    const playerStats = Object.values(playerStatsMap);
+
+    const matchId = 'm_' + Date.now();
     const matchPayload = {
+      id: matchId,
       date: new Date().toISOString().split('T')[0],
-      time: '19:30',
+      time: new Date().toTimeString().slice(0, 5),
       opponent,
       venue: this.livePitchState.venue || 'Sân bóng Tân Triều',
       type: '7',
@@ -3606,12 +3730,13 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       homeScore,
       awayScore,
       result,
-      note: `Ghi nhận trực tiếp ngoài sân (${attendingPlayers.length} cầu thủ có mặt • ${this.livePitchState.events.length} sự kiện)`,
+      note: `Ghi nhận trực tiếp ngoài sân (${attendingPlayers.length} cầu thủ có mặt • ${(this.livePitchState.events || []).length} sự kiện)`,
       playerStats
     };
 
-    // Luôn luôn tạo một trận đấu mới đã hoàn tất vào kho Lịch Sử, không ghi đè trận cũ
+    // Luôn luôn tạo một trận đấu mới đã hoàn tất vào kho Lịch Sử
     const savedMatch = window.stateManager.addMatch(matchPayload);
+    const finalMatch = (savedMatch && savedMatch.id) ? savedMatch : matchPayload;
 
     this.clearLiveDraft();
     this.renderMatches();
@@ -3621,10 +3746,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
     if (showSuccessToast) {
       window.showToast('🎉 Đã kết thúc và lưu trận đấu thành công vào kho Lịch Sử!');
       this.closeLiveCompanionModal();
-      this.openMatchDetailModal(savedMatch.id);
+      this.openMatchDetailModal(finalMatch.id);
     }
 
-    return savedMatch;
+    return finalMatch;
   },
 
   // ==========================================
@@ -3716,12 +3841,30 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
   clearLiveDraft() {
     localStorage.removeItem('fctnt_live_pitch_draft');
+    if (this.livePitchState.timerInterval) {
+      clearInterval(this.livePitchState.timerInterval);
+      this.livePitchState.timerInterval = null;
+    }
+    this.livePitchState.isTimerRunning = false;
     this.livePitchState.events = [];
     this.livePitchState.homeScore = 0;
     this.livePitchState.awayScore = 0;
     this.livePitchState.timerSeconds = 0;
     this.livePitchState.period = 1;
     this.livePitchState.matchId = null;
+
+    const periodBadge = document.getElementById('live-timer-period');
+    const timerBtn = document.getElementById('live-timer-toggle-btn');
+    if (periodBadge) {
+      periodBadge.innerText = '⏱️ CHƯA BẮT ĐẦU';
+      periodBadge.style.color = 'var(--accent-gold)';
+      periodBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+    }
+    if (timerBtn) {
+      timerBtn.innerHTML = '▶️ Bắt Đầu';
+      timerBtn.style.background = 'rgba(16, 185, 129, 0.2)';
+    }
+    this.updateTimerDisplay();
 
     // Xóa trên Cloud
     fetch('/api/live-match/clear', { method: 'POST' }).catch(e => { });

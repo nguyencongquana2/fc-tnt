@@ -327,7 +327,7 @@ class StateManager {
     return (this.data.matches || []).find(m => m.id === id);
   }
 
-  async addMatch(match) {
+  addMatch(match) {
     const newMatch = {
       ...match,
       id: match.id || ('m_' + Date.now()),
