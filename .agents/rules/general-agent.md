@@ -9,4 +9,5 @@ trigger: always_on
 - Performance:
   - For conversational greetings or simple questions, answer directly without executing terminal tools or file scans.
   - Follow the existing project structure defined in ARCHITECTURE.md.
+  - Adhere to all coding and security standards defined in coding-standards.md.
   - Update FEATURE_ROADMAP.md only when a major feature is completed and requested by user.
