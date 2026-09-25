@@ -190,3 +190,8 @@ window.awardsModule = {
     }).join('');
   }
 };
+
+if (window.TNT) {
+  window.TNT.register('awards', window.awardsModule);
+}
+

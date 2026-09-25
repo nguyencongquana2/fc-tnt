@@ -789,3 +789,8 @@ window.posterModule = {
     }
   }
 };
+
+if (window.TNT) {
+  window.TNT.register('poster', window.posterModule);
+}
+

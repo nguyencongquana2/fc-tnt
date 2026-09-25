@@ -36,3 +36,8 @@ Object.assign(window.matchesModule, {
     }
   }
 });
+
+if (window.TNT) {
+  window.TNT.register('matches', window.matchesModule);
+}
+

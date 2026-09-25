@@ -315,7 +315,7 @@
     initEffects();
   }
 
-  window.tntEffects = {
+  const tntEffects = {
     animateNumber,
     triggerStatsCounter,
     injectPitchRadar,
@@ -323,4 +323,9 @@
     spawnFloatingReaction,
     injectQRLaserScanner
   };
+
+  if (window.TNT) {
+    window.TNT.register('effects', tntEffects);
+  }
+  window.tntEffects = tntEffects;
 })();

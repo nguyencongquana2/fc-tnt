@@ -200,6 +200,9 @@ window.appModule = {
 
     // Bắn sự kiện chuyển tab cho hệ thống hiệu ứng & animation
     window.dispatchEvent(new CustomEvent('tabChanged', { detail: { tab: tabName } }));
+    if (window.TNT && window.TNT.events) {
+      window.TNT.events.emit('tab:changed', tabName);
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
@@ -423,5 +426,12 @@ window.showToast = function (msg, type = 'success') {
 
 // Start app on DOM Loaded
 document.addEventListener('DOMContentLoaded', () => {
+  if (window.TNT) {
+    window.TNT.register('app', window.appModule);
+    window.TNT.register('ui', {
+      showToast: window.showToast,
+      escapeHtml: window.escapeHtml
+    });
+  }
   window.appModule.init();
 });

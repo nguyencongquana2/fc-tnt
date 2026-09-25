@@ -786,3 +786,8 @@ window.momentsModule = {
     return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
   }
 };
+
+if (window.TNT) {
+  window.TNT.register('moments', window.momentsModule);
+}
+

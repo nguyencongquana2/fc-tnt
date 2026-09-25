@@ -245,6 +245,9 @@ class StateManager {
         console.error('Error in listener notification:', err);
       }
     });
+    if (window.TNT && window.TNT.events) {
+      window.TNT.events.emit('state:updated', this.data);
+    }
   }
 
   // --- PLAYERS CRUD ---
@@ -759,4 +762,12 @@ class StateManager {
   }
 }
 
-window.stateManager = new StateManager();
+const stateManager = new StateManager();
+if (window.TNT) {
+  window.TNT.register('state', stateManager);
+  window.TNT.register('utils', {
+    escapeHtml: window.escapeHtml,
+    getPlayerAliases: (typeof window.getPlayerAliases === 'function' ? window.getPlayerAliases : null)
+  });
+}
+window.stateManager = stateManager;

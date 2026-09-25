@@ -271,6 +271,12 @@
     initSplash();
   }
 
+  if (window.TNT) {
+    window.TNT.register('splash', {
+      dismiss: dismissSplash,
+      nextFact: nextFact
+    });
+  }
   window.dismissTNTSplash = dismissSplash;
   window.nextTNTFact = nextFact;
 })();

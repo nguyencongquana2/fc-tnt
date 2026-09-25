@@ -682,4 +682,8 @@ class FinanceModule {
   }
 }
 
-window.financeModule = new FinanceModule();
+const financeModule = new FinanceModule();
+if (window.TNT) {
+  window.TNT.register('finance', financeModule);
+}
+window.financeModule = financeModule;

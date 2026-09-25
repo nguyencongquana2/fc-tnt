@@ -33,6 +33,7 @@ FC-TNT/
 │   ├── responsive.css    # Tối ưu hóa hiển thị responsive mobile & tablet
 │   └── style.css         # Master stylesheet hub hợp nhất toàn bộ bằng @import
 ├── js/                   # Module logic phía Client (SPA)
+│   ├── core.js           # [Decoupling] Service Locator & Event Bus trung tâm (window.TNT)
 │   ├── app.js            # Điều hướng tab, modal, toast
 │   ├── state.js          # Quản lý state tập trung & socket realtime
 │   ├── matches.js        # Bộ điều phối trung tâm (Facade) module trận đấu
@@ -98,6 +99,7 @@ Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
 
 ### `js/` (Logic Xử Lý Phía Client)
 Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
+- `core.js`: [Decoupling & Clean Architecture] Cung cấp không gian tên tập trung `window.TNT` cùng Event Bus nội bộ (`TNT.events`), áp dụng mẫu Service Locator & Mediator Pattern. Giải quyết triệt để vấn đề Tight Coupling (liên kết chặt chẽ) giữa các module qua biến toàn cục tự do, đồng thời duy trì khả năng tương thích ngược hoàn hảo.
 - `state.js`: Quản lý state tập trung (`APP_STATE`), tiện ích khử độc XSS (`window.escapeHtml`), xử lý xác thực/token Admin, hàm gọi API chung (`apiCall`), bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
 - `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính (Dashboard, Awards, Matches, Weather, Moments, Players), điều khiển modal và toast thông báo.
 - `matches.js` & `matches/`: [Mô-đun hoá] Quản lý toàn bộ nghiệp vụ trận đấu, được điều phối qua facade `matches.js` và phân tách thành các submodule:

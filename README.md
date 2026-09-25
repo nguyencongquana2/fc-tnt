@@ -79,6 +79,7 @@ FC-TNT/
 ├── css/                  # [Mô-đun hoá] Giao diện phân tầng (base, matches, live, moments, finance, weather, effects, responsive)
 │   └── style.css         # Master Stylesheet Hub tích hợp toàn bộ module
 ├── js/                   # Modules logic phía Client (Single-Page App)
+│   ├── core.js           # [Decoupling] Service Locator & Event Bus trung tâm (window.TNT)
 │   ├── app.js            # Điều hướng tab, modal, toast
 │   ├── state.js          # Quản lý state tập trung (APP_STATE) & Socket.IO
 │   ├── matches.js        # Bộ điều phối trung tâm (Facade) module trận đấu

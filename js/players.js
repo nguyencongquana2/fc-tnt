@@ -479,3 +479,8 @@ window.playersModule = {
     modal.classList.remove('active');
   }
 };
+
+if (window.TNT) {
+  window.TNT.register('players', window.playersModule);
+}
+

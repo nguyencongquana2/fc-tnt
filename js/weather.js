@@ -828,3 +828,8 @@ window.weatherModule = {
     }
   }
 };
+
+if (window.TNT) {
+  window.TNT.register('weather', window.weatherModule);
+}
+
