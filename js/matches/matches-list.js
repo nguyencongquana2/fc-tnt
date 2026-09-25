@@ -36,7 +36,7 @@ Object.assign(window.matchesModule, {
             <div>
               <div style="font-weight: 800; font-size: 0.98rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <span>🔴 TRẬN ĐANG ĐÁ TRỰC TIẾP:</span>
-                <span style="color: var(--accent-gold);">${activeDraft.opponent || 'FC Đối Thủ'}</span>
+                <span style="color: var(--accent-gold);">${window.escapeHtml(activeDraft.opponent || 'FC Đối Thủ')}</span>
                 <span style="background: rgba(0,0,0,0.4); padding: 0.1rem 0.5rem; border-radius: 4px; color: var(--accent-emerald);">${activeDraft.homeScore || 0} - ${activeDraft.awayScore || 0}</span>
               </div>
               <div style="font-size: 0.76rem; color: var(--text-dim); margin-top: 0.2rem;">
@@ -87,14 +87,15 @@ Object.assign(window.matchesModule, {
         const cardResultClass = m.result === 'WIN' ? 'match-win' : m.result === 'DRAW' ? 'match-draw' : 'match-loss';
         const homeScore = m.homeScore ?? 0;
         const awayScore = m.awayScore ?? 0;
-        const opponentName = m.opponent || 'FC Đối Thủ';
+        const opponentName = window.escapeHtml(m.opponent || 'FC Đối Thủ');
+        const venueName = window.escapeHtml(m.venue || 'Sân bóng');
 
         return `
           <div class="match-card ${cardResultClass}" onclick="window.matchesModule.openMatchDetailModal('${m.id}')">
             <div class="match-card-top-bar">
               <div class="match-meta-left">
                 <span class="match-date-badge">📅 ${m.date || '---'} • ${m.time || '19:30'}</span>
-                <span class="match-venue">📍 ${m.venue || 'Sân bóng'} (Sân 7 • 3-1-2)</span>
+                <span class="match-venue">📍 ${venueName} (Sân 7 • 3-1-2)</span>
               </div>
               
               <div class="match-meta-right" onclick="event.stopPropagation()">
@@ -125,14 +126,14 @@ Object.assign(window.matchesModule, {
 
             <div class="match-card-bottom">
               <div class="match-note-text">
-                ${m.note ? `"${m.note}"` : 'Sơ đồ 3 Hậu Vệ - 1 Giữa - 2 Cánh Tiền Đạo'}
+                ${m.note ? `"${window.escapeHtml(m.note)}"` : 'Sơ đồ 3 Hậu Vệ - 1 Giữa - 2 Cánh Tiền Đạo'}
               </div>
 
               <div class="match-bottom-details">
                 ${motm && highestRating >= 7.0 ? `
                   <div class="motm-badge-preview">
-                    <img class="motm-avatar-small" src="${motm.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="${motm.name || 'Cầu thủ'}">
-                    <span>MOTM: ${(motm.nickname && motm.nickname.trim()) ? motm.nickname.trim() : (motm.name || 'Cầu thủ')} (${highestRating}⭐)</span>
+                    <img class="motm-avatar-small" src="${motm.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="${window.escapeHtml(motm.name || 'Cầu thủ')}">
+                    <span>MOTM: ${window.escapeHtml((motm.nickname && motm.nickname.trim()) ? motm.nickname.trim() : (motm.name || 'Cầu thủ'))} (${highestRating}⭐)</span>
                   </div>
                 ` : '<div></div>'}
                 
@@ -349,8 +350,12 @@ Object.assign(window.matchesModule, {
     const headerTitle = document.getElementById('match-detail-title');
     const teamInfo = window.stateManager.data.teamInfo;
 
+    const escapedOpponent = window.escapeHtml(m.opponent || 'Đối thủ');
+    const escapedVenue = window.escapeHtml(m.venue || 'Sân bóng');
+    const escapedNote = m.note ? window.escapeHtml(m.note) : '';
+
     headerTitle.innerHTML = `
-      <span>⚽ vs ${m.opponent} (${m.homeScore} - ${m.awayScore})</span>
+      <span>⚽ vs ${escapedOpponent} (${m.homeScore} - ${m.awayScore})</span>
     `;
 
     const infoHeader = document.getElementById('match-detail-info-header');
@@ -358,13 +363,13 @@ Object.assign(window.matchesModule, {
       <div class="match-detail-header-compact">
         <div class="match-detail-header-left">
           <div class="match-detail-header-teams">
-            ${teamInfo?.name || 'Đội nhà'} <span class="score-win-highlight">${m.homeScore}</span> : <span class="score-loss-highlight">${m.awayScore}</span> ${m.opponent}
+            ${window.escapeHtml(teamInfo?.name || 'Đội nhà')} <span class="score-win-highlight">${m.homeScore}</span> : <span class="score-loss-highlight">${m.awayScore}</span> ${escapedOpponent}
           </div>
           <div class="match-detail-header-sub">
             <span>📅 ${m.date}</span>
-            <span>📍 ${m.venue || 'Sân bóng'}</span>
+            <span>📍 ${escapedVenue}</span>
             <span class="formation-tag">Sân 7 • 3-1-2</span>
-            ${m.note ? `<span class="note-tag" title="${m.note}">💬 ${m.note}</span>` : ''}
+            ${escapedNote ? `<span class="note-tag" title="${escapedNote}">💬 ${escapedNote}</span>` : ''}
           </div>
         </div>
         <div class="match-detail-header-actions">
@@ -585,12 +590,12 @@ Object.assign(window.matchesModule, {
                          ondragleave="window.matchesModule.handleSubCardDragLeave(event)"
                          ondrop="window.matchesModule.handleSubCardDrop(event, '${p.id}')"
                          onclick="window.matchesModule.openQuickEdit('${p.id}')">
-                      ${ps.note ? `<div class="sub-speech-indicator" title="Nhận xét: ${ps.note.replace(/"/g, '&quot;')}">💬</div>` : ''}
+                      ${ps.note ? `<div class="sub-speech-indicator" title="Nhận xét: ${window.escapeHtml(ps.note)}">💬</div>` : ''}
                       <div class="sub-avatar-wrap">
-                        <img class="sub-avatar" src="${p.avatar}" alt="${displayName}">
+                        <img class="sub-avatar" src="${p.avatar}" alt="${window.escapeHtml(displayName)}">
                         <span class="sub-rating-badge ${ratingClass}">${rating.toFixed(1)}</span>
                       </div>
-                      <div class="sub-name">${displayName}</div>
+                      <div class="sub-name">${window.escapeHtml(displayName)}</div>
                       <div class="sub-pos">#${p.number} • ${p.position}</div>
                       ${ps.goals > 0 ? `<span style="font-size: 0.72rem; color: var(--accent-ruby); font-weight:700; margin-top:2px;">⚽ ${ps.goals}</span>` : ''}
                       ${ps.assists > 0 ? `<span style="font-size: 0.72rem; color: var(--accent-cyan); font-weight:700;">👟 ${ps.assists}</span>` : ''}
@@ -657,14 +662,14 @@ Object.assign(window.matchesModule, {
                      title="Bấm để xem/chỉnh sửa điểm & nhận xét">
                   <div class="review-card-top">
                     <div style="display: flex; align-items: center; gap: 0.65rem;">
-                      <img class="review-avatar" src="${p.avatar}" alt="${displayName}">
+                      <img class="review-avatar" src="${p.avatar}" alt="${window.escapeHtml(displayName)}">
                       <div>
                         <div class="review-player-name">
-                          ${displayName} #${p.number}
+                          ${window.escapeHtml(displayName)} #${p.number}
                           ${isMOTM ? '<span class="review-motm-badge">👑 MOTM</span>' : ''}
                         </div>
                         <div class="review-player-pos">
-                          ${p.position} ${realName ? `• ${realName}` : ''} • ${ps.isStarter !== false ? '<span style="color:var(--accent-emerald); font-weight:700;">Đá chính</span>' : '<span style="color:var(--accent-cyan); font-weight:700;">Dự bị</span>'}
+                          ${p.position} ${realName ? `• ${window.escapeHtml(realName)}` : ''} • ${ps.isStarter !== false ? '<span style="color:var(--accent-emerald); font-weight:700;">Đá chính</span>' : '<span style="color:var(--accent-cyan); font-weight:700;">Dự bị</span>'}
                         </div>
                       </div>
                     </div>
@@ -686,7 +691,7 @@ Object.assign(window.matchesModule, {
                   ` : ''}
 
                   <div class="review-quote-box">
-                    ${note ? `💬 "${note}"` : '<span style="color: var(--text-dim); font-style: italic;">Chưa có nhận xét chi tiết. Hãy dùng "🤖 AI Chấm Điểm" để tự động sinh nhận xét.</span>'}
+                    ${note ? `💬 "${window.escapeHtml(note)}"` : '<span style="color: var(--text-dim); font-style: italic;">Chưa có nhận xét chi tiết. Hãy dùng "🤖 AI Chấm Điểm" để tự động sinh nhận xét.</span>'}
                   </div>
                 </div>
               `;
@@ -785,13 +790,13 @@ Object.assign(window.matchesModule, {
         infoEl.style.display = 'block';
         infoEl.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-            <span style="font-weight: 800; font-size: 0.95rem; color: #fff;">⚽ vs ${match.opponent}</span>
+            <span style="font-weight: 800; font-size: 0.95rem; color: #fff;">⚽ vs ${window.escapeHtml(match.opponent)}</span>
             <span style="font-size: 0.85rem; font-weight: 800; color: var(--accent-emerald); background: rgba(0,0,0,0.3); padding: 0.15rem 0.5rem; border-radius: 4px;">
               ${match.homeScore} - ${match.awayScore}
             </span>
           </div>
           <div style="font-size: 0.78rem; color: var(--text-dim);">
-            📅 Ngày: ${match.date} • 📍 ${match.venue || 'Sân bóng'} • Sân 7 (3-1-2)
+            📅 Ngày: ${match.date} • 📍 ${window.escapeHtml(match.venue || 'Sân bóng')} • Sân 7 (3-1-2)
           </div>
         `;
         if (isDanger) {

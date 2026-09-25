@@ -596,8 +596,8 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem;">
               <img src="${motmPlayer.avatar}" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--accent-gold); object-fit: cover;">
               <div>
-                <div style="font-weight: 800; font-size: 1.05rem; color: #fff;">${motmPlayer.name} #${motmPlayer.number}</div>
-                <div style="font-size: 0.78rem; color: var(--accent-gold);">${motmPlayer.position} • "${motmRating.note}"</div>
+                <div style="font-weight: 800; font-size: 1.05rem; color: #fff;">${window.escapeHtml(motmPlayer.name)} #${motmPlayer.number}</div>
+                <div style="font-size: 0.78rem; color: var(--accent-gold);">${motmPlayer.position} • "${window.escapeHtml(motmRating.note)}"</div>
               </div>
               <div style="margin-left: auto; font-family: var(--font-display); font-size: 1.6rem; font-weight: 900; color: var(--accent-gold);">
                 ${Number(motmRating.rating).toFixed(1)} ⭐
@@ -626,10 +626,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
           <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1.2; min-width: 150px;">
             <img src="${p.avatar}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover;">
             <div>
-              <div style="font-weight: 700; font-size: 0.85rem; color: #fff;">${p.name} #${p.number}</div>
+              <div style="font-weight: 700; font-size: 0.85rem; color: #fff;">${window.escapeHtml(p.name)} #${p.number}</div>
               <div style="display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem;">
                 <span style="font-size: 0.7rem; color: var(--text-dim);">${p.position}</span>
-                ${r.tag ? `<span class="ai-role-tag-pill">${r.tag}</span>` : ''}
+                ${r.tag ? `<span class="ai-role-tag-pill">${window.escapeHtml(r.tag)}</span>` : ''}
               </div>
             </div>
           </div>
@@ -645,8 +645,8 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
             </span>
           </div>
 
-          <div class="ai-note-text" title="${r.note}">
-            💬 ${r.note}
+          <div class="ai-note-text" title="${window.escapeHtml(r.note)}">
+            💬 ${window.escapeHtml(r.note)}
           </div>
         </div>
       `;

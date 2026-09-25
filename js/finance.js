@@ -282,7 +282,7 @@ class FinanceModule {
             <div style="display: flex; align-items: center; gap: 0.6rem;">
               <img src="${avatar}" alt="${p.playerName}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid ${p.isPaid ? 'var(--accent-emerald)' : 'rgba(255,255,255,0.1)'};">
               <div>
-                <strong style="color: var(--text-main); font-size: 0.95rem;">${p.playerName}</strong>
+                <strong style="color: var(--text-main); font-size: 0.95rem;">${window.escapeHtml(p.playerName)}</strong>
                 ${isPayer ? '<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); font-size: 0.7rem; margin-left: 4px; padding: 2px 6px; border-radius: 4px;">Người ứng tiền</span>' : ''}
               </div>
             </div>
@@ -387,8 +387,8 @@ class FinanceModule {
       <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div>
           <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--accent-gold); font-weight: 700; letter-spacing: 0.5px;">⚽ TRẬN ĐẤU</div>
-          <h3 style="margin: 0.2rem 0; color: #fff; font-size: 1.2rem;">FC TNT vs ${match.opponent}</h3>
-          <div style="color: var(--text-dim); font-size: 0.85rem;">🗓️ ${match.date} (${match.time || '19:30'}) - 🏟️ ${match.venue || 'Sân bóng'}</div>
+          <h3 style="margin: 0.2rem 0; color: #fff; font-size: 1.2rem;">FC TNT vs ${window.escapeHtml(match.opponent)}</h3>
+          <div style="color: var(--text-dim); font-size: 0.85rem;">🗓️ ${match.date} (${match.time || '19:30'}) - 🏟️ ${window.escapeHtml(match.venue || 'Sân bóng')}</div>
         </div>
 
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">

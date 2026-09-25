@@ -75,8 +75,8 @@ Object.assign(window.matchesModule, {
           </div>
         </div>
 
-        <div class="sofascore-player-name">${p.number} ${displayName}</div>
-        <div style="font-size: 0.62rem; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px #000; font-weight:700;">${roleLabel}</div>
+        <div class="sofascore-player-name">${p.number} ${window.escapeHtml(displayName)}</div>
+        <div style="font-size: 0.62rem; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px #000; font-weight:700;">${window.escapeHtml(roleLabel)}</div>
       </div>
     `;
   },
@@ -375,7 +375,7 @@ Object.assign(window.matchesModule, {
           <div style="display: flex; align-items: center; gap: 0.65rem;">
             <img src="${p.avatar}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-emerald);">
             <div>
-              <div style="font-weight: 800; font-size: 1rem; color: #fff;">${displayName} (#${p.number})</div>
+              <div style="font-weight: 800; font-size: 1rem; color: #fff;">${window.escapeHtml(displayName)} (#${p.number})</div>
               <div style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600;">
                 ${ps.isStarter !== false ? 'Đang đá chính (Sân 3-1-2)' : 'Đang ngồi dự bị'}
               </div>
@@ -417,7 +417,7 @@ Object.assign(window.matchesModule, {
         </div>
 
         <div style="margin-bottom: 0.85rem;">
-          <input type="text" class="form-control" id="quick-note" placeholder="Nhận xét màn trình diễn..." value="${ps.note || ''}" style="font-size: 0.82rem; padding: 0.5rem 0.75rem;">
+          <input type="text" class="form-control" id="quick-note" placeholder="Nhận xét màn trình diễn..." value="${window.escapeHtml(ps.note || '')}" style="font-size: 0.82rem; padding: 0.5rem 0.75rem;">
         </div>
 
         <div style="display: flex; justify-content: space-between; gap: 0.5rem;">

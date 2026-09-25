@@ -126,9 +126,9 @@ Object.assign(window.matchesModule, {
       const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
       return `
         <div class="live-roster-card ${isSelected ? 'active' : ''}" onclick="window.matchesModule.togglePlayerInRoster('${p.id}')">
-          <img class="live-roster-avatar" src="${p.avatar}" alt="${displayName}">
+          <img class="live-roster-avatar" src="${p.avatar}" alt="${window.escapeHtml(displayName)}">
           <div class="live-roster-card-info">
-            <div class="live-roster-card-name">${displayName}</div>
+            <div class="live-roster-card-name">${window.escapeHtml(displayName)}</div>
             <div class="live-roster-card-sub">#${p.number} • ${p.position}</div>
           </div>
           <div class="live-roster-check-icon">✓</div>
@@ -976,9 +976,9 @@ Object.assign(window.matchesModule, {
         const displayName = this.getPlayerShortName(p);
         return `
           <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${p.id}')">
-            <img class="live-picker-avatar" src="${p.avatar}" alt="${displayName}">
+            <img class="live-picker-avatar" src="${p.avatar}" alt="${window.escapeHtml(displayName)}">
             <div style="overflow: hidden;">
-              <div class="live-picker-name">${displayName}</div>
+              <div class="live-picker-name">${window.escapeHtml(displayName)}</div>
               <div class="live-picker-sub">#${p.number} • ${p.position}</div>
             </div>
           </div>
@@ -1027,9 +1027,9 @@ Object.assign(window.matchesModule, {
             const displayName = this.getPlayerShortName(pl);
             return `
               <div class="live-picker-card" onclick="window.matchesModule.selectPlayerForLiveAction('${pl.id}')">
-                <img class="live-picker-avatar" src="${pl.avatar}" alt="${displayName}">
+                <img class="live-picker-avatar" src="${pl.avatar}" alt="${window.escapeHtml(displayName)}">
                 <div style="overflow: hidden;">
-                  <div class="live-picker-name">${displayName}</div>
+                  <div class="live-picker-name">${window.escapeHtml(displayName)}</div>
                   <div class="live-picker-sub">#${pl.number} • ${pl.position}</div>
                 </div>
               </div>
@@ -1194,9 +1194,9 @@ Object.assign(window.matchesModule, {
             ${evt.typeLabel}
           </span>
           ${evt.playerAvatar ? `<img src="${evt.playerAvatar}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;">` : ''}
-          <span style="font-weight: 700; color: #fff;">${evt.playerName || ''}</span>
-          ${evt.assistPlayerName ? `<span style="font-size: 0.76rem; color: var(--accent-cyan);">(👟 ${evt.assistPlayerName})</span>` : ''}
-          ${evt.note && evt.note !== `${evt.playerName} ghi bàn` ? `<span style="font-size: 0.78rem; color: #94a3b8; font-style: italic;">• ${evt.note}</span>` : ''}
+          <span style="font-weight: 700; color: #fff;">${window.escapeHtml(evt.playerName || '')}</span>
+          ${evt.assistPlayerName ? `<span style="font-size: 0.76rem; color: var(--accent-cyan);">(👟 ${window.escapeHtml(evt.assistPlayerName)})</span>` : ''}
+          ${evt.note && evt.note !== `${evt.playerName} ghi bàn` ? `<span style="font-size: 0.78rem; color: #94a3b8; font-style: italic;">• ${window.escapeHtml(evt.note)}</span>` : ''}
         </div>
         <button type="button" class="live-event-del-btn" onclick="window.matchesModule.deleteLiveEvent(${idx})" title="Xóa sự kiện">&times;</button>
       </div>

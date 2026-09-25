@@ -6,6 +6,17 @@
 const STORAGE_KEY = 'fc_tnt_data_v4';
 const API_BASE = '/api';
 
+// Global HTML Escaper to prevent Cross-Site Scripting (XSS)
+window.escapeHtml = function (str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const OFFICIAL_PLAYERS = [
   { id: 'p_1', name: 'Quân Kun', nickname: 'Quân Kun', number: 5, position: 'DF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', phone: '0987654321', bankCode: 'VCB', bankAccountNumber: '9392139587', bankAccountName: 'NGUYEN CONG QUAN', joinDate: '2025-01-01', note: 'Hậu vệ cánh trái' },
   { id: 'p_2', name: 'Vinh Lê', nickname: 'Vinh Lê', number: 6, position: 'MF', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', phone: '0912345678', bankCode: 'VCB', bankAccountNumber: '1012345678', bankAccountName: 'LE QUANG VINH', joinDate: '2025-01-01', note: 'Tiền vệ trung tâm điều tiết' },

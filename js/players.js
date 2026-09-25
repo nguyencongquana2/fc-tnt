@@ -172,8 +172,8 @@ window.playersModule = {
     container.innerHTML = players.map(p => {
       const stats = statsMap[p.id] || { matchesPlayed: 0, avgRating: 0, totalGoals: 0, totalAssists: 0, motmCount: 0 };
       const posClass = `pos-${p.position.toLowerCase()}`;
-      const primaryDisplayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
-      const secondaryRealName = (p.name && p.name.trim() && p.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? p.name.trim() : '';
+      const primaryDisplayName = window.escapeHtml((p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name);
+      const secondaryRealName = window.escapeHtml((p.name && p.name.trim() && p.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? p.name.trim() : '');
       
       return `
         <div class="player-fifa-card" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
@@ -389,8 +389,8 @@ window.playersModule = {
     const content = document.getElementById('player-profile-content');
     const isAdmin = window.stateManager.isAdmin;
 
-    const primaryDisplayName = (player.nickname && player.nickname.trim()) ? player.nickname.trim() : player.name;
-    const secondaryRealName = (player.name && player.name.trim() && player.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? player.name.trim() : '';
+    const primaryDisplayName = window.escapeHtml((player.nickname && player.nickname.trim()) ? player.nickname.trim() : player.name);
+    const secondaryRealName = window.escapeHtml((player.name && player.name.trim() && player.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? player.name.trim() : '');
 
     content.innerHTML = `
       <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
@@ -417,10 +417,10 @@ window.playersModule = {
             ` : ''}
           </div>
           <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">#${player.number} ${secondaryRealName ? `• Họ tên: "${secondaryRealName}"` : ''}</p>
-          <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem;">${player.note || 'Chưa có ghi chú đặc biệt'}</p>
+          <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem;">${window.escapeHtml(player.note || 'Chưa có ghi chú đặc biệt')}</p>
           ${player.bankAccountNumber ? `
             <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 3px 8px; margin-top: 0.4rem; font-size: 0.8rem; color: var(--accent-gold);">
-              💳 <strong>${player.bankCode || 'NH'}:</strong> ${player.bankAccountNumber} ${player.bankAccountName ? `(${player.bankAccountName})` : ''}
+              💳 <strong>${window.escapeHtml(player.bankCode || 'NH')}:</strong> ${window.escapeHtml(player.bankAccountNumber)} ${player.bankAccountName ? `(${window.escapeHtml(player.bankAccountName)})` : ''}
             </div>
           ` : ''}
         </div>
@@ -454,8 +454,8 @@ window.playersModule = {
         ${stats.matchHistory.length > 0 ? stats.matchHistory.map(mh => `
           <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(0,0,0,0.25); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
             <div>
-              <div style="font-weight: 700; color: #fff;">vs ${mh.opponent} <span style="font-size: 0.8rem; color: var(--text-dim);">(${mh.score})</span></div>
-              <div style="font-size: 0.75rem; color: var(--text-dim);">${mh.date} • ${mh.note || 'Thi đấu tròn vai'}</div>
+              <div style="font-weight: 700; color: #fff;">vs ${window.escapeHtml(mh.opponent)} <span style="font-size: 0.8rem; color: var(--text-dim);">(${mh.score})</span></div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">${window.escapeHtml(mh.date)} • ${window.escapeHtml(mh.note || 'Thi đấu tròn vai')}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 1rem;">
               <div style="font-size: 0.85rem;">

@@ -73,7 +73,7 @@ window.awardsModule = {
                 <img class="podium-avatar" src="${top2.player.avatar}" alt="${top2.player.name}">
                 <div class="podium-rank-badge">2</div>
               </div>
-              <div class="podium-player-name">${top2.player.nickname || top2.player.name}</div>
+              <div class="podium-player-name">${window.escapeHtml(top2.player.nickname || top2.player.name)}</div>
               <div class="podium-player-stat" style="color: var(--accent-silver);">${top2[statKey]} ${statIcon}</div>
             </div>
             <div class="podium-base">🥈 2</div>
@@ -86,10 +86,10 @@ window.awardsModule = {
             <div class="podium-player-card">
               <span class="podium-crown">👑</span>
               <div class="podium-avatar-wrap">
-                <img class="podium-avatar" src="${top1.player.avatar}" alt="${top1.player.name}">
+                <img class="podium-avatar" src="${top1.player.avatar}" alt="${window.escapeHtml(top1.player.name)}">
                 <div class="podium-rank-badge">1</div>
               </div>
-              <div class="podium-player-name" style="font-weight: 800; color: #fbbf24;">${top1.player.nickname || top1.player.name}</div>
+              <div class="podium-player-name" style="font-weight: 800; color: #fbbf24;">${window.escapeHtml(top1.player.nickname || top1.player.name)}</div>
               <div class="podium-player-stat" style="color: #fbbf24;">${top1[statKey]} ${statIcon}</div>
             </div>
             <div class="podium-base">🏆 1</div>
@@ -101,10 +101,10 @@ window.awardsModule = {
           <div class="podium-step rank-3" onclick="window.playersModule.viewPlayerProfile('${top3.player.id}')" style="cursor: pointer;">
             <div class="podium-player-card">
               <div class="podium-avatar-wrap">
-                <img class="podium-avatar" src="${top3.player.avatar}" alt="${top3.player.name}">
+                <img class="podium-avatar" src="${top3.player.avatar}" alt="${window.escapeHtml(top3.player.name)}">
                 <div class="podium-rank-badge">3</div>
               </div>
-              <div class="podium-player-name">${top3.player.nickname || top3.player.name}</div>
+              <div class="podium-player-name">${window.escapeHtml(top3.player.nickname || top3.player.name)}</div>
               <div class="podium-player-stat" style="color: var(--accent-bronze);">${top3[statKey]} ${statIcon}</div>
             </div>
             <div class="podium-base">🥉 3</div>
@@ -172,8 +172,8 @@ window.awardsModule = {
             <div style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.playersModule.viewPlayerProfile('${st.player.id}')">
               <img src="${st.player.avatar}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-subtle);">
               <div>
-                <div style="font-weight: 700; color: #fff;">${displayName}</div>
-                <div style="font-size: 0.75rem; color: var(--text-dim);">#${st.player.number} ${realName ? `• ${realName}` : `• ${st.player.position}`}</div>
+                <div style="font-weight: 700; color: #fff;">${window.escapeHtml(displayName)}</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">#${st.player.number} ${realName ? `• ${window.escapeHtml(realName)}` : `• ${st.player.position}`}</div>
               </div>
             </div>
           </td>

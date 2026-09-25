@@ -95,7 +95,7 @@ Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
 
 ### `js/` (Logic Xử Lý Phía Client)
 Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
-- `state.js`: Quản lý state tập trung (`APP_STATE`), xử lý xác thực/token Admin, hàm gọi API chung (`apiCall`), bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
+- `state.js`: Quản lý state tập trung (`APP_STATE`), tiện ích khử độc XSS (`window.escapeHtml`), xử lý xác thực/token Admin, hàm gọi API chung (`apiCall`), bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
 - `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính (Dashboard, Awards, Matches, Weather, Moments, Players), điều khiển modal và toast thông báo.
 - `matches.js` & `matches/`: [Mô-đun hoá] Quản lý toàn bộ nghiệp vụ trận đấu, được điều phối qua facade `matches.js` và phân tách thành các submodule:
   - `matches/matches-list.js`: Quản lý danh sách trận, hiển thị chi tiết, tạo/sửa trận và xác thực PIN an toàn khi xóa.
