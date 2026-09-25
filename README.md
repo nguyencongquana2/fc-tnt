@@ -76,12 +76,13 @@ FC-TNT/
 ├── assets/
 │   ├── icons/            # Bộ icon favicon, apple-touch-icon, PWA icons
 │   └── images/           # Logo CLB, logo.svg, hình ảnh nền
-├── css/
-│   └── style.css         # Quản lý giao diện, Dark Mode & Glassmorphism
+├── css/                  # [Mô-đun hoá] Giao diện phân tầng (base, matches, live, moments, finance, weather, effects, responsive)
+│   └── style.css         # Master Stylesheet Hub tích hợp toàn bộ module
 ├── js/                   # Modules logic phía Client (Single-Page App)
 │   ├── app.js            # Điều hướng tab, modal, toast
 │   ├── state.js          # Quản lý state tập trung (APP_STATE) & Socket.IO
-│   ├── matches.js        # Logic sơ đồ sân 7, Live Match & AI Rating
+│   ├── matches.js        # Bộ điều phối trung tâm (Facade) module trận đấu
+│   ├── matches/          # [Mô-đun hoá] Submodules: list, pitch sân 7, AI rating, live match
 │   ├── players.js        # Quản lý danh sách cầu thủ & form thêm/sửa
 │   ├── finance.js        # Công thức chia tiền sân & VietQR
 │   ├── awards.js         # Bảng xếp hạng vinh danh cá nhân
@@ -99,7 +100,9 @@ FC-TNT/
 ├── routes/               # API Router Backend mô-đun hoá
 │   ├── auth.js           # API xác thực PIN & middleware requireAdmin
 │   ├── players.js        # API CRUD cầu thủ & avatar
-│   ├── matches.js        # API trận đấu, thu chi, live match & AI rating
+│   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
+│   ├── ai.js             # API AI rate match chấm điểm trận đấu & NLP Gemini
+│   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc & bình luận
 │   └── weather.js        # API thời tiết Open-Meteo & AI cố vấn mặt sân
 ├── scripts/              # Công cụ tiện ích

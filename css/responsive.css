@@ -1,0 +1,731 @@
+/**
+ * FC TNT - Mobile & Tablet Responsive Overhaul
+ * Media Queries, Mobile Bottom Navigation, Sheet Overlays & Touch Optimizations
+ */
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE OVERHAUL (FC TNT MOBILE OPTIMIZATION)
+   ========================================================================== */
+
+@media (max-width: 991px) {
+  .match-detail-split-layout {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .poster-modal-body {
+    flex-direction: column;
+  }
+
+  .poster-preview-panel {
+    max-height: 380px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Global Adjustments */
+  body {
+    padding-bottom: 2rem;
+  }
+
+  .main-wrapper {
+    padding: 0.85rem 0.85rem 3rem;
+  }
+
+  /* Sticky 2-Row Top Header */
+  .navbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    padding: 0.5rem 0.75rem 0.55rem !important;
+    background: rgba(10, 15, 24, 0.96) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+  }
+
+  .nav-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Row 1: Left Brand */
+  .brand-wrapper {
+    order: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    flex-shrink: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .brand-icon-box {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 1.15rem !important;
+    border-radius: var(--radius-sm) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .brand-title {
+    font-size: 1.15rem !important;
+    white-space: nowrap !important;
+    letter-spacing: 0px !important;
+  }
+
+  .brand-subtitle {
+    display: none !important;
+  }
+
+  /* Row 1: Right Auth Actions */
+  .nav-actions {
+    order: 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .nav-actions #export-data-btn,
+  .nav-actions #import-data-btn {
+    display: none !important;
+  }
+
+  .auth-role-badge {
+    padding: 0.25rem 0.45rem !important;
+    font-size: 0.72rem !important;
+    gap: 0.2rem !important;
+    white-space: nowrap !important;
+  }
+
+  .nav-actions .btn-sm {
+    padding: 0.32rem 0.6rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* Row 2: Sub-Nav Bar (Full width, horizontal swipeable pills) */
+  .nav-tabs {
+    order: 3 !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    background: rgba(18, 26, 42, 0.9) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-full) !important;
+    padding: 0.25rem 0.3rem !important;
+    gap: 0.25rem !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .nav-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .tab-btn {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    padding: 0.42rem 0.75rem !important;
+    font-size: 0.76rem !important;
+    font-weight: 700 !important;
+    color: var(--text-muted) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: var(--radius-full) !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    line-height: 1.2 !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .tab-btn span {
+    display: inline !important;
+    font-size: 0.76rem !important;
+    white-space: nowrap !important;
+  }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--accent-emerald), #059669) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 10px var(--accent-emerald-glow) !important;
+  }
+
+  .tab-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-main) !important;
+  }
+
+  .tab-btn:active {
+    transform: scale(0.95) !important;
+  }
+
+  /* Hero Banner - Ẩn trên Mobile để đẩy widget thời tiết và thống kê lên đầu ngay khi mở app */
+  .hero-banner {
+    display: none !important;
+  }
+
+  .hero-team-info {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .team-badge-large {
+    width: 64px;
+    height: 64px;
+    font-size: 2.2rem;
+    border-radius: var(--radius-md);
+    margin: 0 auto;
+  }
+
+  .hero-team-name {
+    font-size: 1.7rem;
+    letter-spacing: 0.5px;
+    white-space: normal;
+  }
+
+  .hero-team-slogan {
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+  }
+
+  .hero-banner > div:last-child {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .hero-banner > div:last-child button:nth-child(2) {
+    grid-column: 1 / -1;
+    width: 100%;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+    justify-content: center;
+  }
+
+  .hero-banner > div:last-child button:not(:nth-child(2)) {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: 0.6rem 0.4rem;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  /* Stat Cards */
+  .stat-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .stat-card {
+    padding: 0.85rem 0.75rem;
+    border-radius: var(--radius-md);
+  }
+
+  .stat-card-value {
+    font-size: 1.45rem;
+  }
+
+  .stat-card-label {
+    font-size: 0.72rem;
+  }
+
+  .stat-card-desc {
+    font-size: 0.7rem;
+  }
+
+  /* Section Header */
+  .section-header {
+    margin-bottom: 1rem;
+    gap: 0.65rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.8rem;
+  }
+
+  /* Sofascore Pitch on Mobile */
+  .sofascore-pitch-container {
+    height: 430px;
+    min-height: 400px;
+    padding: 0.85rem 0.35rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .pitch-player-node .sofascore-player-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .sofa-rating-box {
+    font-size: 0.68rem;
+    padding: 0.05rem 0.25rem;
+  }
+
+  .sofa-motm-star {
+    width: 15px;
+    height: 15px;
+    font-size: 0.55rem;
+  }
+
+  .sofascore-player-name {
+    font-size: 0.68rem;
+    max-width: 65px;
+  }
+
+  .substitutes-bench-section {
+    padding: 0.85rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .substitutes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 0.45rem;
+    max-height: 200px;
+  }
+
+  .sub-name {
+    font-size: 0.72rem;
+    max-width: 75px;
+  }
+
+  /* Awards & Hall of Fame */
+  .awards-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .award-category-card {
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+  }
+
+  /* Moments */
+  .moments-category-bar {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    gap: 0.4rem;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .moments-category-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .moment-category-pill {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+  }
+
+  .moment-card-media-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem;
+  }
+
+  /* Weather Tab */
+  .weather-venue-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
+    word-break: break-word;
+  }
+
+  .weather-7days-container {
+    padding: 0.85rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .weather-days-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.55rem;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .weather-days-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .weather-day-card {
+    flex: 0 0 115px;
+    min-width: 115px;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .weather-ai-card {
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .quick-chips-list {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.4rem;
+    padding-bottom: 0.4rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .weather-quick-chip {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+  }
+
+  .chat-bubble {
+    max-width: 90%;
+    font-size: 0.84rem;
+    padding: 0.7rem 0.9rem;
+  }
+
+  /* Players Roster Grid */
+  .players-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+  }
+
+  .player-fifa-card {
+    padding: 0.85rem 0.65rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .player-avatar-large {
+    width: 52px;
+    height: 52px;
+  }
+
+  .player-overall-num {
+    font-size: 1.45rem;
+  }
+
+  .player-card-bg-number {
+    font-size: 5rem;
+    right: -5px;
+    bottom: -15px;
+  }
+
+  /* Modals on Mobile */
+  .modal-overlay {
+    padding: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .modal-container {
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    margin: 0;
+  }
+
+  .modal-container.modal-lg,
+  .modal-container.modal-xl {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .modal-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+  }
+
+  .modal-body {
+    padding: 1rem 0.85rem;
+    max-height: calc(92vh - 120px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .form-control {
+    font-size: 16px !important;
+  }
+
+  .match-form-split-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Match Cards Mobile Optimization */
+  .match-card {
+    padding: 0.85rem 0.75rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 0.85rem;
+  }
+
+  .match-card-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .match-meta-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .match-date-badge {
+    white-space: nowrap;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    line-height: 1.25;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.2px;
+  }
+
+  .match-venue {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 170px;
+  }
+
+  .match-meta-right {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .match-finance-btn {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  .match-result-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.55rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  .match-scoreboard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    padding: 0.65rem 0.5rem;
+    background: rgba(15, 23, 42, 0.55);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.75rem;
+  }
+
+  .team-box {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .team-box.away-team {
+    flex-direction: row-reverse;
+    text-align: right;
+  }
+
+  .team-icon-box {
+    width: 28px;
+    height: 28px;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+  }
+
+  .team-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
+    letter-spacing: -0.2px;
+  }
+
+  .score-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+  }
+
+  .score-num {
+    font-size: 1.35rem;
+    font-weight: 800;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1;
+  }
+
+  .score-divider {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  .match-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .match-bottom-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .match-motm-pill {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.45rem;
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .match-note-text {
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+  }
+
+  .match-view-detail-btn {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .players-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .player-fifa-card {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .stat-card-value {
+    font-size: 1.3rem;
+  }
+
+  /* Ultra-compact for small phones (360px - 414px) */
+  .match-card {
+    padding: 0.75rem 0.65rem;
+  }
+
+  .team-icon-box {
+    width: 26px;
+    height: 26px;
+    font-size: 0.9rem;
+  }
+
+  .team-title {
+    font-size: 0.8rem;
+  }
+
+  .score-num {
+    font-size: 1.25rem;
+    min-width: 16px;
+  }
+
+  .score-display {
+    padding: 0.2rem 0.4rem;
+    gap: 0.15rem;
+  }
+
+  .match-venue {
+    max-width: 125px;
+    font-size: 0.72rem;
+  }
+
+  .match-date-badge {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.45rem;
+  }
+
+  .match-finance-btn {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .match-result-badge {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.45rem;
+  }
+
+  .match-motm-pill {
+    max-width: 110px;
+    font-size: 0.68rem;
+  }
+
+  .match-note-text {
+    max-width: 110px;
+    font-size: 0.68rem;
+  }
+
+  .match-view-detail-btn {
+    padding: 0.28rem 0.5rem;
+    font-size: 0.68rem;
+  }
+}
+

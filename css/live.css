@@ -1,0 +1,1219 @@
+/**
+ * FC TNT - Live Pitch Companion (Trợ Lý Sân Cỏ Trực Tiếp)
+ * Timer, Score Stepper, Voice Logger, Touch Actions, Timeline & Squad Roster Sheet
+ */
+/* ==========================================================================
+   LIVE PITCH COMPANION (TRỢ LÝ SÂN CỎ TRỰC TIẾP & VOICE LOGGER)
+   ========================================================================== */
+.live-companion-overlay {
+  z-index: 10050;
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.live-companion-container {
+  max-width: 720px;
+  width: 96%;
+  max-height: 94vh;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0d1527 0%, #080d1a 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 35px rgba(16, 185, 129, 0.15), 0 20px 40px rgba(0, 0, 0, 0.8);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: liveModalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes liveModalPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.live-companion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.2rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.live-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.live-pulse-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.live-dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: liveDotBlink 1.2s infinite ease-in-out;
+}
+
+@keyframes liveDotBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.7); }
+}
+
+.live-match-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.live-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-wakelock-btn {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.live-wakelock-btn:hover {
+  background: rgba(251, 191, 36, 0.25);
+}
+
+.live-wakelock-btn.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: var(--accent-emerald);
+}
+
+.live-close-btn {
+  color: #94a3b8;
+  font-size: 1.4rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+}
+
+.live-close-btn:hover {
+  color: #fff;
+}
+
+.live-companion-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Scoreboard Card */
+.live-scoreboard-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.live-match-timer-zone {
+  text-align: center;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.85rem;
+}
+
+.live-timer-display {
+  font-family: 'Courier New', Courier, monospace, var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--accent-emerald);
+  letter-spacing: 2px;
+  line-height: 1;
+  text-shadow: 0 0 16px rgba(16, 185, 129, 0.45);
+}
+
+.live-timer-period-badge {
+  display: inline-block;
+  margin-top: 0.35rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+}
+
+.live-timer-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.live-timer-btn {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.live-timer-btn:active {
+  transform: scale(0.95);
+}
+
+.live-timer-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+}
+
+/* Score display */
+.live-score-display-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 0.5rem;
+}
+
+.live-team-score-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.live-team-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+
+.live-away-name-input {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  width: 90%;
+  max-width: 140px;
+  margin-bottom: 0.25rem;
+}
+
+.live-score-number {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  margin: 0.2rem 0;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.live-team-score-box.home .live-score-number {
+  color: var(--accent-emerald);
+  text-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}
+
+.live-team-score-box.away .live-score-number {
+  color: #f87171;
+  text-shadow: 0 0 15px rgba(248, 113, 113, 0.35);
+}
+
+.live-score-divider {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.live-score-stepper {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.live-step-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.live-step-btn:active {
+  transform: scale(0.9);
+  background: rgba(16, 185, 129, 0.3);
+}
+
+/* Voice Bar - Minimalist Capsule Design */
+.live-voice-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
+  border: 1.5px solid rgba(6, 182, 212, 0.35);
+  border-radius: 50px; /* Bo tròn hoàn toàn hai đầu (Capsule) */
+  padding: 0.4rem 0.6rem;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: visible;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.live-voice-top-row.capsule-design {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Mic Button - Smaller & Sleek */
+.live-voice-mic-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border: 1.5px solid rgba(6, 182, 212, 0.6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  outline: none;
+}
+
+.live-voice-mic-btn:hover {
+  transform: scale(1.05);
+  border-color: #06b6d4;
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.45);
+}
+
+.live-voice-mic-btn .mic-icon {
+  font-size: 1.15rem;
+  transition: transform 0.2s ease;
+  z-index: 2;
+}
+
+.live-voice-mic-btn.recording {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #fca5a5;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.65);
+  animation: liveMicPulse 1.2s infinite ease-in-out;
+}
+
+.live-voice-mic-btn.recording .mic-wave-ring {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.6);
+  animation: liveWaveExpand 1.5s infinite linear;
+}
+
+@keyframes liveMicPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes liveWaveExpand {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.live-voice-info {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.live-voice-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-voice-hint {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-voice-keyboard-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.live-voice-keyboard-btn:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: rgba(6, 182, 212, 0.5);
+  color: #fff;
+}
+
+/* Quick Suggestion Chips removed for minimalist design */
+
+.live-voice-controls-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+  width: 100%;
+  animation: liveControlsFadeIn 0.2s ease-out;
+}
+
+@keyframes liveControlsFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.live-voice-input-edit {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.live-voice-input-edit:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+}
+
+.live-voice-btn-group {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.live-voice-cancel-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.live-voice-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.live-voice-submit-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0.4rem 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+  transition: all 0.15s ease;
+}
+
+.live-voice-submit-btn:hover {
+  filter: brightness(1.1);
+}
+
+.live-voice-submit-btn:active {
+  transform: scale(0.95);
+}
+
+/* Quick Action Grid */
+.live-quick-actions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.live-section-subtitle {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.live-action-category {
+  margin-bottom: 0.85rem;
+}
+
+.live-category-header {
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+}
+
+.live-category-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.badge-red {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.badge-green {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-orange {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.live-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .live-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .live-actions-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.live-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  min-height: 48px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.live-action-btn:active {
+  transform: scale(0.95);
+  filter: brightness(1.25);
+}
+
+.live-action-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.live-action-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+
+/* 1. Nhóm Tấn Công */
+.live-action-btn.goal {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(220, 38, 38, 0.08) 100%);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.live-action-btn.goal .live-action-label { color: #fca5a5; }
+
+.live-action-btn.own-goal {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.2) 0%, rgba(190, 18, 60, 0.1) 100%);
+  border-color: rgba(244, 63, 94, 0.45);
+}
+.live-action-btn.own-goal .live-action-label { color: #fda4af; }
+
+.live-action-btn.wondergoal {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%);
+  border-color: rgba(251, 191, 36, 0.45);
+}
+.live-action-btn.wondergoal .live-action-label { color: #fde68a; }
+
+.live-action-btn.assist {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(14, 165, 233, 0.08) 100%);
+  border-color: rgba(6, 182, 212, 0.4);
+}
+.live-action-btn.assist .live-action-label { color: #67e8f9; }
+
+.live-action-btn.long-shot {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.18) 0%, rgba(234, 88, 12, 0.08) 100%);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+.live-action-btn.long-shot .live-action-label { color: #fdba74; }
+
+.live-action-btn.woodwork {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(180, 83, 9, 0.08) 100%);
+  border-color: rgba(217, 119, 6, 0.35);
+}
+.live-action-btn.woodwork .live-action-label { color: #fed7aa; }
+
+.live-action-btn.miss {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0%, rgba(100, 116, 139, 0.06) 100%);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+.live-action-btn.miss .live-action-label { color: #cbd5e1; }
+
+/* 2. Nhóm Tuyến Giữa */
+.live-action-btn.keypass {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 165, 233, 0.08) 100%);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+.live-action-btn.keypass .live-action-label { color: #7dd3fc; }
+
+.live-action-btn.pressing-escape {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.18) 0%, rgba(139, 92, 246, 0.08) 100%);
+  border-color: rgba(167, 139, 250, 0.4);
+}
+.live-action-btn.pressing-escape .live-action-label { color: #c4b5fd; }
+
+.live-action-btn.intercept {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.18) 0%, rgba(20, 184, 166, 0.08) 100%);
+  border-color: rgba(45, 212, 191, 0.4);
+}
+.live-action-btn.intercept .live-action-label { color: #5eead4; }
+
+/* 3. Nhóm Phòng Ngự & Thủ Môn */
+.live-action-btn.save {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.08) 100%);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.live-action-btn.save .live-action-label { color: #fde047; }
+
+.live-action-btn.gk-blunder {
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.2) 0%, rgba(225, 29, 72, 0.1) 100%);
+  border-color: rgba(251, 113, 133, 0.45);
+}
+.live-action-btn.gk-blunder .live-action-label { color: #fecdd3; }
+
+.live-action-btn.defense {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.08) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.live-action-btn.defense .live-action-label { color: #6ee7b7; }
+
+.live-action-btn.tackle {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.18) 0%, rgba(202, 138, 4, 0.08) 100%);
+  border-color: rgba(234, 179, 8, 0.4);
+}
+.live-action-btn.tackle .live-action-label { color: #fef08a; }
+
+.live-action-btn.tactical-foul {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.18) 0%, rgba(234, 88, 12, 0.08) 100%);
+  border-color: rgba(251, 146, 60, 0.4);
+}
+.live-action-btn.tactical-foul .live-action-label { color: #fed7aa; }
+
+/* 4. Nhóm Tình Huống Phủi & Cảm Xúc */
+.live-action-btn.won-foul {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.18) 0%, rgba(16, 185, 129, 0.08) 100%);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+.live-action-btn.won-foul .live-action-label { color: #a7f3d0; }
+
+.live-action-btn.turnover {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.18) 0%, rgba(225, 29, 72, 0.08) 100%);
+  border-color: rgba(244, 63, 94, 0.4);
+}
+.live-action-btn.turnover .live-action-label { color: #fca5a5; }
+
+.live-action-btn.funny {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.18) 0%, rgba(147, 51, 234, 0.08) 100%);
+  border-color: rgba(192, 132, 252, 0.4);
+}
+.live-action-btn.funny .live-action-label { color: #e9d5ff; }
+
+/* Timeline Section */
+.live-timeline-section {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.85rem;
+}
+
+.live-timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.live-timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.live-empty-timeline {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-style: italic;
+  padding: 1.2rem 0.5rem;
+}
+
+.live-event-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  gap: 0.5rem;
+  animation: liveEventSlideIn 0.2s ease-out;
+}
+
+@keyframes liveEventSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.live-event-minute {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.12);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.live-event-body {
+  flex: 1;
+  font-size: 0.84rem;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-event-badge {
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.75rem;
+}
+
+.live-event-del-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+
+.live-event-del-btn:hover {
+  color: #ef4444;
+}
+
+/* Player Selection Overlay / Picker */
+.live-player-picker-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 10100;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.live-picker-sheet {
+  background: #0f172a;
+  border-top: 2px solid var(--accent-emerald);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-height: 80%;
+  overflow-y: auto;
+  padding: 1rem 1.1rem 1.4rem;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8);
+  animation: pickerSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pickerSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.live-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.live-picker-tag {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: var(--accent-emerald);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.live-picker-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0.15rem 0 0 0;
+}
+
+.live-picker-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 0.6rem;
+}
+
+.live-picker-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.live-picker-card:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.live-picker-card:active {
+  transform: scale(0.95);
+}
+
+.live-picker-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1.5px solid var(--accent-emerald);
+}
+
+.live-picker-name {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-picker-sub {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* Sticky Footer Bar */
+.live-footer-bar {
+  background: rgba(10, 15, 26, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.8rem 1.1rem;
+  flex-shrink: 0;
+}
+
+.live-footer-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.live-footer-actions .btn {
+  flex: 1;
+  min-width: 105px;
+  justify-content: center;
+}
+
+/* ========================================================================= */
+/* LIVE SQUAD ROSTER REGISTRATION (ĐIỂM DANH ĐỘI HÌNH ĐI ĐÁ)                 */
+/* ========================================================================= */
+.live-roster-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.live-roster-strip:hover {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.95));
+}
+
+.live-roster-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.live-roster-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.2rem;
+}
+
+.live-roster-badge {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #60a5fa;
+  letter-spacing: 0.03em;
+}
+
+.live-roster-badge strong {
+  background: rgba(59, 130, 246, 0.25);
+  color: #93c5fd;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.live-roster-hint {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.live-roster-names-preview {
+  font-size: 0.76rem;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.live-roster-edit-btn {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.live-roster-edit-btn:hover {
+  background: rgba(59, 130, 246, 0.3);
+  color: #fff;
+}
+
+/* Roster Modal Overlay */
+.live-roster-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-radius: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@media (min-width: 640px) {
+  .live-roster-overlay {
+    align-items: center;
+    padding: 1.5rem;
+  }
+}
+
+.live-roster-sheet {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.1rem;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+  .live-roster-sheet {
+    border-radius: 20px;
+    max-width: 580px;
+    max-height: 80vh;
+  }
+}
+
+.live-roster-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+
+.live-roster-quick-tools {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.live-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+  overflow-y: auto;
+  max-height: 50vh;
+  padding-right: 0.2rem;
+  margin-bottom: 1rem;
+}
+
+.live-roster-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.live-roster-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.live-roster-card.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--accent-emerald);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+.live-roster-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+
+.live-roster-card.active .live-roster-avatar {
+  border-color: var(--accent-emerald);
+}
+
+.live-roster-card-info {
+  overflow: hidden;
+  flex: 1;
+}
+
+.live-roster-card-name {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-roster-card-sub {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: 0.1rem;
+}
+
+.live-roster-check-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: transparent;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.live-roster-card.active .live-roster-check-icon {
+  background: var(--accent-emerald);
+  border-color: var(--accent-emerald);
+  color: #000;
+  font-weight: 900;
+}
+
+.live-roster-sheet-footer {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.85rem;
+}
+
+.live-roster-sheet-footer .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+
+
+

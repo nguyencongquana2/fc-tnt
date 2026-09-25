@@ -28,7 +28,9 @@ const LiveMatchDraft = require('./models/LiveMatchDraft');
 // Modular Route Handlers
 const { createAuthRouter, requireAdmin, getValidAdminPins } = require('./routes/auth');
 const { createPlayersRouter } = require('./routes/players');
-const { createMatchesRouter, createAiRouter, createLiveMatchRouter } = require('./routes/matches');
+const { createMatchesRouter } = require('./routes/matches');
+const { createAiRouter } = require('./routes/ai');
+const { createLiveMatchRouter } = require('./routes/liveMatch');
 const { createMomentsRouter } = require('./routes/moments');
 const { createWeatherRouter } = require('./routes/weather');
 

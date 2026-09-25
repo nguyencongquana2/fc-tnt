@@ -22,12 +22,25 @@ FC-TNT/
 ├── assets/
 │   ├── icons/            # Toàn bộ favicon, apple-touch-icon, pwa icons
 │   └── images/           # Logo đội bóng, logo.svg, hình ảnh nền
-├── css/
-│   └── style.css         # Quản lý toàn bộ giao diện, theme dark mode, responsive
+├── css/                  # [Mô-đun hoá] Hệ thống giao diện phân tầng
+│   ├── base.css          # Design system, CSS variables, typography, navbar, modal base
+│   ├── matches.css       # Sơ đồ sân 7 Sofascore, thẻ cầu thủ & AI rating modal
+│   ├── live.css          # Trợ lý sân cỏ Live Companion & Voice Logger
+│   ├── moments.css       # Bảng tin khoảnh khắc, photo grid Facebook & lightbox
+│   ├── finance.css       # Thu chi quỹ trận, VietQR container & laser scanner
+│   ├── weather.css       # Radar thời tiết Canvas & dynamic weather particles
+│   ├── effects.css       # Hiệu ứng splash screen, 3D tilt, crown shine & neon lasers
+│   ├── responsive.css    # Tối ưu hóa hiển thị responsive mobile & tablet
+│   └── style.css         # Master stylesheet hub hợp nhất toàn bộ bằng @import
 ├── js/                   # Module logic phía Client (SPA)
 │   ├── app.js            # Điều hướng tab, modal, toast
 │   ├── state.js          # Quản lý state tập trung & socket realtime
-│   ├── matches.js        # Sơ đồ sân 7 Sofascore & Live Match
+│   ├── matches.js        # Bộ điều phối trung tâm (Facade) module trận đấu
+│   ├── matches/          # [Mô-đun hoá] Phân tách nghiệp vụ trận đấu chi tiết
+│   │   ├── matches-list.js   # Danh sách trận đấu, modal chi tiết & CRUD
+│   │   ├── matches-pitch.js  # Sa bàn sân 7 Sofascore (3-1-2) & kéo thả vị trí
+│   │   ├── matches-ai.js     # Đánh giá trận đấu & chấm điểm bằng AI Gemini
+│   │   └── matches-live.js   # Trợ lý sân cỏ Live Companion & Voice-to-Event
 │   ├── players.js        # Danh sách cầu thủ & form thông tin
 │   ├── finance.js        # Chia tiền sân & tạo mã VietQR
 │   ├── awards.js         # Bảng vinh danh & danh hiệu
@@ -45,7 +58,9 @@ FC-TNT/
 ├── routes/               # [Mô-đun hoá] Tách API từ server.js theo miền nghiệp vụ
 │   ├── auth.js           # Đăng nhập PIN, đổi PIN, kiểm tra quyền Admin
 │   ├── players.js        # API CRUD cầu thủ & avatar
-│   ├── matches.js        # API trận đấu, thu chi, live match & AI rate match
+│   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
+│   ├── ai.js             # API AI rate match chấm điểm trận đấu & NLP Gemini
+│   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc reactions & bình luận
 │   └── weather.js        # API dự báo thời tiết Open-Meteo & AI thẩm định mặt sân
 ├── scripts/              # Công cụ tự động hóa
@@ -64,7 +79,9 @@ FC-TNT/
 Tách rời các endpoint từ `server.js` thành các module độc lập theo miền nghiệp vụ:
 - `auth.js`: Xác thực mã PIN quản trị (`/api/auth/login`), đổi PIN (`/api/auth/change-pin`), kiểm tra token (`/api/auth/check`) và middleware `requireAdmin`.
 - `players.js`: Quản lý danh sách cầu thủ (`/api/players`), thêm/sửa/xóa cầu thủ và cập nhật avatar tự do.
-- `matches.js`: Lịch sử trận đấu (`/api/matches`), quản lý thu chi/quỹ trận, live match sync (`/api/live-match/*`), và AI rate match chấm điểm trận đấu (`/api/ai/rate-match`).
+- `matches.js`: Lịch sử trận đấu (`/api/matches`) và quản lý thu chi/quỹ trận sân bóng.
+- `ai.js`: AI chấm điểm phong độ & viết nhận xét cá nhân hóa bằng Gemini API kết hợp NLP (`/api/ai/rate-match`).
+- `liveMatch.js`: Đồng bộ trạng thái bản nháp trận đấu Live đa thiết bị qua Socket.IO (`/api/live-match/*`).
 - `moments.js`: Bảng tin khoảnh khắc (`/api/moments`), đăng bài, thả cảm xúc (react) và bình luận (comments).
 - `weather.js`: Lấy dự báo thời tiết thực tế từ Open-Meteo (`/api/weather/forecast`) và AI cố vấn chiến thuật/mặt sân (`/api/weather/ai-consultant`).
 
@@ -80,7 +97,11 @@ Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
 Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
 - `state.js`: Quản lý state tập trung (`APP_STATE`), xử lý xác thực/token Admin, hàm gọi API chung (`apiCall`), bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
 - `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính (Dashboard, Awards, Matches, Weather, Moments, Players), điều khiển modal và toast thông báo.
-- `matches.js`: Nghiệp vụ trận đấu: hiển thị danh sách trận, modal chi tiết trận, sơ đồ sân 7 Sofascore (pitch 3-1-2), kéo/thả/chọn cầu thủ cho Live Match, gửi yêu cầu AI chấm điểm.
+- `matches.js` & `matches/`: [Mô-đun hoá] Quản lý toàn bộ nghiệp vụ trận đấu, được điều phối qua facade `matches.js` và phân tách thành các submodule:
+  - `matches/matches-list.js`: Quản lý danh sách trận, hiển thị chi tiết, tạo/sửa trận và xác thực PIN an toàn khi xóa.
+  - `matches/matches-pitch.js`: Sa bàn chiến thuật sân 7 Sofascore (3-1-2), engine kéo-thả (Drag & Drop) và Quick Edit điểm số.
+  - `matches/matches-ai.js`: AI Match Rating & Review Engine kết nối Gemini API chấm điểm và sinh nhận xét chi tiết.
+  - `matches/matches-live.js`: Trợ lý sân cỏ Live Match, đồng hồ thi đấu, ghi nhận sự kiện, nhận diện giọng nói (Voice-to-Event) và đồng bộ Socket.IO.
 - `players.js`: Quản lý danh sách cầu thủ, form thêm/sửa/xoá cầu thủ, upload avatar, thống kê phong độ.
 - `finance.js`: Nghiệp vụ quỹ và tài chính: tính tiền sân/tiền nước, chia đều cho người đi đá, theo dõi ai đã đóng tiền, tạo mã VietQR chuyển khoản nhanh.
 - `awards.js`: Bảng vinh danh cá nhân (Top ghi bàn, Vua kiến tạo, Cầu thủ xuất sắc nhất MOTM, Găng tay vàng).
@@ -89,8 +110,17 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
 - `weather.js`: Lấy dự báo thời tiết tại sân thi đấu và hiển thị tư vấn chiến thuật/trang phục từ AI.
 - `splash.js` & `effects.js`: Hiệu ứng màn hình chào (splash screen), hiệu ứng âm thanh và pháo hoa ăn mừng (confetti).
 
-### `css/` (Giao Diện & Kiểu Dáng)
-- `style.css`: File định kiểu toàn bộ ứng dụng; quản lý hệ thống màu, dark mode/glassmorphism, bố cục responsive (mobile & desktop), thiết kế sơ đồ sân bóng và các hiệu ứng động.
+### `css/` (Giao Diện & Hệ Thống Định Kiểu Phân Tầng)
+Toàn bộ stylesheet được mô-đun hóa chuyên biệt theo từng miền giao diện:
+- `base.css`: Design system, biến màu sắc (`:root`), typography, nút bấm, navbar, modal base, xác thực PIN và footer.
+- `matches.css`: Sơ đồ chiến thuật sân 7 Sofascore (3-1-2), bố cục modal 2 cột, thẻ cầu thủ, kéo thả và AI rating reviews.
+- `live.css`: Giao diện Trợ lý sân cỏ Live Match, đồng hồ bấm giờ, ma trận nút bấm sự kiện và bảng điểm danh đội hình.
+- `moments.css`: Bảng tin khoảnh khắc, lưới ảnh Facebook, biểu cảm cảm xúc, bình luận và lightbox xem ảnh Full HD.
+- `finance.css`: Quản lý quỹ, danh sách nộp tiền, khung mã VietQR chuyển khoản và tia laser quét QR.
+- `weather.css`: Radar thời tiết Canvas, thẻ dự báo 7 ngày và hiệu ứng hạt mưa/nắng/sấm chớp động.
+- `effects.css`: Màn hình chào splash screen, minigame tâng bóng, hiệu ứng 3D tilt, vương miện MOTM, neon lasers và poster canvas.
+- `responsive.css`: Tối ưu hóa toàn diện giao diện trên thiết bị di động và tablet (media queries, bottom nav bar, mobile touch).
+- `style.css`: File hub trung tâm nhập khẩu toàn bộ bằng `@import` phục vụ tương thích ngược.
 
 ### `assets/` (Tài Nguyên Đồ Họa)
 Được phân cấp rõ ràng:
