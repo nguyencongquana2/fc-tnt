@@ -24,7 +24,7 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   });
 
   // POST /api/moments
-  router.post('/', async (req, res) => {
+  router.post('/', requireAdmin, async (req, res) => {
     try {
       const momentData = req.body;
       if (!momentData.id) {
@@ -53,7 +53,7 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   });
 
   // PUT /api/moments/:id
-  router.put('/:id', async (req, res) => {
+  router.put('/:id', requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -203,7 +203,7 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   });
 
   // DELETE /api/moments/:id/comments/:commentId
-  router.delete('/:id/comments/:commentId', async (req, res) => {
+  router.delete('/:id/comments/:commentId', requireAdmin, async (req, res) => {
     try {
       const { id, commentId } = req.params;
 

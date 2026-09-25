@@ -6,6 +6,8 @@
 const express = require('express');
 const Team = require('../models/Team');
 
+const mongoose = require('mongoose');
+
 const ADMIN_STATIC_TOKEN = 'fc_tnt_admin_authenticated';
 
 // Lấy mã PIN Quản trị viên hiện tại (ưu tiên biến môi trường ADMIN_PIN trên Render / .env)
@@ -19,7 +21,8 @@ async function getValidAdminPins(isMongoConnected) {
   }
 
   // 2. Mã từ MongoDB Database (nếu có và khác 123456)
-  if (isMongoConnected && isMongoConnected()) {
+  const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
+  if (connected) {
     try {
       const team = await Team.findOne();
       if (team && team.adminPin && team.adminPin !== '123456') {
@@ -33,10 +36,30 @@ async function getValidAdminPins(isMongoConnected) {
   return Array.from(pins);
 }
 
+// Xác thực token Admin bảo mật: giải mã Base64 và đối soát với mã PIN hợp lệ
+async function verifyAdminToken(token, isMongoConnected) {
+  if (!token || typeof token !== 'string') return false;
+  if (token === ADMIN_STATIC_TOKEN) return true;
+  if (!token.startsWith('fc_tnt_admin_')) return false;
+
+  try {
+    const base64Part = token.slice('fc_tnt_admin_'.length);
+    if (!base64Part) return false;
+    const decodedPin = Buffer.from(base64Part, 'base64').toString('utf8').trim();
+    if (!decodedPin) return false;
+
+    const validPins = await getValidAdminPins(isMongoConnected);
+    return validPins.includes(decodedPin);
+  } catch (err) {
+    return false;
+  }
+}
+
 // Middleware xác thực quyền Admin cho các thao tác thêm / sửa / xóa dữ liệu
-const requireAdmin = (req, res, next) => {
+const requireAdmin = async (req, res, next) => {
   const token = req.headers['x-admin-token'];
-  if (token && (token === ADMIN_STATIC_TOKEN || token.startsWith('fc_tnt_admin_'))) {
+  const isValid = await verifyAdminToken(token);
+  if (isValid) {
     return next();
   }
   return res.status(401).json({
@@ -103,9 +126,9 @@ function createAuthRouter({ isMongoConnected }) {
   });
 
   // GET /api/auth/check
-  router.get('/check', (req, res) => {
+  router.get('/check', async (req, res) => {
     const token = req.headers['x-admin-token'];
-    const isValid = token && (token === ADMIN_STATIC_TOKEN || token.startsWith('fc_tnt_admin_'));
+    const isValid = await verifyAdminToken(token, isMongoConnected);
     res.json({ isAdmin: isValid });
   });
 
@@ -115,5 +138,6 @@ function createAuthRouter({ isMongoConnected }) {
 module.exports = {
   createAuthRouter,
   requireAdmin,
+  verifyAdminToken,
   getValidAdminPins
 };

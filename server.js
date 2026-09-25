@@ -46,8 +46,8 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fc_ntn';
 
-let isMongoConnected = false;
-const checkMongo = () => isMongoConnected;
+// Kiểm tra trạng thái kết nối MongoDB động trong thời gian thực
+const checkMongo = () => Boolean(mongoose.connection && mongoose.connection.readyState === 1);
 
 // Broadcast helper cho đồng bộ thời gian thực
 const broadcastDataUpdate = (type, message, extra = {}) => {
@@ -348,11 +348,28 @@ app.get('/assets/logo-512.png', (req, res) => res.sendFile(path.join(__dirname, 
 app.get('/assets/logo.png', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'images', 'logo.png')));
 app.get('/assets/logo.svg', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'images', 'logo.svg')));
 
-// Phục vụ frontend tĩnh
-app.use(express.static(path.join(__dirname, '')));
+// Phục vụ các thư mục tài nguyên tĩnh công khai phía Client (ngăn chặn rò rỉ mã nguồn backend)
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/utils', express.static(path.join(__dirname, 'utils')));
 
-// Route fallback cho Single Page App
+// Các tệp web công khai ở thư mục gốc
+app.get('/manifest.json', (req, res) => res.sendFile(path.join(__dirname, 'manifest.json')));
+app.get('/robots.txt', (req, res) => res.sendFile(path.join(__dirname, 'robots.txt')));
+app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'sitemap.xml')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+
+// Route fallback cho Single Page App (ngăn rò rỉ các file mã nguồn/cấu hình khi truy cập qua URL)
 app.get('*', (req, res) => {
+  // Trả về 404 JSON nếu là endpoint API không tồn tại
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Endpoint API không tồn tại' });
+  }
+  // Chặn tải về các file mã nguồn, file cấu hình hoặc script backend
+  const sensitiveExtensions = ['.env', '.js', '.json', '.md', '.py', '.git', '.lock'];
+  if (sensitiveExtensions.some(ext => req.path.toLowerCase().endsWith(ext))) {
+    return res.status(404).send('Not Found');
+  }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

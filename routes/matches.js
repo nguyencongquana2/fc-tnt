@@ -88,7 +88,7 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   });
 
   // PUT /api/matches/:id/finance
-  router.put('/:id/finance', async (req, res) => {
+  router.put('/:id/finance', requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const financeData = req.body;
@@ -117,7 +117,7 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   });
 
   // PATCH /api/matches/:id/finance/toggle-payment
-  router.patch('/:id/finance/toggle-payment', async (req, res) => {
+  router.patch('/:id/finance/toggle-payment', requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const { playerId, isPaid } = req.body;
