@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const { aiRateLimiter } = require('../utils/rateLimiter');
 
 // Tọa độ Sân bóng đá AKKA - 68 Đại Lộ Chu Văn An, Thanh Liệt, Thanh Trì / Hoàng Mai, Hà Nội
 const AKKA_VENUE = {
@@ -464,8 +465,8 @@ function createWeatherRouter() {
     }
   });
 
-  // POST /api/weather/ai-consultant
-  router.post('/ai-consultant', async (req, res) => {
+  // POST /api/weather/ai-consultant (Có rate limiting bảo vệ hạn ngạch Gemini)
+  router.post('/ai-consultant', aiRateLimiter, async (req, res) => {
     try {
       const { question, forecastData, selectedDate, selectedSlot } = req.body;
       if (!question || !String(question).trim()) {

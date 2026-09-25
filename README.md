@@ -108,7 +108,8 @@ FC-TNT/
 │   └── weather.js        # API thời tiết Open-Meteo & AI cố vấn mặt sân
 ├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung Backend & Frontend (UMD)
 │   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định
-│   └── playerAliases.js   # Bảng bí danh cầu thủ cho AI NLP & Live Match Voice
+│   ├── playerAliases.js   # Bảng bí danh cầu thủ cho AI NLP & Live Match Voice
+│   └── rateLimiter.js     # Bộ lọc trượt (Sliding Window) chống Brute-force PIN & bảo vệ Gemini API
 ├── scripts/              # Công cụ tiện ích
 │   └── generate_favicons.py # Script Python tự động sinh bộ favicon & logo
 ├── .env                  # Biến môi trường

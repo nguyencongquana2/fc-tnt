@@ -68,11 +68,13 @@ const requireAdmin = async (req, res, next) => {
   });
 };
 
+const { loginRateLimiter } = require('../utils/rateLimiter');
+
 function createAuthRouter({ isMongoConnected }) {
   const router = express.Router();
 
-  // POST /api/auth/login
-  router.post('/login', async (req, res) => {
+  // POST /api/auth/login (Có bảo vệ chống tấn công Brute-force mã PIN)
+  router.post('/login', loginRateLimiter, async (req, res) => {
     const { pin } = req.body;
     if (!pin) {
       return res.status(400).json({ success: false, error: 'Vui lòng nhập mã PIN!' });

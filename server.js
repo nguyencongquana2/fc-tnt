@@ -69,6 +69,7 @@ io.on('connection', (socket) => {
 });
 
 // Middleware
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -172,16 +173,31 @@ async function seedInitialData() {
   }
 }
 
-// Connect to MongoDB
+// Lắng nghe sự kiện vòng đời kết nối MongoDB
+mongoose.connection.on('connected', () => {
+  console.log('🌿 MongoDB Connection: Established (readyState = 1)');
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️ MongoDB Connection: Disconnected! Tự động chuyển sang in-memory fallback.');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('🔄 MongoDB Connection: Reconnected successfully!');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB Connection Error:', err.message);
+});
+
+// Khởi tạo kết nối MongoDB
 mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 5000
 }).then(async () => {
-  isMongoConnected = true;
   console.log('🌿 Connected to MongoDB Database successfully!');
   await seedInitialData();
 }).catch((err) => {
-  console.warn('⚠️ MongoDB connection warning (Using in-memory/JSON fallback):', err.message);
-  isMongoConnected = false;
+  console.warn('⚠️ MongoDB initial connection warning (Using in-memory fallback):', err.message);
 });
 
 // Shared context truyền vào các router

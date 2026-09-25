@@ -385,10 +385,12 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
 }
 
 
+const { aiRateLimiter } = require('../utils/rateLimiter');
+
 function createAiRouter() {
   const router = express.Router();
 
-  router.post('/rate-match', async (req, res) => {
+  router.post('/rate-match', aiRateLimiter, async (req, res) => {
     try {
       const { matchInfo, playerList, matchNarration, liveEvents, apiKey } = req.body;
 
