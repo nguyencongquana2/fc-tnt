@@ -8,8 +8,6 @@ const Team = require('../models/Team');
 
 const mongoose = require('mongoose');
 
-const ADMIN_STATIC_TOKEN = 'fc_tnt_admin_authenticated';
-
 // Lấy mã PIN Quản trị viên hiện tại (ưu tiên biến môi trường ADMIN_PIN trên Render / .env)
 async function getValidAdminPins(isMongoConnected) {
   const pins = new Set();
@@ -39,7 +37,6 @@ async function getValidAdminPins(isMongoConnected) {
 // Xác thực token Admin bảo mật: giải mã Base64 và đối soát với mã PIN hợp lệ
 async function verifyAdminToken(token, isMongoConnected) {
   if (!token || typeof token !== 'string') return false;
-  if (token === ADMIN_STATIC_TOKEN) return true;
   if (!token.startsWith('fc_tnt_admin_')) return false;
 
   try {

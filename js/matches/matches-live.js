@@ -1481,6 +1481,8 @@ Object.assign(window.matchesModule, {
     this.updateTimerDisplay();
 
     // Xóa trên Cloud
-    fetch('/api/live-match/clear', { method: 'POST' }).catch(e => { });
+    fetch('/api/live-match/clear', { method: 'POST' }).catch(err => {
+      console.warn('[LiveMatch] Failed to clear cloud live match draft:', err.message);
+    });
   }
 });
