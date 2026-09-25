@@ -181,20 +181,43 @@
     }
   }
 
-  function dismissSplash() {
+  const SPLASH_SESSION_KEY = 'tnt_splash_viewed_session';
+
+  function dismissSplash(immediate = false) {
     if (isDismissed) return;
     isDismissed = true;
+    try {
+      sessionStorage.setItem(SPLASH_SESSION_KEY, '1');
+    } catch (e) {
+      console.warn('[Splash] sessionStorage unavailable:', e.message);
+    }
+
     const splash = document.getElementById('tnt-splash-screen');
     if (splash) {
-      splash.classList.add('splash-fade-out');
-      setTimeout(() => {
+      if (immediate) {
         splash.style.display = 'none';
         splash.remove();
-      }, 650);
+      } else {
+        splash.classList.add('splash-fade-out');
+        setTimeout(() => {
+          splash.style.display = 'none';
+          splash.remove();
+        }, 350);
+      }
     }
   }
 
   function initSplash() {
+    // 1. Kiểm tra session: Nếu người dùng đã xem splash trong phiên duyệt web -> đóng ngay lập tức (0.0s)
+    try {
+      if (sessionStorage.getItem(SPLASH_SESSION_KEY) === '1') {
+        dismissSplash(true);
+        return;
+      }
+    } catch (e) {
+      console.warn('[Splash] sessionStorage check warning:', e.message);
+    }
+
     renderFact();
 
     const ball = document.getElementById('splash-interactive-ball');
@@ -216,18 +239,18 @@
 
     const skipBtn = document.getElementById('splash-skip-btn');
     if (skipBtn) {
-      skipBtn.addEventListener('click', dismissSplash);
+      skipBtn.addEventListener('click', () => dismissSplash(false));
     }
 
-    // Dynamic progress bar simulation (~3.2s total duration for optimal reading & interaction)
+    // Dynamic progress bar simulation (~1.2s - 1.4s duration cho cảm giác mượt mà, siêu tốc)
     const progressBar = document.getElementById('splash-progress-fill');
     const percentBadge = document.getElementById('splash-percent-badge');
     const statusText = document.getElementById('splash-status-text');
     let progress = 0;
 
     const interval = setInterval(() => {
-      // Tăng từ từ và mượt mà (~1.4% đến 2.2% mỗi 45ms -> tổng thời gian khoảng ~2.8s)
-      const increment = Math.random() * 0.8 + 1.2;
+      // Tăng đều và nhanh (~2.8% đến 4.2% mỗi 35ms -> tổng thời gian khoảng ~1.2s)
+      const increment = Math.random() * 1.4 + 2.8;
       progress = Math.min(100, progress + increment);
       const rounded = Math.floor(progress);
 
@@ -235,9 +258,9 @@
       if (percentBadge) percentBadge.textContent = rounded + '%';
 
       if (statusText) {
-        if (progress < 28) {
+        if (progress < 30) {
           statusText.textContent = '⏳ Đang kết nối phòng thay đồ FC TNT...';
-        } else if (progress < 60) {
+        } else if (progress < 65) {
           statusText.textContent = '📋 Đang đồng bộ bảng vinh danh & chiến thuật...';
         } else if (progress < 90) {
           statusText.textContent = '👟 Cầu thủ đang xỏ giày và khởi động...';
@@ -248,21 +271,21 @@
 
       if (progress >= 100) {
         clearInterval(interval);
-        setTimeout(dismissSplash, 400);
+        setTimeout(() => dismissSplash(false), 200);
       }
-    }, 45);
+    }, 35);
 
     // Keyboard shortcut (Space / Enter to skip)
     window.addEventListener('keydown', function (e) {
       if (e.code === 'Space' || e.code === 'Enter') {
         if (!isDismissed) {
-          dismissSplash();
+          dismissSplash(false);
         }
       }
     }, { once: true });
 
-    // Fallback max timeout (4.0s)
-    setTimeout(dismissSplash, 4000);
+    // Fallback max timeout (1.8s)
+    setTimeout(() => dismissSplash(false), 1800);
   }
 
   if (document.readyState === 'loading') {

@@ -95,12 +95,15 @@ Tài liệu này tổng hợp toàn bộ các tính năng cốt lõi của hệ 
 
 ---
 
-### 🔒 9. Bảo Mật Quản Trị Phân Quyền Bằng Mã PIN (Admin Security & Multi-device) ✅ *(Đã hoàn thiện)*
-* **Mục đích**: Phân định rõ ràng giữa người xem bình thường và Quản trị viên (Đội trưởng / Thủ quỹ).
+### 🔒 9. Bảo Mật Quản Trị Phân Quyền Bằng Mã PIN & Phòng Thủ Toàn Diện (Admin Security & Hardening) ✅ *(Đã hoàn thiện)*
+* **Mục đích**: Phân định rõ ràng giữa người xem bình thường và Quản trị viên (Đội trưởng / Thủ quỹ), thiết lập các chốt chặn an ninh mạng vững chắc.
 * **Tính năng chi tiết**:
-  - **Đăng nhập PIN 6 số an toàn**: Mã hóa bảo mật, cấp token quản trị lưu an toàn trên trình duyệt.
-  - **Phân quyền chặt chẽ**: Chỉ Admin mới có quyền thêm/sửa/xóa trận đấu, chỉnh sửa điểm số, quản lý tiền nong và thay đổi thông tin đội.
-  - **Chức năng đổi mã PIN trực tiếp**: Admin có thể đổi PIN nhanh ngay trên giao diện web.
+  - **Chống tấn công Brute-force mã PIN**: Tích hợp Sliding Window Rate Limiter giới hạn tối đa 5 lần thử/15 phút trên mỗi IP, kèm header phản hồi HTTP 429 Retry-After.
+  - **Phân quyền truy cập nghiêm ngặt (Broken Access Control)**: Mọi API thêm/sửa/xóa trận đấu, cập nhật tiền sân, xóa khoảnh khắc, xóa bình luận đều bắt buộc qua middleware `requireAdmin`.
+  - **Chống lộ mã nguồn (Source Code Disclosure)**: Chặn đứng nguy cơ rò rỉ mã nguồn backend, chỉ phục vụ tài nguyên tĩnh thông qua danh sách whitelist thư mục công khai (`css`, `js`, `utils`, `assets`).
+  - **Bảo vệ RAM máy chủ & Kiểm soát kích thước tải (10MB Payload Guard)**: Tự động nén ảnh chụp điện thoại bằng Canvas ở trình duyệt (giảm 95% dung lượng), hạ giới hạn body-parser xuống 10MB an toàn và bắt lỗi HTTP 413 Payload Too Large.
+  - **Chống spam hạn ngạch Gemini AI**: Rate limiter riêng biệt cho các API gọi trí tuệ nhân tạo (max 12 request/10 phút) để bảo vệ chi phí và hạn ngạch Google AI Studio.
+  - **Giám sát vòng đời kết nối MongoDB**: Tự động chuyển đổi mượt mà giữa MongoDB Atlas và bộ nhớ in-memory dự phòng khi mạng chập chờn mà không gây crash ứng dụng.
 
 ---
 
@@ -168,4 +171,21 @@ Tài liệu này tổng hợp toàn bộ các tính năng cốt lõi của hệ 
 
 ---
 
-*📅 Ngày cập nhật: 22/09/2026 • Đội bóng: FC TNT*
+### 👥 17. Hệ Thống Tài Khoản Cầu Thủ & Xác Thực Chuẩn JWT / Phân Quyền Đa Cấp (Player Accounts & JWT / RBAC) ⏳ *(Kế hoạch sắp tới)*
+* **Mục đích**: Chuyển đổi từ mô hình 1 mã PIN dùng chung sang mô hình mỗi thành viên trong đội có một tài khoản riêng, phân định vai trò và bảo vệ phiên đăng nhập bằng chuẩn công nghiệp JWT (JSON Web Token) kết hợp băm mật khẩu `bcrypt`.
+* **Tính năng chi tiết**:
+  - **Tài khoản cá nhân liên kết 1-1 với Hồ sơ Cầu thủ**: Mỗi cầu thủ đăng ký/đăng nhập bằng số điện thoại hoặc tên định danh riêng, có mật khẩu cá nhân được băm bằng muối bảo mật (`bcrypt`).
+  - **Cơ chế xác thực số chuẩn JWT & Refresh Token**:
+    - Cấp Access Token có chữ ký số HMAC-SHA256 (`JWT_SECRET`) chống giả mạo, mang theo thông tin định danh (`playerId`, `name`, `role`) và thời gian hết hạn (`exp`).
+    - Refresh Token bảo mật tự động gia hạn phiên làm việc mà không bắt người dùng phải đăng nhập lại liên tục.
+    - Triệt tiêu hoàn toàn rủi ro lộ mã PIN gốc qua Base64 của cơ chế cũ.
+  - **Phân quyền vai trò đa cấp (Role-Based Access Control - RBAC)**:
+    - 👑 **Đội trưởng (Captain / Super Admin)**: Toàn quyền quản trị, thêm/sửa/xóa trận đấu, duyệt thành viên, cập nhật thông tin đội và kích hoạt AI chấm điểm.
+    - 💰 **Thủ quỹ (Treasurer)**: Quản lý tiền sân, đối soát mã VietQR, xác nhận thu nợ và quản lý quỹ chung của đội bóng.
+    - ⚽ **Thành viên (Player)**: Tự do cập nhật ảnh đại diện cá nhân, bio, số áo ưa thích, tự xác nhận điểm danh đi đá / vắng mặt, bình luận chém gió trong Khoảnh khắc.
+    - 👁️ **Khách / Cổ động viên (Guest / Fan)**: Xem lịch thi đấu, bảng xếp hạng phong độ, bảng vinh danh và thả cảm xúc tương tác.
+  - **Nhật ký thao tác minh bạch (Audit Trail)**: Ghi vết rõ ràng thành viên nào vừa cập nhật tỉ số, thủ quỹ nào vừa xác nhận đóng tiền nhằm tăng cường sự tin tưởng và minh bạch tuyệt đối trong nội bộ đội bóng.
+
+---
+
+*📅 Ngày cập nhật: 25/09/2026 • Đội bóng: FC TNT*

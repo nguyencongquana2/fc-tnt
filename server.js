@@ -229,7 +229,7 @@ const routeContext = {
 app.get('/api/status', (req, res) => {
   res.json({
     status: 'online',
-    database: isMongoConnected ? 'MongoDB Connected' : 'Local Fallback Mode',
+    database: checkMongo() ? 'MongoDB Connected' : 'Local Fallback Mode',
     timestamp: new Date().toISOString()
   });
 });
@@ -237,7 +237,7 @@ app.get('/api/status', (req, res) => {
 // GET /api/data (Lấy toàn bộ dữ liệu khởi tạo đồng bộ cho Client SPA)
 app.get('/api/data', async (req, res) => {
   try {
-    if (isMongoConnected) {
+    if (checkMongo()) {
       let team = await Team.findOne();
       if (!team) {
         team = { name: 'FC TNT', slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống', logo: '⚽' };
@@ -271,7 +271,7 @@ app.put('/api/team', requireAdmin, async (req, res) => {
   try {
     const { name, slogan, logo } = req.body;
 
-    if (isMongoConnected) {
+    if (checkMongo()) {
       let team = await Team.findOne();
       if (!team) {
         team = await Team.create({ name, slogan, logo });
@@ -299,7 +299,7 @@ app.post('/api/backup/restore', requireAdmin, async (req, res) => {
   try {
     const { teamInfo, players, matches, moments } = req.body;
 
-    if (isMongoConnected) {
+    if (checkMongo()) {
       if (players && Array.isArray(players) && players.length > 0) {
         await Player.deleteMany({});
         await Player.insertMany(players);
