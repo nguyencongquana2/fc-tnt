@@ -421,7 +421,9 @@ Object.assign(window.matchesModule, {
     if (this.livePitchState.isRecordingVoice && this.livePitchState.speechRecognition) {
       try {
         this.livePitchState.speechRecognition.stop();
-      } catch (e) { }
+      } catch (err) {
+        console.debug('[SpeechRecognition] Lỗi khi dừng nhận diện:', err);
+      }
       this.livePitchState.isRecordingVoice = false;
       if (micBtn) micBtn.classList.remove('recording');
       if (statusText) statusText.innerText = '🎙️ Đã dừng thu! Bấm "Ghi Nhận"';
@@ -444,7 +446,11 @@ Object.assign(window.matchesModule, {
     try {
       // Hủy bỏ instance cũ nếu còn tồn tại
       if (this.livePitchState.speechRecognition) {
-        try { this.livePitchState.speechRecognition.abort(); } catch (e) { }
+        try { 
+          this.livePitchState.speechRecognition.abort(); 
+        } catch (err) { 
+          console.debug('[SpeechRecognition] Lỗi hủy bỏ instance cũ:', err); 
+        }
         this.livePitchState.speechRecognition = null;
       }
 
@@ -476,7 +482,11 @@ Object.assign(window.matchesModule, {
         // Tự động dừng sau 12 giây nếu người dùng không bấm nút dừng
         speechTimeout = setTimeout(() => {
           if (this.livePitchState.isRecordingVoice && this.livePitchState.speechRecognition) {
-            try { this.livePitchState.speechRecognition.stop(); } catch (e) { }
+            try { 
+              this.livePitchState.speechRecognition.stop(); 
+            } catch (err) { 
+              console.debug('[SpeechRecognition] Lỗi timeout dừng nhận diện:', err); 
+            }
           }
         }, 12000);
       };

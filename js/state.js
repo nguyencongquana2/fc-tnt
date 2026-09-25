@@ -190,9 +190,22 @@ class StateManager {
           matches: dataToSave.matches
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(miniCache));
-      } catch (e2) {}
+      } catch (e2) {
+        console.warn('LocalStorage miniCache fallback failed (quota exceeded):', e2);
+      }
     } finally {
       this.notify();
+    }
+  }
+
+  // Đồng bộ ngầm lên server, xử lý và bắt trọn vẹn lỗi mà không để rơi vào empty catch
+  _syncToServer(url, options, actionName) {
+    try {
+      fetch(url, options).catch(err => {
+        console.warn(`[Sync ${actionName}] Lỗi kết nối mạng:`, err.message || err);
+      });
+    } catch (e) {
+      console.warn(`[Sync ${actionName}] Không thể gửi request:`, e.message || e);
     }
   }
 
@@ -253,16 +266,14 @@ class StateManager {
     this.saveData();
 
     // Gửi API lên server MongoDB
-    try {
-      fetch(`${API_BASE}/players`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': this.getAdminToken()
-        },
-        body: JSON.stringify(newPlayer)
-      }).catch(err => console.warn('Sync addPlayer error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/players`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': this.getAdminToken()
+      },
+      body: JSON.stringify(newPlayer)
+    }, 'addPlayer');
 
     return newPlayer;
   }
@@ -274,16 +285,14 @@ class StateManager {
       this.saveData();
 
       // Gửi API cập nhật lên server MongoDB
-      try {
-        fetch(`${API_BASE}/players/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-token': this.getAdminToken()
-          },
-          body: JSON.stringify(this.data.players[index])
-        }).catch(err => console.warn('Sync updatePlayer error:', err));
-      } catch (e) { }
+      this._syncToServer(`${API_BASE}/players/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        },
+        body: JSON.stringify(this.data.players[index])
+      }, 'updatePlayer');
 
       return this.data.players[index];
     }
@@ -297,13 +306,11 @@ class StateManager {
       this.saveData();
 
       // Gửi API cập nhật avatar lên server MongoDB (mở cho cả thành viên)
-      try {
-        fetch(`${API_BASE}/players/${id}/avatar`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ avatar: avatarBase64 })
-        }).catch(err => console.warn('Sync updatePlayerAvatar error:', err));
-      } catch (e) { }
+      this._syncToServer(`${API_BASE}/players/${id}/avatar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar: avatarBase64 })
+      }, 'updatePlayerAvatar');
 
       return this.data.players[index];
     }
@@ -322,15 +329,13 @@ class StateManager {
     this.saveData();
 
     // Gửi API xóa lên server MongoDB
-    try {
-      fetch(`${API_BASE}/players/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': this.getAdminToken()
-        }
-      }).catch(err => console.warn('Sync deletePlayer error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/players/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': this.getAdminToken()
+      }
+    }, 'deletePlayer');
   }
 
   // --- MATCHES CRUD ---
@@ -353,16 +358,14 @@ class StateManager {
     this.saveData();
 
     // Gửi API lên server MongoDB
-    try {
-      fetch(`${API_BASE}/matches`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': this.getAdminToken()
-        },
-        body: JSON.stringify(newMatch)
-      }).catch(err => console.warn('Sync addMatch error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/matches`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': this.getAdminToken()
+      },
+      body: JSON.stringify(newMatch)
+    }, 'addMatch');
 
     return newMatch;
   }
@@ -374,16 +377,14 @@ class StateManager {
       this.saveData();
 
       // Gửi API cập nhật lên server MongoDB
-      try {
-        fetch(`${API_BASE}/matches/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-token': this.getAdminToken()
-          },
-          body: JSON.stringify(this.data.matches[index])
-        }).catch(err => console.warn('Sync updateMatch error:', err));
-      } catch (e) { }
+      this._syncToServer(`${API_BASE}/matches/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        },
+        body: JSON.stringify(this.data.matches[index])
+      }, 'updateMatch');
 
       return this.data.matches[index];
     }
@@ -395,15 +396,13 @@ class StateManager {
     this.saveData();
 
     // Gửi API xóa lên server MongoDB
-    try {
-      fetch(`${API_BASE}/matches/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': this.getAdminToken()
-        }
-      }).catch(err => console.warn('Sync deleteMatch error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/matches/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': this.getAdminToken()
+      }
+    }, 'deleteMatch');
   }
 
   async clearAllMatches() {
@@ -411,15 +410,13 @@ class StateManager {
     this.saveData();
 
     // Gửi API xóa tất cả trận lên server MongoDB
-    try {
-      fetch(`${API_BASE}/matches`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': this.getAdminToken()
-        }
-      }).catch(err => console.warn('Sync clearAllMatches error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/matches`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': this.getAdminToken()
+      }
+    }, 'clearAllMatches');
   }
 
   // --- STATS & COMPUTATIONS ---
@@ -590,16 +587,14 @@ class StateManager {
     this.data.moments.unshift(moment);
     this.saveData();
 
-    try {
-      fetch(`${API_BASE}/moments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': this.getAdminToken()
-        },
-        body: JSON.stringify(moment)
-      }).catch(err => console.warn('Sync addMoment error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/moments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': this.getAdminToken()
+      },
+      body: JSON.stringify(moment)
+    }, 'addMoment');
 
     return moment;
   }
@@ -611,16 +606,14 @@ class StateManager {
       this.data.moments[idx] = { ...this.data.moments[idx], ...updateData };
       this.saveData();
 
-      try {
-        fetch(`${API_BASE}/moments/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-token': this.getAdminToken()
-          },
-          body: JSON.stringify(updateData)
-        }).catch(err => console.warn('Sync updateMoment error:', err));
-      } catch (e) { }
+      this._syncToServer(`${API_BASE}/moments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': this.getAdminToken()
+        },
+        body: JSON.stringify(updateData)
+      }, 'updateMoment');
 
       return this.data.moments[idx];
     }
@@ -632,14 +625,12 @@ class StateManager {
     this.data.moments = this.data.moments.filter(m => m.id !== id);
     this.saveData();
 
-    try {
-      fetch(`${API_BASE}/moments/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'x-admin-token': this.getAdminToken()
-        }
-      }).catch(err => console.warn('Sync deleteMoment error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/moments/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'x-admin-token': this.getAdminToken()
+      }
+    }, 'deleteMoment');
 
     return true;
   }
@@ -670,13 +661,11 @@ class StateManager {
 
     this.saveData();
 
-    try {
-      fetch(`${API_BASE}/moments/${momentId}/react`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reactionType, userKey })
-      }).catch(err => console.warn('Sync toggleReaction error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/moments/${momentId}/react`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reactionType, userKey })
+    }, 'toggleReaction');
 
     return moment.reactions;
   }
@@ -697,13 +686,11 @@ class StateManager {
     moment.comments.push(newComment);
     this.saveData();
 
-    try {
-      fetch(`${API_BASE}/moments/${momentId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authorName, content, avatar })
-      }).catch(err => console.warn('Sync addComment error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/moments/${momentId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authorName, content, avatar })
+    }, 'addComment');
 
     return newComment;
   }
@@ -715,12 +702,10 @@ class StateManager {
     moment.comments = moment.comments.filter(c => c.id !== commentId);
     this.saveData();
 
-    try {
-      fetch(`${API_BASE}/moments/${momentId}/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-token': this.getAdminToken() }
-      }).catch(err => console.warn('Sync deleteComment error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/moments/${momentId}/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': this.getAdminToken() }
+    }, 'deleteComment');
 
     return true;
   }
@@ -729,16 +714,14 @@ class StateManager {
     this.data.teamInfo = { ...this.data.teamInfo, ...info };
     this.saveData();
 
-    try {
-      fetch(`${API_BASE}/team`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': this.getAdminToken()
-        },
-        body: JSON.stringify(this.data.teamInfo)
-      }).catch(err => console.warn('Sync updateTeamInfo error:', err));
-    } catch (e) { }
+    this._syncToServer(`${API_BASE}/team`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': this.getAdminToken()
+      },
+      body: JSON.stringify(this.data.teamInfo)
+    }, 'updateTeamInfo');
   }
 
   resetToCleanData() {
@@ -757,16 +740,14 @@ class StateManager {
         this.data = parsed;
         this.saveData();
 
-        try {
-          fetch(`${API_BASE}/backup/restore`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-admin-token': this.getAdminToken()
-            },
-            body: JSON.stringify(parsed)
-          }).catch(err => console.warn('Sync importDataJSON error:', err));
-        } catch (e) { }
+        this._syncToServer(`${API_BASE}/backup/restore`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': this.getAdminToken()
+          },
+          body: JSON.stringify(parsed)
+        }, 'importDataJSON');
 
         return { success: true };
       } else {

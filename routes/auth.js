@@ -25,7 +25,9 @@ async function getValidAdminPins(isMongoConnected) {
       if (team && team.adminPin && team.adminPin !== '123456') {
         pins.add(String(team.adminPin).trim());
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Auth] Không thể đọc Admin PIN từ MongoDB:', e.message);
+    }
   }
 
   return Array.from(pins);

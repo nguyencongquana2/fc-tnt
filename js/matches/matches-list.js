@@ -14,7 +14,9 @@ Object.assign(window.matchesModule, {
           return draft;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Matches] Lỗi parse bản nháp Live Match từ localStorage:', e);
+    }
     return null;
   },
 
