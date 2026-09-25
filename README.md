@@ -105,6 +105,9 @@ FC-TNT/
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc & bình luận
 │   └── weather.js        # API thời tiết Open-Meteo & AI cố vấn mặt sân
+├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung Backend & Frontend (UMD)
+│   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định
+│   └── playerAliases.js   # Bảng bí danh cầu thủ cho AI NLP & Live Match Voice
 ├── scripts/              # Công cụ tiện ích
 │   └── generate_favicons.py # Script Python tự động sinh bộ favicon & logo
 ├── .env                  # Biến môi trường

@@ -63,6 +63,9 @@ FC-TNT/
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc reactions & bình luận
 │   └── weather.js        # API dự báo thời tiết Open-Meteo & AI thẩm định mặt sân
+├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung giữa Backend & Frontend (UMD)
+│   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định ban đầu
+│   └── playerAliases.js   # Từ điển alias và phân giải tên cầu thủ cho AI NLP & Voice
 ├── scripts/              # Công cụ tự động hóa
 │   └── generate_favicons.py # Tự động tạo bộ icon favicon & logo
 ├── .env                  # Biến môi trường (MONGODB_URI, GEMINI_API_KEY, ADMIN_PIN)
@@ -126,6 +129,11 @@ Toàn bộ stylesheet được mô-đun hóa chuyên biệt theo từng miền g
 Được phân cấp rõ ràng:
 - `assets/icons/`: Bộ icon favicon đa kích cỡ (`favicon.ico`, `favicon-48.png`, `favicon-192.png`, `favicon.png`, `favicon.svg`, `apple-touch-icon.png`).
 - `assets/images/`: Logo chính thức của đội bóng (`logo.png`, `logo.svg`, `logo-512.png`) và hình ảnh nền.
+
+### `utils/` (Mô-đun Dùng Chung - Nguyên Tắc DRY)
+Áp dụng mẫu Universal Module Definition (UMD) để tái sử dụng mã nguồn đồng thời trên cả Node.js Backend (`module.exports`) và Trình duyệt Frontend (`window` global) mà không phụ thuộc vào bundler:
+- `officialPlayers.js`: Nguồn sự thật duy nhất (Single Source of Truth - SSOT) cho danh sách 15 cầu thủ chính thức mặc định. Loại bỏ hoàn toàn sự trùng lặp dữ liệu giữa `server.js` và `js/state.js`.
+- `playerAliases.js`: Bảng ánh xạ từ khóa/biệt danh phủi (`FC_TNT_KNOWN_ALIASES`) và thuật toán chuẩn hóa tên cầu thủ (`getPlayerAliases`). Phục vụ phân tích giọng nói (Voice-to-Event) ở frontend và NLP rating trận đấu của Gemini AI ở backend.
 
 ### `scripts/` (Công Cụ Tiện Ích)
 - `generate_favicons.py`: Script Python tự động sinh toàn bộ bộ nhận diện icon và favicon từ vector sang `assets/icons/` và `assets/images/`.

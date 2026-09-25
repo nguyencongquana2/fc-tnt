@@ -625,107 +625,12 @@ Object.assign(window.matchesModule, {
   },
 
   getPlayerAliases(p) {
-    const aliases = new Set();
+    if (typeof window.getPlayerAliases === 'function') {
+      return window.getPlayerAliases(p);
+    }
     const rawName = (p.name || '').toLowerCase().trim();
     const rawNick = (p.nickname || '').toLowerCase().trim();
-    const numStr = String(p.number || '').trim();
-
-    if (rawName) aliases.add(rawName);
-    if (rawNick) aliases.add(rawNick);
-    if (numStr) {
-      aliases.add(`số ${numStr}`);
-      aliases.add(`#${numStr}`);
-    }
-
-    const nameParts = rawName.split(/\s+/);
-    if (nameParts.length > 1) {
-      aliases.add(nameParts[nameParts.length - 1]);
-    }
-    const nickParts = rawNick.split(/\s+/);
-    if (nickParts.length > 1) {
-      aliases.add(nickParts[0]);
-      aliases.add(nickParts[nickParts.length - 1]);
-    }
-
-    // Bảng ánh xạ biệt danh phủi đặc trưng của FC TNT
-    if (rawName.includes('vinh') || rawNick.includes('vinh')) {
-      aliases.add('duy vinh');
-      aliases.add('vinh lê');
-      aliases.add('vinh');
-    }
-    if (rawName.includes('todiu') || rawNick.includes('todiu') || rawName.includes('diu') || rawNick.includes('diu') || rawName.includes('diệu') || rawNick.includes('diệu')) {
-      aliases.add('tố địu');
-      aliases.add('tố điệu');
-      aliases.add('tố');
-      aliases.add('địu');
-    }
-    if (rawName.includes('quang') || rawNick.includes('quang')) {
-      aliases.add('quang');
-      aliases.add('voi');
-    }
-    if (rawName.includes('bắc') || rawNick.includes('bắc')) {
-      aliases.add('đức bắc');
-      aliases.add('bắc');
-    }
-    if (rawName.includes('giang') || rawNick.includes('giang')) {
-      aliases.add('trường giang');
-      aliases.add('giang');
-    }
-    if (rawName.includes('dũng') || rawNick.includes('dũng')) {
-      aliases.add('công dũng');
-      aliases.add('dũng');
-    }
-    if (rawName.includes('hoàn') || rawNick.includes('hoàn')) {
-      aliases.add('trí hoàn');
-      aliases.add('hoàn');
-    }
-    if (rawName.includes('quân') || rawNick.includes('quân')) {
-      aliases.add('quân kun');
-      aliases.add('quân');
-      aliases.add('công quân');
-    }
-    if (rawName.includes('tài') || rawNick.includes('tài')) {
-      aliases.add('tài thọ');
-      aliases.add('tài');
-      aliases.add('tấn tài');
-      aliases.add('lê tấn tài');
-    }
-    if (rawName.includes('hùng') || rawNick.includes('hùng')) {
-      aliases.add('hùng sứt');
-      aliases.add('hùng');
-      aliases.add('lường hùng');
-    }
-    if (rawName.includes('nam') || rawNick.includes('nam')) {
-      if (rawName.includes('thành nam') || rawNick.includes('thành nam')) {
-        aliases.add('thành nam');
-        aliases.add('nam cao');
-      }
-      if (rawName.includes('sỹ nam') || rawNick.includes('sỹ nam') || p.position === 'GK') {
-        aliases.add('sỹ nam');
-        aliases.add('nam thấp');
-      }
-    }
-    if (rawName.includes('chiến') || rawNick.includes('chiến')) {
-      aliases.add('đình chiến');
-      aliases.add('chiến');
-    }
-    if (rawName.includes('anh') || rawNick.includes('anh')) {
-      aliases.add('đình anh');
-      aliases.add('anh');
-    }
-    if (rawName.includes('tiến') || rawNick.includes('tiến')) {
-      aliases.add('tiếnn');
-      aliases.add('tiến');
-      aliases.add('công tiến');
-    }
-
-    if (rawName.includes('ct') || rawNick.includes('ct') || rawName.includes('thắng') || rawNick.includes('thắng')) {
-      aliases.add('ct');
-      aliases.add('thắng');
-      aliases.add('công thắng');
-    }
-
-    return Array.from(aliases).filter(a => a.length >= 2);
+    return [rawName, rawNick, `#${p.number}`].filter(Boolean);
   },
 
   parseVoiceTranscript(text) {
