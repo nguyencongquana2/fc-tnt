@@ -610,18 +610,60 @@ window.momentsModule = {
     if (player) player.src = '';
   },
 
-  handleImageFiles(fileList) {
-    if (!fileList || fileList.length === 0) return;
-
-    Array.from(fileList).forEach(file => {
-      if (!file.type.startsWith('image/')) return;
+  compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        this.uploadedImages.push(e.target.result);
-        this.renderModalImagesPreview();
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Giữ tỷ lệ và scale về tối đa 1200x1200px
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error('Lỗi load ảnh'));
+        img.src = e.target.result;
       };
+      reader.onerror = () => reject(new Error('Lỗi đọc file'));
       reader.readAsDataURL(file);
     });
+  },
+
+  async handleImageFiles(fileList) {
+    if (!fileList || fileList.length === 0) return;
+
+    for (const file of Array.from(fileList)) {
+      if (!file.type.startsWith('image/')) continue;
+      try {
+        const compressedBase64 = await this.compressImage(file, 1200, 1200, 0.8);
+        this.uploadedImages.push(compressedBase64);
+        this.renderModalImagesPreview();
+      } catch (err) {
+        console.warn('[Moments] Không thể nén ảnh, sử dụng ảnh gốc:', err.message);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.uploadedImages.push(e.target.result);
+          this.renderModalImagesPreview();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
   },
 
   handleVideoFile(file) {
@@ -634,9 +676,9 @@ window.momentsModule = {
       return;
     }
 
-    if (file.size > 48 * 1024 * 1024) {
+    if (file.size > 8 * 1024 * 1024) {
       if (window.appModule && window.appModule.showToast) {
-        window.appModule.showToast('⚠️ Dung lượng video quá lớn (>48MB). Bạn nên dùng link YouTube hoặc nén nhỏ lại nhé!', 'warning');
+        window.appModule.showToast('⚠️ Dung lượng video quá lớn (>8MB). Để đảm bảo tốc độ tải mượt mà, bạn vui lòng dán link YouTube/Drive hoặc nén video dưới 8MB nhé!', 'warning');
       }
       return;
     }

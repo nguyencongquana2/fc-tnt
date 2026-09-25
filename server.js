@@ -71,8 +71,20 @@ io.on('connection', (socket) => {
 // Middleware
 app.set('trust proxy', 1);
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Middleware xử lý lỗi payload quá giới hạn an toàn (Chống DoS / Tràn RAM tiến trình Node.js)
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large' || err.status === 413) {
+    return res.status(413).json({
+      success: false,
+      error: 'Dung lượng dữ liệu gửi lên quá lớn (tối đa 10MB)! Vui lòng nén bớt ảnh hoặc dán link video ngoài.',
+      code: 'PAYLOAD_TOO_LARGE'
+    });
+  }
+  next(err);
+});
 
 // 15 Cầu thủ chính thức của đội bóng (Shared SSOT)
 const OFFICIAL_PLAYERS = require('./utils/officialPlayers');

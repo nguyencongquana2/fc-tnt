@@ -143,7 +143,8 @@ Toàn bộ stylesheet được mô-đun hóa chuyên biệt theo từng miền g
 - `generate_favicons.py`: Script Python tự động sinh toàn bộ bộ nhận diện icon và favicon từ vector sang `assets/icons/` và `assets/images/`.
 
 ### `server.js` (App Bootstrap)
-- Đóng vai trò bootstrap tinh gọn (~220 dòng): khởi tạo Express, kết nối MongoDB, Socket.IO, cấu hình phục vụ static/fallback và gắn kết các route từ thư mục `routes/`.
+- Đóng vai trò bootstrap tinh gọn: khởi tạo Express, kết nối MongoDB, Socket.IO, cấu hình phục vụ static/fallback và gắn kết các route từ thư mục `routes/`.
+- Tích hợp middleware kiểm soát kích thước payload an toàn (`10mb`) và xử lý lỗi chuẩn HTTP 413 (`PayloadTooLargeError`), kết hợp thuật toán nén ảnh Canvas ở Client ([js/moments.js](file:///c:/Users/ADMIN/Documents/Cong_Quan/01_HocTap/03_DuAn/02_DuAnCaNhan/Bong_Da/Web/js/moments.js), [js/players.js](file:///c:/Users/ADMIN/Documents/Cong_Quan/01_HocTap/03_DuAn/02_DuAnCaNhan/Bong_Da/Web/js/players.js)) để bảo vệ RAM tiến trình Node.js và tuân thủ giới hạn 16MB BSON của MongoDB.
 
 ---
 
