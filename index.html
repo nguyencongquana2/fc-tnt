@@ -72,6 +72,40 @@
   }
   </script>
 
+  <!-- Clean Social/Ad Tracking Parameters from URL (fbclid, gclid, utm_*) -->
+  <script>
+    (function () {
+      try {
+        if (!window.location.search) return;
+        var url = new URL(window.location.href);
+        var trackingParams = ['fbclid', 'gclid', 'msclkid', 'dclid', 'zanpid'];
+        var changed = false;
+
+        trackingParams.forEach(function (param) {
+          if (url.searchParams.has(param)) {
+            url.searchParams.delete(param);
+            changed = true;
+          }
+        });
+
+        Array.from(url.searchParams.keys()).forEach(function (key) {
+          if (key.startsWith('utm_')) {
+            url.searchParams.delete(key);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          var cleanSearch = url.searchParams.toString();
+          var cleanUrl = url.pathname + (cleanSearch ? '?' + cleanSearch : '') + url.hash;
+          window.history.replaceState(null, '', cleanUrl);
+        }
+      } catch (err) {
+        console.warn('[URLCleanup] Error cleaning tracking parameters:', err.message);
+      }
+    })();
+  </script>
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FC TNT">
