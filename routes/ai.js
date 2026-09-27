@@ -387,6 +387,17 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
 
 const { aiRateLimiter } = require('../utils/rateLimiter');
 
+// Sinh động bảng đối soát biệt danh từ SSOT utils/playerAliases.js cho prompt Gemini
+function generateAliasesPromptSection(playerList) {
+  if (!Array.isArray(playerList) || playerList.length === 0) return '';
+  return playerList.map(p => {
+    const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
+    const aliases = getPlayerAliases(p);
+    const aliasStr = aliases.map(a => `"${a}"`).join(' / ');
+    return `   - ${aliasStr} = ${displayName} (ID: "${p.id}", #${p.number})`;
+  }).join('\n');
+}
+
 function createAiRouter() {
   const router = express.Router();
 
@@ -451,23 +462,8 @@ QUY TẮC CHẤM ĐIỂM CHUYÊN MÔN THEO VỊ TRÍ & TỈ SỐ (TUÂN THỦ TU
    - BẮT BUỘC chọn đúng 1 "motmPlayerId" (Cầu thủ xuất sắc nhất trận) xứng đáng nhất.
    - Tuyệt đối không tự bịa bàn thắng/kiến tạo nếu không có trong sự kiện hoặc bài mô tả!
 
-4. BẢNG BIỆT DANH FC TNT (Phải nhận diện chuẩn xác):
-   - "Vinh" / "Duy Vinh" / "Vinh Lê" = Vinh Lê
-   - "ToDiu" / "Tố Địu" / "Tố" / "Địu" / "Tố Điệu" = ToDiu
-   - "Hoàn" / "Trí Hoàn" = Trí Hoàn
-   - "Voi" / "Quang"  = Quang  Voi
-   - "Bắc" / "Đức Bắc" = Đức Bắc
-   - "Giang" / "Trường Giang" = Trường Giang
-   - "Dũng" / "Công Dũng" = Công Dũng
-   - "Nam Cao" / "Thành Nam" = Thành Nam
-   - "Sỹ Nam" / "Nam Thấp" = Sỹ Nam
-   - "Tài" / "Lê Tấn Tài" / "Tài Thọ"  = Tài Thọ
-   - "Hùng" / "Hùng Sứt"  / "Lường Hùng"= Hùng Sứt
-   - "Quân" / "Quân Kun" / "Công Quân" = Quân Kun
-   - "Chiến" / "Đình Chiến" = Đình Chiến
-   - "Anh" / "Đình Anh" = Đình Anh
-   - "Tiến" / "Tiếnn"/ "Công Tiến" = Tiếnn
-   - "Thắng" / "Công Thắng" / "ct" = ct
+4. BẢNG BIỆT DANH FC TNT (Đối soát chuẩn xác từ danh sách ra sân theo SSOT):
+${generateAliasesPromptSection(playerList)}
 
 Trả về đúng chuẩn JSON không có định dạng markdown hay văn bản thừa:
 {

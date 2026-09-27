@@ -31,7 +31,6 @@
     { match: ['sỹ nam', 'nam thấp'], aliases: ['sỹ nam', 'nam thấp', 'nam'] },
     { match: ['chiến'], aliases: ['đình chiến', 'chiến'] },
     { match: ['đình anh', 'anh'], aliases: ['đình anh', 'anh'] },
-    { match: ['bùi tiến'], aliases: ['bùi tiến', 'tiến'] },
     { match: ['công tiến', 'tiếnn'], aliases: ['công tiến', 'tiếnn', 'tiến'] },
     { match: ['thắng', 'ct'], aliases: ['công thắng', 'thắng', 'ct'] }
   ];
@@ -71,8 +70,8 @@
       }
     }
 
-    // Alias fallback cho Nam thủ môn nếu có
-    if (rawName.includes('nam') || rawNick.includes('nam') || p.position === 'GK') {
+    // Alias fallback cho Sỹ Nam (thủ môn) nếu có
+    if (rawName.includes('nam') || rawNick.includes('nam')) {
       if (p.position === 'GK' || rawName.includes('sỹ') || rawNick.includes('thấp')) {
         aliases.add('sỹ nam');
         aliases.add('nam thấp');
