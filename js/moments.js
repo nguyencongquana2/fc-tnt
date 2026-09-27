@@ -420,6 +420,13 @@ window.momentsModule = {
       return;
     }
 
+    if (content.length > 1000) {
+      if (window.showToast) {
+        window.showToast('Nội dung bình luận tối đa 1.000 ký tự!', 'warning');
+      }
+      return;
+    }
+
     let authorName = 'Thành viên FC TNT';
     let avatar = '';
 

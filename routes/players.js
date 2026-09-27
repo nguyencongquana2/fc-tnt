@@ -5,6 +5,8 @@
 
 const express = require('express');
 const Player = require('../models/Player');
+const { avatarRateLimiter } = require('../utils/rateLimiter');
+const { isValidAvatar } = require('../utils/validators');
 
 function createPlayersRouter({ isMongoConnected, fallbackData, broadcastDataUpdate, requireAdmin }) {
   const router = express.Router();
@@ -42,30 +44,40 @@ function createPlayersRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // PUT /api/players/:id/avatar (Cập nhật avatar - mở cho thành viên)
-  router.put('/:id/avatar', async (req, res) => {
+  // PUT /api/players/:id/avatar (Cập nhật avatar - mở cho thành viên có rate limiter & validation an toàn)
+  router.put('/:id/avatar', avatarRateLimiter, async (req, res) => {
     try {
       const { id } = req.params;
       const { avatar } = req.body;
 
-      if (!avatar) {
-        return res.status(400).json({ error: 'Thiếu dữ liệu ảnh đại diện' });
+      if (!isValidAvatar(avatar)) {
+        return res.status(400).json({ 
+          error: 'Ảnh đại diện không hợp lệ! Vui lòng chọn ảnh định dạng JPEG, PNG, WEBP, GIF (tối đa 2.5MB) hoặc đường link ảnh web hợp lệ.' 
+        });
       }
 
+      const cleanAvatar = avatar.trim();
+
       if (isMongoConnected()) {
-        const updated = await Player.findOneAndUpdate({ id }, { avatar }, { new: true });
-        broadcastDataUpdate('players', `📸 Cầu thủ ${updated?.name || ''} vừa cập nhật avatar mới!`);
-        return res.json(updated);
+        const player = await Player.findOne({ id });
+        if (!player) {
+          return res.status(404).json({ error: 'Không tìm thấy cầu thủ!' });
+        }
+        player.avatar = cleanAvatar;
+        await player.save();
+        broadcastDataUpdate('players', `📸 Cầu thủ ${player.name || ''} vừa cập nhật avatar mới!`);
+        return res.json(player);
       }
 
       const idx = fallbackData.players.findIndex(p => p.id === id);
       if (idx !== -1) {
-        fallbackData.players[idx].avatar = avatar;
+        fallbackData.players[idx].avatar = cleanAvatar;
         broadcastDataUpdate('players', `📸 Cầu thủ ${fallbackData.players[idx].name} vừa cập nhật avatar mới!`);
         return res.json(fallbackData.players[idx]);
       }
-      res.status(404).json({ error: 'Player not found' });
+      res.status(404).json({ error: 'Không tìm thấy cầu thủ!' });
     } catch (err) {
+      console.warn('[Players] Update avatar failed:', err.message);
       res.status(500).json({ error: err.message });
     }
   });

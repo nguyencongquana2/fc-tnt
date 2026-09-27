@@ -59,8 +59,32 @@ const aiRateLimiter = createRateLimiter({
   message: 'Bạn đã gửi quá nhiều yêu cầu AI liên tiếp. Vui lòng đợi vài phút để hệ thống xử lý.'
 });
 
+// 3. Rate limiter cho đăng bình luận (Tối đa 10 bình luận trong 2 phút)
+const commentRateLimiter = createRateLimiter({
+  windowMs: 2 * 60 * 1000,
+  max: 10,
+  message: 'Bạn đang gửi bình luận quá nhanh! Vui lòng thử lại sau 2 phút.'
+});
+
+// 4. Rate limiter cho thả cảm xúc (Tối đa 40 lượt trong 1 phút)
+const reactionRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 40,
+  message: 'Bạn đang thả cảm xúc quá nhanh! Vui lòng chờ một lát.'
+});
+
+// 5. Rate limiter cho tải ảnh đại diện cầu thủ (Tối đa 10 lần trong 10 phút)
+const avatarRateLimiter = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  message: 'Bạn đã cập nhật ảnh đại diện quá nhiều lần liên tiếp! Vui lòng thử lại sau 10 phút.'
+});
+
 module.exports = {
   createRateLimiter,
   loginRateLimiter,
-  aiRateLimiter
+  aiRateLimiter,
+  commentRateLimiter,
+  reactionRateLimiter,
+  avatarRateLimiter
 };

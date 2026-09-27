@@ -29,6 +29,12 @@ window.playersModule = {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
 
+        if (file.size > 10 * 1024 * 1024) {
+          window.showToast('Vui lòng chọn ảnh dung lượng dưới 10MB!', 'warning');
+          avatarFileInput.value = '';
+          return;
+        }
+
         try {
           const base64 = await this.processImageUpload(file);
           document.getElementById('player-avatar-preview').src = base64;
@@ -47,6 +53,12 @@ window.playersModule = {
       globalFileInput.addEventListener('change', async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file || !this.quickUploadPlayerId) return;
+
+        if (file.size > 10 * 1024 * 1024) {
+          window.showToast('Vui lòng chọn ảnh dung lượng dưới 10MB!', 'warning');
+          globalFileInput.value = '';
+          return;
+        }
 
         try {
           const base64 = await this.processImageUpload(file);

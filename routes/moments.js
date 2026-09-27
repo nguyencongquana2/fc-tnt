@@ -5,6 +5,8 @@
 
 const express = require('express');
 const Moment = require('../models/Moment');
+const { commentRateLimiter, reactionRateLimiter } = require('../utils/rateLimiter');
+const { isValidReaction, validateCommentInput } = require('../utils/validators');
 
 function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate, requireAdmin }) {
   const router = express.Router();
@@ -99,16 +101,19 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // POST /api/moments/:id/react
-  router.post('/:id/react', async (req, res) => {
+  // POST /api/moments/:id/react (Thả cảm xúc - rate limiter chống spam)
+  router.post('/:id/react', reactionRateLimiter, async (req, res) => {
     try {
       const { id } = req.params;
       const { reactionType, userKey = 'anonymous' } = req.body;
 
-      const validTypes = ['heart', 'football', 'beer', 'fire'];
-      if (!validTypes.includes(reactionType)) {
+      if (!isValidReaction(reactionType)) {
         return res.status(400).json({ error: 'Loại cảm xúc không hợp lệ!' });
       }
+
+      const safeUserKey = typeof userKey === 'string' && userKey.trim() 
+        ? userKey.trim().slice(0, 80) 
+        : 'anonymous';
 
       if (isMongoConnected()) {
         const moment = await Moment.findOne({ id });
@@ -119,14 +124,14 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         }
 
         const existingIdx = (moment.reactions.userReactions || []).findIndex(
-          ur => ur.userKey === userKey && ur.reactionType === reactionType
+          ur => ur.userKey === safeUserKey && ur.reactionType === reactionType
         );
 
         if (existingIdx !== -1) {
           moment.reactions.userReactions.splice(existingIdx, 1);
           moment.reactions[reactionType] = Math.max(0, (moment.reactions[reactionType] || 1) - 1);
         } else {
-          moment.reactions.userReactions.push({ userKey, reactionType });
+          moment.reactions.userReactions.push({ userKey: safeUserKey, reactionType });
           moment.reactions[reactionType] = (moment.reactions[reactionType] || 0) + 1;
         }
 
@@ -143,39 +148,42 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         moment.reactions = { heart: 0, football: 0, beer: 0, fire: 0, userReactions: [] };
       }
       const existingIdx = (moment.reactions.userReactions || []).findIndex(
-        ur => ur.userKey === userKey && ur.reactionType === reactionType
+        ur => ur.userKey === safeUserKey && ur.reactionType === reactionType
       );
 
       if (existingIdx !== -1) {
         moment.reactions.userReactions.splice(existingIdx, 1);
         moment.reactions[reactionType] = Math.max(0, (moment.reactions[reactionType] || 1) - 1);
       } else {
-        moment.reactions.userReactions.push({ userKey, reactionType });
+        moment.reactions.userReactions.push({ userKey: safeUserKey, reactionType });
         moment.reactions[reactionType] = (moment.reactions[reactionType] || 0) + 1;
       }
 
       broadcastDataUpdate('moments', '', { momentId: id, reactions: moment.reactions });
       res.json({ success: true, reactions: moment.reactions });
     } catch (err) {
+      console.warn('[Moments] Lỗi thao tác reaction:', err.message);
       res.status(500).json({ error: err.message });
     }
   });
 
-  // POST /api/moments/:id/comments
-  router.post('/:id/comments', async (req, res) => {
+  // POST /api/moments/:id/comments (Đăng bình luận - rate limiter & validation chống spam/XSS)
+  router.post('/:id/comments', commentRateLimiter, async (req, res) => {
     try {
       const { id } = req.params;
-      const { authorName, avatar = '', content } = req.body;
+      const validation = validateCommentInput(req.body || {});
 
-      if (!content || !content.trim()) {
-        return res.status(400).json({ error: 'Nội dung bình luận không được để trống!' });
+      if (!validation.isValid) {
+        return res.status(400).json({ error: validation.errors[0] || 'Dữ liệu không hợp lệ!' });
       }
+
+      const { authorName, avatar, content } = validation.sanitized;
 
       const newComment = {
         id: 'c_' + Date.now(),
-        authorName: authorName && authorName.trim() ? authorName.trim() : 'Anh Em Phủi',
+        authorName,
         avatar,
-        content: content.trim(),
+        content,
         createdAt: new Date()
       };
 
@@ -198,6 +206,7 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       broadcastDataUpdate('moments', `💬 ${newComment.authorName} vừa bình luận: "${newComment.content.substring(0, 30)}..."`, { momentId: id });
       res.status(201).json({ success: true, comment: newComment, comments: moment.comments });
     } catch (err) {
+      console.warn('[Moments] Lỗi gửi comment:', err.message);
       res.status(500).json({ error: err.message });
     }
   });
