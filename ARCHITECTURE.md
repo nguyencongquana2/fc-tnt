@@ -38,10 +38,13 @@ FC-TNT/
 │   ├── state.js          # Quản lý state tập trung & socket realtime
 │   ├── matches.js        # Bộ điều phối trung tâm (Facade) module trận đấu
 │   ├── matches/          # [Mô-đun hoá] Phân tách nghiệp vụ trận đấu chi tiết
-│   │   ├── matches-list.js   # Danh sách trận đấu, modal chi tiết & CRUD
-│   │   ├── matches-pitch.js  # Sa bàn sân 7 Sofascore (3-1-2) & kéo thả vị trí
-│   │   ├── matches-ai.js     # Đánh giá trận đấu & chấm điểm bằng AI Gemini
-│   │   └── matches-live.js   # Trợ lý sân cỏ Live Companion & Voice-to-Event
+│   │   ├── matches-list.js        # Danh sách trận đấu, modal chi tiết & CRUD
+│   │   ├── matches-pitch.js       # Sa bàn sân 7 Sofascore (3-1-2) & kéo thả vị trí
+│   │   ├── matches-ai.js          # Đánh giá trận đấu & chấm điểm bằng AI Gemini
+│   │   ├── matches-live.js        # Trợ lý sân cỏ Live Companion (Orchestrator & Sync)
+│   │   ├── matches-live-timer.js  # Đồng hồ thi đấu, Screen Wake Lock & điểm danh Roster
+│   │   ├── matches-live-events.js # Bộ chọn cầu thủ sự kiện nhanh & Timeline trực tiếp
+│   │   └── matches-live-voice.js  # Nhận diện giọng nói (Voice-to-Event) & phân tích Smart NLP
 │   ├── players.js        # Danh sách cầu thủ & form thông tin
 │   ├── finance.js        # Chia tiền sân & tạo mã VietQR
 │   ├── awards.js         # Bảng vinh danh & danh hiệu
@@ -107,7 +110,10 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `matches/matches-list.js`: Quản lý danh sách trận, hiển thị chi tiết, tạo/sửa trận và xác thực PIN an toàn khi xóa.
   - `matches/matches-pitch.js`: Sa bàn chiến thuật sân 7 Sofascore (3-1-2), engine kéo-thả (Drag & Drop) và Quick Edit điểm số.
   - `matches/matches-ai.js`: AI Match Rating & Review Engine kết nối Gemini API chấm điểm và sinh nhận xét chi tiết.
-  - `matches/matches-live.js`: Trợ lý sân cỏ Live Match, đồng hồ thi đấu, ghi nhận sự kiện, nhận diện giọng nói (Voice-to-Event) và đồng bộ Socket.IO.
+  - `matches/matches-live.js`: Bộ điều phối trung tâm Trợ lý sân cỏ Live Match, đồng bộ đám mây realtime qua Socket.IO và xuất báo cáo Zalo.
+  - `matches/matches-live-timer.js`: Quản lý đồng hồ thi đấu sân phủi, giữ sáng màn hình ngoài trời (Screen Wake Lock) và điểm danh đội hình.
+  - `matches/matches-live-events.js`: Ma trận nút chọn cầu thủ sự kiện nhanh, ghi nhận diễn biến và hiển thị dòng thời gian (Timeline).
+  - `matches/matches-live-voice.js`: Trợ lý ghi nhận sự kiện bằng giọng nói tiếng Việt tự nhiên (Web Speech API kết hợp Football NLP).
 - `players.js`: Quản lý danh sách cầu thủ, form thêm/sửa/xoá cầu thủ, upload avatar, thống kê phong độ.
 - `finance.js`: Nghiệp vụ quỹ và tài chính: tính tiền sân/tiền nước, chia đều cho người đi đá, theo dõi ai đã đóng tiền, tạo mã VietQR chuyển khoản nhanh.
 - `awards.js`: Bảng vinh danh cá nhân (Top ghi bàn, Vua kiến tạo, Cầu thủ xuất sắc nhất MOTM, Găng tay vàng).
