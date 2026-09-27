@@ -33,6 +33,7 @@ const { createAiRouter } = require('./routes/ai');
 const { createLiveMatchRouter } = require('./routes/liveMatch');
 const { createMomentsRouter } = require('./routes/moments');
 const { createWeatherRouter } = require('./routes/weather');
+const { securityHeadersMiddleware } = require('./utils/securityHeaders');
 
 const app = express();
 const server = http.createServer(app);
@@ -70,6 +71,8 @@ io.on('connection', (socket) => {
 
 // Middleware
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use(securityHeadersMiddleware);
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

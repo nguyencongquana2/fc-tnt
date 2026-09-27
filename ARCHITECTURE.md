@@ -71,7 +71,8 @@ FC-TNT/
 │   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định ban đầu
 │   ├── playerAliases.js   # Từ điển alias và phân giải tên cầu thủ cho AI NLP & Voice
 │   ├── rateLimiter.js     # Bộ lọc trượt (Sliding Window) chống Brute-force PIN, lạm dụng AI, Spam Comment & Avatar DoS
-│   └── validators.js      # Bộ kiểm chuẩn dữ liệu đầu vào (Avatar, Comment, Reactions) dùng chung UMD
+│   ├── validators.js      # Bộ kiểm chuẩn dữ liệu đầu vào (Avatar, Comment, Reactions) dùng chung UMD
+│   └── securityHeaders.js # Bộ tạo HTTP Headers bảo vệ web (CSP, HSTS, X-Frame, No-Sniff, Permissions)
 ├── scripts/              # Công cụ tự động hóa
 │   └── generate_favicons.py # Tự động tạo bộ icon favicon & logo
 ├── .env                  # Biến môi trường (MONGODB_URI, GEMINI_API_KEY, ADMIN_PIN)
