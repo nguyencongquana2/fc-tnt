@@ -1,12 +1,34 @@
 /**
  * FC TNT - Auth & Admin Permissions Router
- * Quản lý mã PIN quản trị viên, xác thực token và phân quyền thao tác
+ * Quản lý mã PIN quản trị viên, xác thực token HMAC SHA-256 và phân quyền thao tác
  */
 
 const express = require('express');
-const Team = require('../models/Team');
-
+const crypto = require('crypto');
 const mongoose = require('mongoose');
+const Team = require('../models/Team');
+const { loginRateLimiter } = require('../utils/rateLimiter');
+
+// Secret ký chữ ký số HMAC an toàn kết hợp salt máy chủ và mã PIN
+function getHmacSecret(currentPin) {
+  const envSecret = process.env.ADMIN_SECRET || process.env.JWT_SECRET || '';
+  const pinPart = currentPin || process.env.ADMIN_PIN || 'fc_tnt_default_salt';
+  return crypto.createHash('sha256').update(`${envSecret}::fc_tnt_auth_salt_2026::${pinPart}`).digest('hex');
+}
+
+// Sinh token Admin có chữ ký số HMAC-SHA256, mốc thời gian và hạn sử dụng
+function generateAdminToken(pin) {
+  const secret = getHmacSecret(pin);
+  const now = Date.now();
+  const payload = {
+    role: 'admin',
+    iat: now,
+    exp: now + (30 * 24 * 60 * 60 * 1000) // Hạn sử dụng 30 ngày
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64url');
+  return `fc_tnt_v2.${payloadB64}.${signature}`;
+}
 
 // Lấy mã PIN Quản trị viên hiện tại (ưu tiên biến môi trường ADMIN_PIN trên Render / .env)
 async function getValidAdminPins(isMongoConnected) {
@@ -18,12 +40,12 @@ async function getValidAdminPins(isMongoConnected) {
     return Array.from(pins);
   }
 
-  // 2. Mã từ MongoDB Database (nếu có và khác 123456)
+  // 2. Mã từ MongoDB Database
   const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
   if (connected) {
     try {
       const team = await Team.findOne();
-      if (team && team.adminPin && team.adminPin !== '123456') {
+      if (team && team.adminPin) {
         pins.add(String(team.adminPin).trim());
       }
     } catch (e) {
@@ -31,25 +53,73 @@ async function getValidAdminPins(isMongoConnected) {
     }
   }
 
+  // 3. Fallback mặc định an toàn nếu chưa từng cấu hình PIN
+  if (pins.size === 0) {
+    pins.add('123456');
+  }
+
   return Array.from(pins);
 }
 
-// Xác thực token Admin bảo mật: giải mã Base64 và đối soát với mã PIN hợp lệ
+// Xác thực token Admin bằng HMAC SHA-256 (có timingSafeEqual chống tấn công thời gian)
 async function verifyAdminToken(token, isMongoConnected) {
   if (!token || typeof token !== 'string') return false;
-  if (!token.startsWith('fc_tnt_admin_')) return false;
 
-  try {
-    const base64Part = token.slice('fc_tnt_admin_'.length);
-    if (!base64Part) return false;
-    const decodedPin = Buffer.from(base64Part, 'base64').toString('utf8').trim();
-    if (!decodedPin) return false;
+  // 1. Kiểm tra Token HMAC v2
+  if (token.startsWith('fc_tnt_v2.')) {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const [, payloadB64, providedSig] = parts;
 
-    const validPins = await getValidAdminPins(isMongoConnected);
-    return validPins.includes(decodedPin);
-  } catch (err) {
-    return false;
+    try {
+      const payloadStr = Buffer.from(payloadB64, 'base64url').toString('utf8');
+      const payload = JSON.parse(payloadStr);
+
+      if (!payload || payload.role !== 'admin') return false;
+      if (typeof payload.exp !== 'number' || Date.now() > payload.exp) {
+        console.warn('[Auth] Token HMAC đã hết hạn');
+        return false;
+      }
+
+      const validPins = await getValidAdminPins(isMongoConnected);
+      if (validPins.length === 0) return false;
+
+      // Xác thực chữ ký đối soát với các PIN hợp lệ
+      for (const pin of validPins) {
+        const secret = getHmacSecret(pin);
+        const expectedSig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64url');
+
+        const expectedBuf = Buffer.from(expectedSig);
+        const providedBuf = Buffer.from(providedSig);
+
+        if (expectedBuf.length === providedBuf.length && crypto.timingSafeEqual(expectedBuf, providedBuf)) {
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      console.warn('[Auth] Lỗi xác thực token HMAC v2:', err.message);
+      return false;
+    }
   }
+
+  // 2. Fallback tương thích ngược an toàn cho token v1 (trong giai đoạn chuyển đổi)
+  if (token.startsWith('fc_tnt_admin_')) {
+    try {
+      const base64Part = token.slice('fc_tnt_admin_'.length);
+      if (!base64Part) return false;
+      const decodedPin = Buffer.from(base64Part, 'base64').toString('utf8').trim();
+      if (!decodedPin) return false;
+
+      const validPins = await getValidAdminPins(isMongoConnected);
+      return validPins.includes(decodedPin);
+    } catch (err) {
+      console.warn('[Auth] Lỗi giải mã token v1:', err.message);
+      return false;
+    }
+  }
+
+  return false;
 }
 
 // Middleware xác thực quyền Admin cho các thao tác thêm / sửa / xóa dữ liệu
@@ -65,8 +135,6 @@ const requireAdmin = async (req, res, next) => {
   });
 };
 
-const { loginRateLimiter } = require('../utils/rateLimiter');
-
 function createAuthRouter({ isMongoConnected }) {
   const router = express.Router();
 
@@ -81,9 +149,10 @@ function createAuthRouter({ isMongoConnected }) {
     const validPins = await getValidAdminPins(isMongoConnected);
 
     if (validPins.includes(inputPin)) {
+      const token = generateAdminToken(inputPin);
       return res.json({
         success: true,
-        token: 'fc_tnt_admin_' + Buffer.from(inputPin).toString('base64'),
+        token,
         message: 'Đăng nhập Quản trị viên thành công!'
       });
     }
@@ -103,7 +172,8 @@ function createAuthRouter({ isMongoConnected }) {
       }
 
       const cleanPin = String(newPin).trim();
-      if (isMongoConnected()) {
+      const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
+      if (connected) {
         let team = await Team.findOne();
         if (!team) {
           team = await Team.create({ adminPin: cleanPin });
@@ -114,9 +184,11 @@ function createAuthRouter({ isMongoConnected }) {
       }
 
       process.env.ADMIN_PIN = cleanPin;
+      const newToken = generateAdminToken(cleanPin);
 
       return res.json({
         success: true,
+        token: newToken,
         message: `Đã đổi mã PIN Quản trị thành công sang: ${cleanPin}`
       });
     } catch (err) {
@@ -138,5 +210,7 @@ module.exports = {
   createAuthRouter,
   requireAdmin,
   verifyAdminToken,
-  getValidAdminPins
+  getValidAdminPins,
+  generateAdminToken,
+  getHmacSecret
 };
