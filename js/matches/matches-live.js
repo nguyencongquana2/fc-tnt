@@ -1388,14 +1388,20 @@ Object.assign(window.matchesModule, {
       // 1. Lưu tức thời tại Local Storage của thiết bị hiện tại
       localStorage.setItem('fctnt_live_pitch_draft', JSON.stringify(draft));
 
-      // 2. Đồng bộ lên Cloud Server cho các thiết bị khác
+      // 2. Đồng bộ lên Cloud Server cho các thiết bị khác (yêu cầu token Admin)
       if (this._syncDebounceTimer) clearTimeout(this._syncDebounceTimer);
       this._syncDebounceTimer = setTimeout(() => {
+        const token = window.stateManager?.getAdminToken ? window.stateManager.getAdminToken() : '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers['x-admin-token'] = token;
+        }
+
         fetch('/api/live-match/sync', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(draft)
-        }).catch(err => console.warn('Cloud live draft sync error:', err));
+        }).catch(err => console.warn('Cloud live draft sync error:', err.message || err));
       }, 250);
 
     } catch (e) {
@@ -1480,8 +1486,17 @@ Object.assign(window.matchesModule, {
     }
     this.updateTimerDisplay();
 
-    // Xóa trên Cloud
-    fetch('/api/live-match/clear', { method: 'POST' }).catch(err => {
+    // Xóa trên Cloud (yêu cầu quyền Admin)
+    const token = window.stateManager?.getAdminToken ? window.stateManager.getAdminToken() : '';
+    const headers = {};
+    if (token) {
+      headers['x-admin-token'] = token;
+    }
+
+    fetch('/api/live-match/clear', {
+      method: 'POST',
+      headers
+    }).catch(err => {
       console.warn('[LiveMatch] Failed to clear cloud live match draft:', err.message);
     });
   }

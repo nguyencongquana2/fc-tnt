@@ -5,10 +5,12 @@
 
 const express = require('express');
 const LiveMatchDraft = require('../models/LiveMatchDraft');
+const { requireAdmin: defaultRequireAdmin } = require('./auth');
 
 // Router cho Live Match (/api/live-match)
-function createLiveMatchRouter({ isMongoConnected, io }) {
+function createLiveMatchRouter({ isMongoConnected, io, requireAdmin }) {
   const router = express.Router();
+  const adminGuard = requireAdmin || defaultRequireAdmin;
   let fallbackLiveMatchDraft = null;
 
   // GET /api/live-match/current
@@ -41,24 +43,24 @@ function createLiveMatchRouter({ isMongoConnected, io }) {
     }
   });
 
-  // POST /api/live-match/sync
-  router.post('/sync', async (req, res) => {
+  // POST /api/live-match/sync (Bảo vệ bằng quyền Quản trị viên)
+  router.post('/sync', adminGuard, async (req, res) => {
     try {
       const payload = req.body || {};
       const draftData = {
         id: 'current_live_match_draft',
         status: 'active',
-        opponent: payload.opponent || 'FC Đối Thủ',
-        venue: payload.venue || 'Sân bóng',
-        homeScore: Number(payload.homeScore) || 0,
-        awayScore: Number(payload.awayScore) || 0,
-        timerSeconds: Number(payload.timerSeconds) || 0,
+        opponent: String(payload.opponent || 'FC Đối Thủ').slice(0, 100),
+        venue: String(payload.venue || 'Sân bóng').slice(0, 100),
+        homeScore: Math.max(0, Math.min(99, Number(payload.homeScore) || 0)),
+        awayScore: Math.max(0, Math.min(99, Number(payload.awayScore) || 0)),
+        timerSeconds: Math.max(0, Math.min(7200, Number(payload.timerSeconds) || 0)),
         timerRunning: Boolean(payload.timerRunning),
         timerStartedAt: payload.timerStartedAt || null,
-        period: Number(payload.period) || 1,
-        events: Array.isArray(payload.events) ? payload.events : [],
-        registeredPlayerIds: Array.isArray(payload.registeredPlayerIds) ? payload.registeredPlayerIds : [],
-        matchId: payload.matchId || null,
+        period: Math.max(1, Math.min(4, Number(payload.period) || 1)),
+        events: Array.isArray(payload.events) ? payload.events.slice(0, 100) : [],
+        registeredPlayerIds: Array.isArray(payload.registeredPlayerIds) ? payload.registeredPlayerIds.slice(0, 50) : [],
+        matchId: payload.matchId ? String(payload.matchId).slice(0, 50) : null,
         updatedAt: new Date()
       };
 
@@ -83,8 +85,8 @@ function createLiveMatchRouter({ isMongoConnected, io }) {
     }
   });
 
-  // POST /api/live-match/clear
-  router.post('/clear', async (req, res) => {
+  // POST /api/live-match/clear (Bảo vệ bằng quyền Quản trị viên)
+  router.post('/clear', adminGuard, async (req, res) => {
     try {
       fallbackLiveMatchDraft = null;
       if (isMongoConnected()) {
