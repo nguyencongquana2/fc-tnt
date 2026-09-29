@@ -118,7 +118,7 @@
   <link rel="stylesheet" href="css/moments.css?v=4.5">
   <link rel="stylesheet" href="css/finance.css?v=4.5">
   <link rel="stylesheet" href="css/weather.css?v=4.5">
-  <link rel="stylesheet" href="css/tactics.css?v=5.0">
+  <link rel="stylesheet" href="css/tactics.css?v=5.1">
   <link rel="stylesheet" href="css/effects.css?v=4.5">
   <link rel="stylesheet" href="css/responsive.css?v=4.5">
 
@@ -549,7 +549,7 @@
 
             <!-- Color Palette -->
             <div class="color-picker-group">
-              <span style="font-size: 0.75rem; color: var(--text-muted);">Màu:</span>
+              <span class="tactics-color-label" style="font-size: 0.75rem; color: var(--text-muted);">Màu:</span>
               <div class="color-dot active" data-color="#10b981" style="background: #10b981;" title="Xanh Ngọc Lục Bảo"></div>
               <div class="color-dot" data-color="#f59e0b" style="background: #f59e0b;" title="Vàng Hổ Phách"></div>
               <div class="color-dot" data-color="#ef4444" style="background: #ef4444;" title="Đỏ Rực"></div>
@@ -559,7 +559,7 @@
 
             <!-- Quick Formations -->
             <div class="tactics-formation-wrapper" title="Chuyển nhanh sơ đồ đội hình Đội Nhà">
-              <span style="font-size: 0.72rem; color: var(--text-muted);">🟢 Nhà:</span>
+              <span class="tactics-form-team-label" style="font-size: 0.72rem; color: var(--text-muted);">🟢 Nhà:</span>
               <select id="tactics-home-formation" class="tactics-formation-select">
                 <option value="3-1-2" selected>3-1-2 (Phủi)</option>
                 <option value="2-3-1">2-3-1 (Kiểm soát)</option>
@@ -568,7 +568,7 @@
             </div>
 
             <div class="tactics-formation-wrapper" title="Chuyển nhanh sơ đồ đội hình Đội Bạn">
-              <span style="font-size: 0.72rem; color: var(--text-muted);">🔴 Bạn:</span>
+              <span class="tactics-form-team-label" style="font-size: 0.72rem; color: var(--text-muted);">🔴 Bạn:</span>
               <select id="tactics-away-formation" class="tactics-formation-select">
                 <option value="3-2-1" selected>3-2-1 (Thủ cắm)</option>
                 <option value="2-3-1">2-3-1 (Pressing)</option>
@@ -623,7 +623,8 @@
             <div id="tactics-pieces-container" class="tactics-pieces-container"></div>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; font-size: 0.75rem; color: var(--text-muted);">
+          <!-- Dòng mẹo hướng dẫn & đồng bộ (Tự ẩn khi Fullscreen) -->
+          <div class="tactics-tips-bar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; font-size: 0.75rem; color: var(--text-muted);">
             <span>💡 <strong>Mẹo:</strong> Kéo thả quân cờ bằng chuột hoặc ngón tay. <strong>Chạm đúp (hoặc giữ lâu)</strong> vào quân cờ để đổi tên & số áo hoặc chọn cầu thủ FC TNT.</span>
             <span>⚡ Đồng bộ phòng họp chiến thuật trực tiếp: <strong>Realtime Socket.IO</strong></span>
           </div>
@@ -2387,7 +2388,7 @@
   <script src="js/awards.js?v=4.3"></script>
   <script src="js/poster.js?v=4.3"></script>
   <script src="js/moments.js?v=4.3"></script>
-  <script src="js/tactics.js?v=5.0"></script>
+  <script src="js/tactics.js?v=5.1"></script>
   <script src="js/weather.js?v=4.3"></script>
   <script src="js/splash.js?v=4.3"></script>
   <script src="js/effects.js?v=4.3"></script>
