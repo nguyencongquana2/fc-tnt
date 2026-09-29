@@ -307,16 +307,22 @@ window.playersModule = {
                 🗑️
               </button>
             </div>
-          ` : `
+          ` : (canEditAvatar ? `
             <div class="player-card-footer" onclick="event.stopPropagation()">
-              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới từ máy" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; flex: 1;">
-                📷 Đổi Ảnh
+              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới của bạn" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; flex: 1; color: var(--accent-emerald);">
+                📷 Đổi Ảnh Của Tôi
               </button>
               <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; flex: 1;" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
                 👁️ Chi Tiết
               </button>
             </div>
-          `}
+          ` : `
+            <div class="player-card-footer" onclick="event.stopPropagation()">
+              <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; width: 100%;" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
+                👁️ Xem Chi Tiết
+              </button>
+            </div>
+          `)}
         </div>
       `;
     }).join('');
