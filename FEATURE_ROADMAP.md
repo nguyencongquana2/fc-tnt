@@ -171,21 +171,45 @@ Tài liệu này tổng hợp toàn bộ các tính năng cốt lõi của hệ 
 
 ---
 
-### 👥 17. Hệ Thống Tài Khoản Cầu Thủ & Xác Thực Chuẩn JWT / Phân Quyền Đa Cấp (Player Accounts & JWT / RBAC) ⏳ *(Kế hoạch sắp tới)*
-* **Mục đích**: Chuyển đổi từ mô hình 1 mã PIN dùng chung sang mô hình mỗi thành viên trong đội có một tài khoản riêng, phân định vai trò và bảo vệ phiên đăng nhập bằng chuẩn công nghiệp JWT (JSON Web Token) kết hợp băm mật khẩu `bcrypt`.
+### 👥 17. Hệ Thống Tài Khoản Thành Viên & Cấp Phát Mật Khẩu (Member Accounts & Self-Service Profile) ⏳ *(Ưu tiên cao)*
+* **Mục đích**: Chuyển đổi nền tảng sang mô hình thành viên chính thức: Admin/Đội trưởng chủ động cấp tài khoản cho từng anh em, thành viên tự đăng nhập để đổi mật khẩu và quản lý thông tin cá nhân.
 * **Tính năng chi tiết**:
-  - **Tài khoản cá nhân liên kết 1-1 với Hồ sơ Cầu thủ**: Mỗi cầu thủ đăng ký/đăng nhập bằng số điện thoại hoặc tên định danh riêng, có mật khẩu cá nhân được băm bằng muối bảo mật (`bcrypt`).
-  - **Cơ chế xác thực số chuẩn JWT & Refresh Token**:
-    - Cấp Access Token có chữ ký số HMAC-SHA256 (`JWT_SECRET`) chống giả mạo, mang theo thông tin định danh (`playerId`, `name`, `role`) và thời gian hết hạn (`exp`).
-    - Refresh Token bảo mật tự động gia hạn phiên làm việc mà không bắt người dùng phải đăng nhập lại liên tục.
-    - Triệt tiêu hoàn toàn rủi ro lộ mã PIN gốc qua Base64 của cơ chế cũ.
-  - **Phân quyền vai trò đa cấp (Role-Based Access Control - RBAC)**:
-    - 👑 **Đội trưởng (Captain / Super Admin)**: Toàn quyền quản trị, thêm/sửa/xóa trận đấu, duyệt thành viên, cập nhật thông tin đội và kích hoạt AI chấm điểm.
-    - 💰 **Thủ quỹ (Treasurer)**: Quản lý tiền sân, đối soát mã VietQR, xác nhận thu nợ và quản lý quỹ chung của đội bóng.
-    - ⚽ **Thành viên (Player)**: Tự do cập nhật ảnh đại diện cá nhân, bio, số áo ưa thích, tự xác nhận điểm danh đi đá / vắng mặt, bình luận chém gió trong Khoảnh khắc.
-    - 👁️ **Khách / Cổ động viên (Guest / Fan)**: Xem lịch thi đấu, bảng xếp hạng phong độ, bảng vinh danh và thả cảm xúc tương tác.
-  - **Nhật ký thao tác minh bạch (Audit Trail)**: Ghi vết rõ ràng thành viên nào vừa cập nhật tỉ số, thủ quỹ nào vừa xác nhận đóng tiền nhằm tăng cường sự tin tưởng và minh bạch tuyệt đối trong nội bộ đội bóng.
+  - **Admin cấp tài khoản & Mật khẩu ban đầu**:
+    - Trong tab Cầu thủ, Admin có nút "Cấp tài khoản": hệ thống tự động sinh username và mật khẩu tạm thời.
+    - Hỗ trợ 1-chạm sao chép thông tin tài khoản để Admin gửi riêng cho từng anh em qua Zalo/Messenger.
+  - **Đăng nhập & Đổi mật khẩu cá nhân**:
+    - Giao diện đăng nhập thành viên chuyên biệt (tách biệt với mã PIN Admin).
+    - Cơ chế bắt buộc đổi mật khẩu mới trong lần đầu đăng nhập, mã hóa chuẩn bảo mật `bcrypt` lưu trên MongoDB.
+  - **Trang hồ sơ cá nhân (Player Profile Hub)**:
+    - Cầu thủ tự cập nhật ảnh đại diện cá nhân, biệt danh, số áo ưa thích, vị trí sở trường, chân thuận, chiều cao/cân nặng.
+    - Cấu hình thông tin ngân hàng cá nhân (VietQR cá nhân) phục vụ hoàn quỹ hoặc nhận thưởng nóng sau trận.
+    - Thống kê thành tích cá nhân tổng hợp: Số trận ra sân, bàn thắng, kiến tạo, điểm phong độ trung bình do AI Gemini chấm và các nhận xét gần nhất.
+  - **Phân quyền vai trò (RBAC)**:
+    - 👑 **Admin / Đội trưởng**: Toàn quyền quản trị trận đấu, lịch thi đấu, tiền sân, quỹ đội và cấp/khóa tài khoản.
+    - ⚽ **Thành viên (Member / Player)**: Quản lý hồ sơ cá nhân, đổi mật khẩu, tham gia vẽ và đóng góp chiến thuật, điểm danh trận tới và tương tác bình luận.
 
 ---
 
-*📅 Ngày cập nhật: 25/09/2026 • Đội bóng: FC TNT*
+### 📋 18. Bảng Sa Bàn Chiến Thuật Số Tương Tác & Thảo Luận Đội Bóng (Interactive Tactical Whiteboard & Playbook Room) ⏳ *(Ưu tiên cao)*
+* **Mục đích**: Không gian chiến thuật trực quan giúp toàn đội trao đổi, đóng góp ý tưởng, phân tích sơ đồ di chuyển và thống nhất các bài đánh thực chiến trước mỗi trận đấu sân 7.
+* **Tính năng chi tiết**:
+  - **Sa bàn sân 7 trực quan (Tactics Pitch Canvas)**:
+    - Mô phỏng mặt cỏ sân 7 chuẩn (vạch 13m, vòng tròn trung tâm, khung thành 2 bên).
+    - Bộ quân cờ linh hoạt: Đội nhà (gắn tên/số áo từng anh em trong đội), Đội bạn (quân cờ đối thủ) và Bóng thi đấu.
+    - Thao tác kéo thả (Drag & Drop / Touch) mượt mà trên cả máy tính lẫn điện thoại di động.
+  - **Bộ công cụ vẽ chiến thuật chuyên nghiệp**:
+    - 🏹 Mũi tên liền nét: Hướng chạy chỗ không bóng, dâng cao, bọc lót hoặc pressing.
+    - 〰️ Đường nét đứt: Hướng chuyền bóng, ban bật ngắn, phất bóng dài hoặc đổi cánh.
+    - ⭕ Đánh dấu khu vực (Zone highlight): Khoanh vùng khoảng trống, bẫy pressing, điểm yếu hàng thủ đối phương.
+    - 🧽 Công cụ tẩy xóa, hoàn tác (Undo/Redo) và làm mới bảng 1-chạm.
+  - **Kho kịch bản bài tập cố định (Tactical Playbook Library)**:
+    - Lưu các bài phối hợp thành kịch bản mẫu: Phạt góc bài 1, Bài ném biên biến ảo, Thoát pressing khi thủ môn phát bóng ngắn, Chống phản công nhanh...
+    - Kèm tiêu đề, tên người sáng tạo (VD: *"Chiến thuật của Quân"*) và ghi chú diễn giải ý đồ chiến thuật.
+  - **Thảo luận & Đóng góp ý kiến (Tactics Discussion)**:
+    - Khu vực bình luận dưới từng bài chiến thuật để anh em vào tranh luận, góp ý hoàn thiện trước giờ ra sân.
+  - **Phòng họp chiến thuật trực tiếp (Live Tactical Room via Socket.IO)**:
+    - Đội trưởng hoặc người trình bày mở phòng chiến thuật trực tiếp: thao tác kéo quân cờ hoặc vẽ đường chạy tới đâu, màn hình điện thoại của toàn bộ anh em tham gia phòng sẽ di chuyển và hiển thị đồng bộ tức thì theo thời gian thực (Realtime).
+
+---
+
+*📅 Ngày cập nhật: 29/09/2026 • Đội bóng: FC TNT*
