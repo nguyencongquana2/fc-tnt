@@ -191,7 +191,28 @@ window.tacticsModule = {
     }
   },
 
+  joinTacticsRoom() {
+    if (this.socket) {
+      this.socket.emit('join_tactics_room');
+    }
+  },
+
+  leaveTacticsRoom() {
+    if (this.socket) {
+      this.socket.emit('leave_tactics_room');
+    }
+  },
+
   bindEvents() {
+    // Tự động vào/rời phòng socket khi chuyển đổi tab giao diện (Tiết kiệm pin & 4G)
+    window.addEventListener('tabChanged', (e) => {
+      if (e.detail && e.detail.tab === 'tactics') {
+        this.joinTacticsRoom();
+      } else {
+        this.leaveTacticsRoom();
+      }
+    });
+
     // Bộ lọc danh mục bài tập mẫu (Playbook Category Filter Tabs)
     const filterTabs = document.querySelectorAll('.playbook-filter-btn');
     filterTabs.forEach(btn => {
@@ -488,6 +509,9 @@ window.tacticsModule = {
         el.addEventListener('touchend', () => {
           if (touchTimer) clearTimeout(touchTimer);
         }, { passive: true });
+        el.addEventListener('touchcancel', () => {
+          if (touchTimer) clearTimeout(touchTimer);
+        }, { passive: true });
       }
 
       this.bindPieceDragEvents(el, p);
@@ -517,7 +541,14 @@ window.tacticsModule = {
   bindPieceDragEvents(element, piece) {
     let isDragging = false;
     let lastSocketEmitTime = 0;
+    let dragRafId = null;
     const pitchWrapper = document.getElementById('tactics-pitch-wrapper');
+
+    const updatePieceDom = () => {
+      element.style.left = `${piece.x}%`;
+      element.style.top = `${piece.y}%`;
+      dragRafId = null;
+    };
 
     const onPointerDown = (e) => {
       if (this.currentMode !== 'select') return;
@@ -530,8 +561,9 @@ window.tacticsModule = {
           moveEvent.preventDefault();
         }
 
-        const currentX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX);
-        const currentY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY);
+        const touchObj = (moveEvent.touches && moveEvent.touches[0]) || (moveEvent.changedTouches && moveEvent.changedTouches[0]);
+        const currentX = touchObj ? touchObj.clientX : moveEvent.clientX;
+        const currentY = touchObj ? touchObj.clientY : moveEvent.clientY;
         if (currentX === undefined || currentY === undefined) return;
 
         const rect = pitchWrapper.getBoundingClientRect();
@@ -544,8 +576,11 @@ window.tacticsModule = {
 
         piece.x = Math.round(pctX * 10) / 10;
         piece.y = Math.round(pctY * 10) / 10;
-        element.style.left = `${piece.x}%`;
-        element.style.top = `${piece.y}%`;
+
+        // Cập nhật DOM mượt mà qua requestAnimationFrame đồng bộ V-Sync
+        if (!dragRafId) {
+          dragRafId = requestAnimationFrame(updatePieceDom);
+        }
 
         // Gửi tọa độ thời gian thực cho phòng Socket.IO (Throttled 40ms ~ 25fps)
         if (this.socket) {
@@ -565,10 +600,19 @@ window.tacticsModule = {
         if (!isDragging) return;
         isDragging = false;
         element.classList.remove('dragging');
+
+        if (dragRafId) {
+          cancelAnimationFrame(dragRafId);
+          dragRafId = null;
+        }
+        element.style.left = `${piece.x}%`;
+        element.style.top = `${piece.y}%`;
+
         window.removeEventListener('mousemove', onPointerMove);
         window.removeEventListener('mouseup', onPointerUp);
         window.removeEventListener('touchmove', onPointerMove);
         window.removeEventListener('touchend', onPointerUp);
+        window.removeEventListener('touchcancel', onPointerUp);
 
         // Gửi tọa độ chốt chặn cuối cùng khi buông tay
         if (this.socket) {
@@ -584,6 +628,7 @@ window.tacticsModule = {
       window.addEventListener('mouseup', onPointerUp);
       window.addEventListener('touchmove', onPointerMove, { passive: false });
       window.addEventListener('touchend', onPointerUp);
+      window.addEventListener('touchcancel', onPointerUp);
     };
 
     element.addEventListener('mousedown', onPointerDown);
@@ -607,7 +652,7 @@ window.tacticsModule = {
     ctx.scale(dpr, dpr);
     this.redrawCanvas();
 
-    // Gắn sự kiện vẽ
+    // Gắn sự kiện vẽ (Hỗ trợ cả Mouse và Touchscreen / Touchcancel)
     canvas.onmousedown = (e) => this.startDrawing(e);
     canvas.onmousemove = (e) => this.drawMove(e);
     canvas.onmouseup = (e) => this.endDrawing(e);
@@ -615,14 +660,16 @@ window.tacticsModule = {
     canvas.ontouchstart = (e) => this.startDrawing(e);
     canvas.ontouchmove = (e) => this.drawMove(e);
     canvas.ontouchend = (e) => this.endDrawing(e);
+    canvas.ontouchcancel = (e) => this.endDrawing(e);
   },
 
   getCanvasPoint(e) {
     const canvas = document.getElementById('tactics-canvas-overlay');
     if (!canvas) return { x: 50, y: 50 };
     const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    const touchObj = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    const clientX = touchObj ? touchObj.clientX : e.clientX;
+    const clientY = touchObj ? touchObj.clientY : e.clientY;
 
     const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
     const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
@@ -631,7 +678,7 @@ window.tacticsModule = {
 
   startDrawing(e) {
     if (this.currentMode === 'select') return;
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
 
     const pt = this.getCanvasPoint(e);
 
@@ -662,17 +709,29 @@ window.tacticsModule = {
 
   drawMove(e) {
     if (!this.isDrawing) return;
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     const pt = this.getCanvasPoint(e);
 
     this.currentDrawingPoints = [this.drawStartPoint, pt];
-    this.redrawCanvas();
-    this.drawTempShape(this.currentMode, this.currentDrawingPoints, this.currentColor);
+
+    // Lên lịch render đồng bộ qua requestAnimationFrame để tối ưu 60fps
+    if (!this._drawRafId) {
+      this._drawRafId = requestAnimationFrame(() => {
+        this.redrawCanvas();
+        this.drawTempShape(this.currentMode, this.currentDrawingPoints, this.currentColor);
+        this._drawRafId = null;
+      });
+    }
   },
 
   endDrawing(e) {
     if (!this.isDrawing) return;
     this.isDrawing = false;
+
+    if (this._drawRafId) {
+      cancelAnimationFrame(this._drawRafId);
+      this._drawRafId = null;
+    }
 
     if (this.currentDrawingPoints.length >= 2) {
       const p1 = this.currentDrawingPoints[0];

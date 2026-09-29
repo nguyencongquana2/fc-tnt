@@ -36,6 +36,7 @@ const { createMomentsRouter } = require('./routes/moments');
 const { createWeatherRouter } = require('./routes/weather');
 const { createTacticsRouter } = require('./routes/tactics');
 const { securityHeadersMiddleware } = require('./utils/securityHeaders');
+const { createSocketRateLimiter } = require('./utils/rateLimiter');
 const OFFICIAL_TACTICS = require('./utils/officialTactics');
 
 const app = express();
@@ -67,6 +68,21 @@ const broadcastDataUpdate = (type, message, extra = {}) => {
   }
 };
 
+// Anti-Spam Rate Limiters cho Socket.IO Sa Bàn (Ngăn ngừa DoS, flood event và tràn RAM)
+const tacticsMoveLimiter = createSocketRateLimiter({ windowMs: 1000, max: 40 }); // Tối đa 40 frames/s khi kéo quân cờ
+const tacticsDrawLimiter = createSocketRateLimiter({ windowMs: 2000, max: 20 }); // Tối đa 20 nét vẽ trong 2 giây
+const tacticsResetLimiter = createSocketRateLimiter({ windowMs: 5000, max: 4 });  // Tối đa 4 lần đổi sơ đồ/reset trong 5 giây
+const tacticsEditLimiter = createSocketRateLimiter({ windowMs: 5000, max: 10 });  // Tối đa 10 lần sửa tên/số áo trong 5 giây
+const tacticsPlaybookLimiter = createSocketRateLimiter({ windowMs: 5000, max: 5 }); // Tối đa 5 lần nạp bài tập trong 5 giây
+
+const allTacticsSocketLimiters = [
+  tacticsMoveLimiter,
+  tacticsDrawLimiter,
+  tacticsResetLimiter,
+  tacticsEditLimiter,
+  tacticsPlaybookLimiter
+];
+
 io.on('connection', (socket) => {
   console.log(`⚡ Realtime Client kết nối: ${socket.id}`);
 
@@ -74,34 +90,111 @@ io.on('connection', (socket) => {
   socket.on('join_tactics_room', () => {
     socket.join('tactics_room');
   });
-  socket.on('tactics_piece_move', (data) => {
-    if (data && typeof data === 'object' && data.id) {
-      socket.to('tactics_room').emit('tactics_piece_moved', data);
-    }
-  });
-  socket.on('tactics_draw_add', (data) => {
-    if (data && typeof data === 'object' && data.id) {
-      socket.to('tactics_room').emit('tactics_draw_added', data);
-    }
-  });
-  socket.on('tactics_board_reset', (data) => {
-    socket.to('tactics_room').emit('tactics_board_resetted', data);
-  });
-  socket.on('tactics_comment_add', (data) => {
-    if (data && typeof data === 'object' && data.tacticId) {
-      socket.to('tactics_room').emit('tactics_comment_added', data);
-    }
-  });
-  socket.on('tactics_load_playbook', (data) => {
-    socket.to('tactics_room').emit('tactics_playbook_loaded', data);
-  });
-  socket.on('tactics_piece_edit', (data) => {
-    if (data && typeof data === 'object' && data.id) {
-      socket.to('tactics_room').emit('tactics_piece_edited', data);
-    }
+
+  socket.on('leave_tactics_room', () => {
+    socket.leave('tactics_room');
   });
 
-  socket.on('disconnect', () => {});
+  // 1. Kéo thả quân cờ thời gian thực (Có Rate Limit & Clamp tọa độ an toàn)
+  socket.on('tactics_piece_move', (data) => {
+    if (!tacticsMoveLimiter.allow(socket.id)) return;
+    if (!data || typeof data !== 'object' || typeof data.id !== 'string') return;
+
+    const x = Number(data.x);
+    const y = Number(data.y);
+    if (Number.isNaN(x) || Number.isNaN(y)) return;
+
+    const sanitized = {
+      id: String(data.id).slice(0, 50),
+      x: Math.max(0, Math.min(100, Math.round(x * 10) / 10)),
+      y: Math.max(0, Math.min(100, Math.round(y * 10) / 10))
+    };
+
+    socket.to('tactics_room').emit('tactics_piece_moved', sanitized);
+  });
+
+  // 2. Vẽ nét mới / mũi tên (Có Rate Limit & Kiểm tra mảng điểm points)
+  socket.on('tactics_draw_add', (data) => {
+    if (!tacticsDrawLimiter.allow(socket.id)) return;
+    if (!data || typeof data !== 'object' || typeof data.id !== 'string') return;
+
+    const allowedTypes = ['arrow', 'curve', 'pass', 'pass_arrow', 'zone', 'text', 'freehand'];
+    const shapeType = allowedTypes.includes(data.type) ? data.type : 'arrow';
+
+    const sanitized = {
+      id: String(data.id).slice(0, 60),
+      type: shapeType,
+      color: typeof data.color === 'string' ? data.color.slice(0, 25) : '#10b981',
+      width: typeof data.width === 'number' ? Math.max(1, Math.min(10, data.width)) : 3,
+      points: Array.isArray(data.points)
+        ? data.points.slice(0, 100).map(pt => ({
+            x: Math.max(0, Math.min(100, Math.round((Number(pt.x) || 0) * 10) / 10)),
+            y: Math.max(0, Math.min(100, Math.round((Number(pt.y) || 0) * 10) / 10))
+          }))
+        : []
+    };
+
+    if (shapeType === 'text') {
+      sanitized.text = typeof data.text === 'string' ? data.text.trim().slice(0, 80) : '';
+    }
+
+    socket.to('tactics_room').emit('tactics_draw_added', sanitized);
+  });
+
+  // 3. Đặt lại sa bàn / chuyển sơ đồ chiến thuật (Giới hạn tối đa 4 lần/5s)
+  socket.on('tactics_board_reset', (data) => {
+    if (!tacticsResetLimiter.allow(socket.id)) return;
+
+    let sanitized = null;
+    if (data && typeof data === 'object') {
+      sanitized = {};
+      if (Array.isArray(data.pieces)) {
+        sanitized.pieces = data.pieces.slice(0, 30).map(p => ({
+          id: String(p.id || '').slice(0, 50),
+          team: ['home', 'away', 'ball'].includes(p.team) ? p.team : 'home',
+          number: String(p.number !== undefined ? p.number : '').slice(0, 10),
+          name: String(p.name || '').slice(0, 30),
+          role: String(p.role || '').slice(0, 15),
+          x: Math.max(0, Math.min(100, Math.round((Number(p.x) || 0) * 10) / 10)),
+          y: Math.max(0, Math.min(100, Math.round((Number(p.y) || 0) * 10) / 10))
+        }));
+      }
+      if (Array.isArray(data.drawings)) {
+        sanitized.drawings = data.drawings.slice(0, 100);
+      }
+    }
+
+    socket.to('tactics_room').emit('tactics_board_resetted', sanitized);
+  });
+
+  // 4. Nạp bài tập mẫu lên sa bàn trực tiếp
+  socket.on('tactics_load_playbook', (data) => {
+    if (!tacticsPlaybookLimiter.allow(socket.id)) return;
+    if (!data || typeof data !== 'object') return;
+    socket.to('tactics_room').emit('tactics_playbook_loaded', data);
+  });
+
+  // 5. Chỉnh sửa tên / số áo quân cờ
+  socket.on('tactics_piece_edit', (data) => {
+    if (!tacticsEditLimiter.allow(socket.id)) return;
+    if (!data || typeof data !== 'object' || typeof data.id !== 'string') return;
+
+    const sanitized = {
+      id: String(data.id).slice(0, 50),
+      number: String(data.number !== undefined ? data.number : '').slice(0, 10),
+      name: String(data.name !== undefined ? data.name : '').trim().slice(0, 30)
+    };
+
+    if (!sanitized.name) return;
+    socket.to('tactics_room').emit('tactics_piece_edited', sanitized);
+  });
+
+  // Giải phóng toàn bộ bộ nhớ rate limiter khi client ngắt kết nối
+  socket.on('disconnect', () => {
+    for (const limiter of allTacticsSocketLimiters) {
+      limiter.remove(socket.id);
+    }
+  });
 });
 
 // Middleware

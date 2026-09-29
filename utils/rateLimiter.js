@@ -87,8 +87,54 @@ const tacticRateLimiter = createRateLimiter({
   message: 'Bạn đã lưu quá nhiều bài chiến thuật liên tiếp! Vui lòng chờ ít phút.'
 });
 
+/**
+ * Sliding Window Rate Limiter chuyên dụng cho WebSocket / Socket.IO events
+ * @param {Object} options
+ * @param {number} options.windowMs - Độ dài cửa sổ thời gian (ms), mặc định 1000ms
+ * @param {number} options.max - Số lượt tối đa được phát sinh trong cửa sổ
+ */
+function createSocketRateLimiter({ windowMs = 1000, max = 30 }) {
+  const socketHits = new Map(); // socketId -> Array<timestamp>
+
+  // Dọn dẹp định kỳ tránh rò rỉ bộ nhớ
+  const cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [id, timestamps] of socketHits.entries()) {
+      const valid = timestamps.filter(t => now - t < windowMs);
+      if (valid.length === 0) {
+        socketHits.delete(id);
+      } else {
+        socketHits.set(id, valid);
+      }
+    }
+  }, Math.max(windowMs * 2, 10000));
+
+  if (cleanupTimer.unref) cleanupTimer.unref();
+
+  return {
+    allow(socketId) {
+      if (!socketId) return false;
+      const now = Date.now();
+      const timestamps = socketHits.get(socketId) || [];
+      const valid = timestamps.filter(t => now - t < windowMs);
+
+      if (valid.length >= max) {
+        return false;
+      }
+
+      valid.push(now);
+      socketHits.set(socketId, valid);
+      return true;
+    },
+    remove(socketId) {
+      socketHits.delete(socketId);
+    }
+  };
+}
+
 module.exports = {
   createRateLimiter,
+  createSocketRateLimiter,
   loginRateLimiter,
   aiRateLimiter,
   commentRateLimiter,
