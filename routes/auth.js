@@ -50,9 +50,13 @@ function sanitizePlayer(player) {
   return obj;
 }
 
+// Sinh ngẫu nhiên 32 bytes RAM nếu người dùng chưa kịp cấu hình .env (chống lộ bí mật khi public repo)
+const RUNTIME_FALLBACK_SECRET = crypto.randomBytes(32).toString('hex');
+
+
 // Secret ký Token cầu thủ
 function getPlayerTokenSecret() {
-  const envSecret = process.env.ADMIN_SECRET || process.env.JWT_SECRET || 'fc_tnt_player_auth_secret_2026';
+  const envSecret = process.env.JWT_SECRET || process.env.ADMIN_SECRET || RUNTIME_FALLBACK_SECRET;
   return crypto.createHash('sha256').update(`${envSecret}::fc_tnt_player_token_salt`).digest('hex');
 }
 
@@ -124,7 +128,7 @@ const requirePlayerAuth = (req, res, next) => {
 
 // Secret ký chữ ký số HMAC an toàn kết hợp salt máy chủ và mã PIN
 function getHmacSecret(currentPin) {
-  const envSecret = process.env.ADMIN_SECRET || process.env.JWT_SECRET || '';
+  const envSecret = process.env.JWT_SECRET || process.env.ADMIN_SECRET || RUNTIME_FALLBACK_SECRET;
   const pinPart = currentPin || process.env.ADMIN_PIN || 'fc_tnt_default_salt';
   return crypto.createHash('sha256').update(`${envSecret}::fc_tnt_auth_salt_2026::${pinPart}`).digest('hex');
 }
@@ -344,7 +348,7 @@ function createAuthRouter({ isMongoConnected, fallbackData, broadcastDataUpdate 
           ]
         });
       } else if (fallbackData && Array.isArray(fallbackData.players)) {
-        player = fallbackData.players.find(p => 
+        player = fallbackData.players.find(p =>
           (p.username && p.username.toLowerCase() === cleanUser) ||
           (p.phone && p.phone === String(username).trim())
         );
