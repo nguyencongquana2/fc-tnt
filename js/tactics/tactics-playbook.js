@@ -77,11 +77,9 @@ Object.assign(window.tacticsModule, {
       this.renderPieces();
     }
 
-    if (Array.isArray(tactic.drawings)) {
-      this.drawings = JSON.parse(JSON.stringify(tactic.drawings));
-      this.redoHistory = [];
-      this.redrawCanvas();
-    }
+    this.drawings = Array.isArray(tactic.drawings) ? JSON.parse(JSON.stringify(tactic.drawings)) : [];
+    this.redoHistory = [];
+    this.redrawCanvas();
 
     // Hiển thị thông tin tiêu đề và khu vực thảo luận
     const titleEl = document.getElementById('active-tactic-title-display');
@@ -174,6 +172,11 @@ Object.assign(window.tacticsModule, {
         this.renderPieces();
         this.redrawCanvas();
         this.renderComments(null);
+
+        const titleEl = document.getElementById('active-tactic-title-display');
+        const descEl = document.getElementById('active-tactic-desc-display');
+        if (titleEl) titleEl.innerText = '📋 Bảng Sa Bàn Chiến Thuật Sân 7 & Thảo Luận Thực Chiến';
+        if (descEl) descEl.innerText = 'Kéo thả vị trí 14 cầu thủ + bóng, vẽ mũi tên chạy chỗ, đường chuyền và thống nhất bài đánh trước trận.';
       }
       this.renderPlaybookList();
       window.showToast('🗑️ Đã xóa bài chiến thuật thành công!');

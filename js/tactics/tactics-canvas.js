@@ -13,6 +13,7 @@ Object.assign(window.tacticsModule, {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return; // Tránh gán kích thước 0 khi tab sa bàn đang ẩn
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
@@ -173,10 +174,14 @@ Object.assign(window.tacticsModule, {
       const textMetrics = ctx.measureText(text);
       const textWidth = textMetrics.width;
 
-      // Vẽ nền đen mờ bo tròn
+      // Vẽ nền đen mờ bo tròn (có fallback cho trình duyệt cũ)
       ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
       ctx.beginPath();
-      ctx.roundRect(p.x - textWidth / 2 - 8, p.y - 12, textWidth + 16, 24, 6);
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(p.x - textWidth / 2 - 8, p.y - 12, textWidth + 16, 24, 6);
+      } else {
+        ctx.rect(p.x - textWidth / 2 - 8, p.y - 12, textWidth + 16, 24);
+      }
       ctx.fill();
 
       // Viền màu

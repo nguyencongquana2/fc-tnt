@@ -9,6 +9,9 @@ Object.assign(window.tacticsModule, {
   initSocketEvents() {
     if (window.stateManager && window.stateManager.socket) {
       this.socket = window.stateManager.socket;
+      if (this._socketEventsBound) return;
+      this._socketEventsBound = true;
+
       this.socket.emit('join_tactics_room');
 
       this.socket.on('tactics_piece_moved', (data) => {

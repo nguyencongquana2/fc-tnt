@@ -4,7 +4,6 @@
  * - tactics-canvas.js: HTML5 Canvas vector drawing engine, math uốn cong & rAF 60fps
  * - tactics-pieces.js: Quản lý 14 quân cờ, sơ đồ (3-1-2, 2-3-1, 3-2-1), kéo thả cảm ứng Touch
  * - tactics-playbook.js: Kho bài tập mẫu, bộ lọc danh mục, thảo luận & modal lưu kịch bản
- * - tactics-export.js: Xuất ảnh sân bóng 1600x900 chất lượng cao & copy Zalo clipboard
  * - tactics-screen.js: Chế độ xem toàn màn hình (Fullscreen) & tự động xoay ngang 90° trên Mobile
  * - tactics-realtime.js: Điều phối phòng họp Socket.IO realtime
  */
@@ -50,6 +49,9 @@ Object.assign(window.tacticsModule, {
   },
 
   bindEvents() {
+    if (this._eventsBound) return;
+    this._eventsBound = true;
+
     // Tự động vào/rời phòng socket khi chuyển đổi tab giao diện (Tiết kiệm pin & 4G)
     window.addEventListener('tabChanged', (e) => {
       if (e.detail && e.detail.tab === 'tactics') {
