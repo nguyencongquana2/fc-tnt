@@ -112,13 +112,13 @@
   <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="manifest.json">
   <!-- Modular UI Stylesheets -->
-  <link rel="stylesheet" href="css/base.css?v=4.8">
+  <link rel="stylesheet" href="css/base.css?v=4.9">
   <link rel="stylesheet" href="css/matches.css?v=4.5">
   <link rel="stylesheet" href="css/live.css?v=4.5">
   <link rel="stylesheet" href="css/moments.css?v=4.5">
   <link rel="stylesheet" href="css/finance.css?v=4.5">
   <link rel="stylesheet" href="css/weather.css?v=4.5">
-  <link rel="stylesheet" href="css/tactics.css?v=4.8">
+  <link rel="stylesheet" href="css/tactics.css?v=4.9">
   <link rel="stylesheet" href="css/effects.css?v=4.5">
   <link rel="stylesheet" href="css/responsive.css?v=4.5">
 
@@ -504,6 +504,22 @@
             💾 Lưu Kịch Bản
           </button>
         </div>
+      </div>
+
+      <!-- Thẻ Launcher Mở Sa Bàn Toàn Màn Hình Xoay Ngang trên Mobile (Tự ẩn trên máy tính) -->
+      <div class="tactics-mobile-launcher-card" id="tactics-mobile-launcher">
+        <div class="mobile-launcher-pitch-art">
+          <div class="art-circle"></div>
+          <span class="art-ball">⚽</span>
+        </div>
+        <div class="mobile-launcher-info">
+          <span class="mobile-launcher-badge">SA BÀN CHIẾN THUẬT SÂN 7</span>
+          <h3 id="mobile-launcher-title">Bảng Sa Bàn Thực Chiến</h3>
+          <p id="mobile-launcher-desc">Chạm nút bên dưới để mở sa bàn toàn màn hình tự động xoay ngang 90°, hỗ trợ kéo thả 14 cầu thủ & vẽ kịch bản chạy chỗ chi tiết.</p>
+        </div>
+        <button type="button" class="btn-mobile-launch" onclick="window.tacticsModule.openMobileLandscape()">
+          <span>📱</span> <strong>Mở Sa Bàn Xoay Ngang</strong>
+        </button>
       </div>
 
       <!-- Toolbar -->
@@ -2416,7 +2432,7 @@
   <script src="js/awards.js?v=4.3"></script>
   <script src="js/poster.js?v=4.3"></script>
   <script src="js/moments.js?v=4.3"></script>
-  <script src="js/tactics.js?v=4.8"></script>
+  <script src="js/tactics.js?v=4.9"></script>
   <script src="js/weather.js?v=4.3"></script>
   <script src="js/splash.js?v=4.3"></script>
   <script src="js/effects.js?v=4.3"></script>

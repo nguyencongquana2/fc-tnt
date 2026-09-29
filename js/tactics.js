@@ -458,6 +458,18 @@ window.tacticsModule = {
     }, 150);
   },
 
+  openMobileLandscape() {
+    this.toggleFullscreen(true);
+    this.isRotated = true;
+    const container = document.getElementById('tactics-pitch-container');
+    if (container) {
+      container.classList.add('is-rotated');
+    }
+    setTimeout(() => {
+      this.initCanvas();
+    }, 150);
+  },
+
   // =========================================================================
   // PIECES RENDERING & DRAG-AND-DROP (MOUSE & TOUCH SUPPORT)
   // =========================================================================
@@ -1171,6 +1183,18 @@ window.tacticsModule = {
 
     this.renderPlaybookList();
     this.renderComments(tactic);
+
+    // Cập nhật thông tin thẻ Launcher trên Mobile
+    const launcherTitle = document.getElementById('mobile-launcher-title');
+    if (launcherTitle) launcherTitle.textContent = tactic.title;
+    const launcherDesc = document.getElementById('mobile-launcher-desc');
+    if (launcherDesc && tactic.description) launcherDesc.textContent = tactic.description;
+
+    // Trên điện thoại, tự động mở sa bàn xoay ngang toàn màn hình khi người dùng chọn bài tập
+    if (window.innerWidth <= 768) {
+      this.openMobileLandscape();
+    }
+
     window.showToast(`📋 Đã mở chiến thuật: "${tactic.title}"`);
   },
 
