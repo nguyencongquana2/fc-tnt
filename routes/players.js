@@ -7,6 +7,7 @@ const express = require('express');
 const Player = require('../models/Player');
 const { avatarRateLimiter } = require('../utils/rateLimiter');
 const { isValidAvatar } = require('../utils/validators');
+const { verifyAdminToken, verifyPlayerToken } = require('./auth');
 
 function createPlayersRouter({ isMongoConnected, fallbackData, broadcastDataUpdate, requireAdmin }) {
   const router = express.Router();
@@ -49,11 +50,30 @@ function createPlayersRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // PUT /api/players/:id/avatar (Cập nhật avatar - mở cho thành viên có rate limiter & validation an toàn)
+  // PUT /api/players/:id/avatar (Cập nhật avatar - Chỉ Admin hoặc Chính Chủ mới có quyền)
   router.put('/:id/avatar', avatarRateLimiter, async (req, res) => {
     try {
       const { id } = req.params;
       const { avatar } = req.body;
+
+      // Kiểm tra quyền: Phải là Admin HOẶC chính chủ cầu thủ đó
+      const adminToken = req.headers['x-admin-token'];
+      const playerToken = req.headers['x-player-token'];
+      
+      const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
+      let isOwner = false;
+      if (playerToken) {
+        const session = verifyPlayerToken(playerToken);
+        if (session && session.playerId === id) {
+          isOwner = true;
+        }
+      }
+
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({
+          error: 'Bạn chỉ có quyền đổi ảnh đại diện của chính mình hoặc cần quyền Quản trị viên!'
+        });
+      }
 
       if (!isValidAvatar(avatar)) {
         return res.status(400).json({ 

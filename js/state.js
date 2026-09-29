@@ -518,16 +518,28 @@ class StateManager {
     return null;
   }
 
+  canEditPlayerAvatar(playerId) {
+    if (this.isAdmin) return true;
+    if (this.isPlayerLoggedIn() && this.currentPlayer && this.currentPlayer.id === playerId) return true;
+    return false;
+  }
+
   async updatePlayerAvatar(id, avatarBase64) {
     const index = this.data.players.findIndex(p => p.id === id);
     if (index !== -1) {
       this.data.players[index].avatar = avatarBase64;
       this.saveData();
 
-      // Gửi API cập nhật avatar lên server MongoDB (mở cho cả thành viên)
+      const headers = { 'Content-Type': 'application/json' };
+      const adminToken = this.getAdminToken();
+      const playerToken = this.getPlayerToken();
+      if (adminToken) headers['x-admin-token'] = adminToken;
+      if (playerToken) headers['x-player-token'] = playerToken;
+
+      // Gửi API cập nhật avatar lên server MongoDB (chỉ Admin hoặc chính chủ)
       this._syncToServer(`${API_BASE}/players/${id}/avatar`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ avatar: avatarBase64 })
       }, 'updatePlayerAvatar');
 
