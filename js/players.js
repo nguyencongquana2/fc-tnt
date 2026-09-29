@@ -217,7 +217,6 @@ window.playersModule = {
     if (!container) return;
 
     const isAdmin = window.stateManager.isAdmin;
-    const canEditProfileAvatar = window.stateManager.canEditPlayerAvatar(player.id);
     const players = window.stateManager.getPlayers();
     const statsList = window.stateManager.getPlayerOverallStats();
     const statsMap = {};
@@ -548,6 +547,7 @@ window.playersModule = {
     const modal = document.getElementById('player-profile-modal');
     const content = document.getElementById('player-profile-content');
     const isAdmin = window.stateManager.isAdmin;
+    const canEditProfileAvatar = window.stateManager.canEditPlayerAvatar(player.id);
 
     const primaryDisplayName = window.escapeHtml((player.nickname && player.nickname.trim()) ? player.nickname.trim() : player.name);
     const secondaryRealName = window.escapeHtml((player.name && player.name.trim() && player.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? player.name.trim() : '');
