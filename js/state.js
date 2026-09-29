@@ -29,7 +29,8 @@ const DEFAULT_DATA = {
   },
   players: OFFICIAL_PLAYERS,
   matches: [],
-  moments: []
+  moments: [],
+  tactics: (typeof window !== 'undefined' && window.OFFICIAL_TACTICS) || []
 };
 
 const ADMIN_AUTH_KEY = 'fc_tnt_admin_token';
@@ -374,6 +375,7 @@ class StateManager {
         if (parsed.players && parsed.players.length > 0) {
           if (!parsed.moments) parsed.moments = [];
           if (!parsed.matches) parsed.matches = [];
+          if (!parsed.tactics) parsed.tactics = (typeof window !== 'undefined' && window.OFFICIAL_TACTICS) || [];
           return parsed;
         }
       }
@@ -394,7 +396,8 @@ class StateManager {
           ...m,
           images: [],
           video: null
-        })) : []
+        })) : [],
+        tactics: dataToSave.tactics || []
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(lightCache));
     } catch (e) {
@@ -431,6 +434,7 @@ class StateManager {
         const serverData = await res.json();
         if (serverData && serverData.players && serverData.players.length > 0) {
           if (!serverData.moments) serverData.moments = [];
+          if (!serverData.tactics) serverData.tactics = (typeof window !== 'undefined' && window.OFFICIAL_TACTICS) || [];
           this.data = serverData;
           this.isServerSynced = true;
           this.saveData(this.data);
@@ -986,6 +990,169 @@ class StateManager {
       }
     } catch (e) {
       return { success: false, error: 'Định dạng file không hợp lệ: ' + e.message };
+    }
+  }
+
+  // =========================================================================
+  // BẢNG SA BÀN CHIẾN THUẬT & PLAYBOOK (TACTICS METHODS)
+  // =========================================================================
+
+  getTactics() {
+    return this.data.tactics || [];
+  }
+
+  getTacticById(id) {
+    return (this.data.tactics || []).find(t => t.id === id);
+  }
+
+  async saveTactic(tacticData) {
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (this.isAdmin) headers['x-admin-token'] = this.getAdminToken();
+      if (this.playerToken) headers['x-player-token'] = this.playerToken;
+
+      const isUpdate = tacticData.id && !tacticData.id.startsWith('preset_') && this.getTacticById(tacticData.id);
+      const url = isUpdate ? `${API_BASE}/tactics/${tacticData.id}` : `${API_BASE}/tactics`;
+      const method = isUpdate ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(tacticData)
+      });
+      const data = await res.json();
+
+      if (res.ok && !data.error) {
+        if (!this.data.tactics) this.data.tactics = [];
+        if (isUpdate) {
+          const idx = this.data.tactics.findIndex(t => t.id === tacticData.id);
+          if (idx !== -1) this.data.tactics[idx] = data;
+        } else {
+          this.data.tactics.unshift(data);
+        }
+        this.saveData();
+        return { success: true, tactic: data };
+      }
+      return { success: false, error: data.error || 'Không thể lưu bài chiến thuật!' };
+    } catch (err) {
+      console.warn('[State] Save tactic error:', err.message);
+      return { success: false, error: 'Lỗi kết nối khi lưu bài chiến thuật!' };
+    }
+  }
+
+  async deleteTactic(id) {
+    try {
+      const headers = {};
+      if (this.isAdmin) headers['x-admin-token'] = this.getAdminToken();
+      if (this.playerToken) headers['x-player-token'] = this.playerToken;
+
+      const res = await fetch(`${API_BASE}/tactics/${id}`, {
+        method: 'DELETE',
+        headers
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        if (this.data.tactics) {
+          this.data.tactics = this.data.tactics.filter(t => t.id !== id);
+        }
+        this.saveData();
+        return { success: true };
+      }
+      return { success: false, error: data.error || 'Không thể xóa chiến thuật!' };
+    } catch (err) {
+      console.warn('[State] Delete tactic error:', err.message);
+      return { success: false, error: 'Lỗi mạng khi xóa chiến thuật!' };
+    }
+  }
+
+  async addTacticComment(tacticId, content) {
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (this.playerToken) headers['x-player-token'] = this.playerToken;
+
+      const authorName = this.currentPlayer ? (this.currentPlayer.nickname || this.currentPlayer.name) : (this.isAdmin ? 'Admin' : 'Thành viên');
+      const avatar = this.currentPlayer ? this.currentPlayer.avatar : '';
+
+      const res = await fetch(`${API_BASE}/tactics/${tacticId}/comments`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ authorName, content, avatar })
+      });
+      const comment = await res.json();
+
+      if (res.ok && !comment.error) {
+        const tactic = this.getTacticById(tacticId);
+        if (tactic) {
+          if (!tactic.comments) tactic.comments = [];
+          tactic.comments.push(comment);
+          this.saveData();
+        }
+        return { success: true, comment };
+      }
+      return { success: false, error: comment.error || 'Không thể gửi bình luận!' };
+    } catch (err) {
+      console.warn('[State] Add tactic comment error:', err.message);
+      return { success: false, error: 'Lỗi mạng khi gửi bình luận!' };
+    }
+  }
+
+  async deleteTacticComment(tacticId, commentId) {
+    try {
+      const headers = {};
+      if (this.adminToken) headers['x-admin-token'] = this.adminToken;
+      if (this.playerToken) headers['x-player-token'] = this.playerToken;
+
+      const res = await fetch(`${API_BASE}/tactics/${tacticId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const tactic = this.getTacticById(tacticId);
+        if (tactic && Array.isArray(tactic.comments)) {
+          tactic.comments = tactic.comments.filter(c => c.id !== commentId);
+          this.saveData();
+        }
+        return { success: true };
+      }
+      return { success: false, error: data.error || 'Không thể xóa bình luận!' };
+    } catch (err) {
+      console.warn('[State] Delete tactic comment error:', err.message);
+      return { success: false, error: 'Lỗi mạng khi xóa bình luận!' };
+    }
+  }
+
+  async toggleTacticLike(tacticId) {
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (this.playerToken) headers['x-player-token'] = this.playerToken;
+      const userId = this.currentPlayer ? this.currentPlayer.id : '';
+
+      const res = await fetch(`${API_BASE}/tactics/${tacticId}/like`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ userId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const tactic = this.getTacticById(tacticId);
+        if (tactic) {
+          tactic.likes = tactic.likes || [];
+          const idx = tactic.likes.indexOf(userId);
+          if (idx === -1) {
+            tactic.likes.push(userId);
+          } else {
+            tactic.likes.splice(idx, 1);
+          }
+          this.saveData();
+        }
+        return data;
+      }
+      return { success: false };
+    } catch (err) {
+      console.warn('[State] Toggle tactic like error:', err.message);
+      return { success: false };
     }
   }
 }

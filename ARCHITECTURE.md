@@ -29,6 +29,7 @@ FC-TNT/
 │   ├── moments.css       # Bảng tin khoảnh khắc, photo grid Facebook & lightbox
 │   ├── finance.css       # Thu chi quỹ trận, VietQR container & laser scanner
 │   ├── weather.css       # Radar thời tiết Canvas & dynamic weather particles
+│   ├── tactics.css       # Bảng sa bàn sân 7, quân cờ kéo thả, thanh công cụ vẽ & playbook
 │   ├── effects.css       # Hiệu ứng splash screen, 3D tilt, crown shine & neon lasers
 │   ├── responsive.css    # Tối ưu hóa hiển thị responsive mobile & tablet
 │   └── style.css         # Master stylesheet hub hợp nhất toàn bộ bằng @import
@@ -36,6 +37,7 @@ FC-TNT/
 │   ├── core.js           # [Decoupling] Service Locator & Event Bus trung tâm (window.TNT)
 │   ├── app.js            # Điều hướng tab, modal, toast
 │   ├── state.js          # Quản lý state tập trung & socket realtime
+│   ├── tactics.js        # Sa bàn sân 7 canvas, kéo thả quân cờ, vẽ mũi tên & playbook realtime
 │   ├── matches.js        # Bộ điều phối trung tâm (Facade) module trận đấu
 │   ├── matches/          # [Mô-đun hoá] Phân tách nghiệp vụ trận đấu chi tiết
 │   │   ├── matches-list.js        # Danh sách trận đấu, modal chi tiết & CRUD
@@ -58,17 +60,20 @@ FC-TNT/
 │   ├── Match.js          # Lịch sử trận đấu & đội hình
 │   ├── LiveMatchDraft.js # Bản nháp trận đấu Live đồng bộ realtime
 │   ├── Moment.js         # Bài đăng khoảnh khắc & bình luận
+│   ├── Tactic.js         # Kịch bản sa bàn chiến thuật & bình luận trao đổi
 │   └── Team.js           # Thông tin đội bóng & mã PIN Admin
 ├── routes/               # [Mô-đun hoá] Tách API từ server.js theo miền nghiệp vụ
 │   ├── auth.js           # Đăng nhập PIN, đổi PIN, kiểm tra quyền Admin
 │   ├── players.js        # API CRUD cầu thủ & avatar
 │   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
+│   ├── tactics.js        # API kịch bản chiến thuật & thảo luận thực chiến
 │   ├── ai.js             # API AI rate match chấm điểm trận đấu & NLP Gemini
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc reactions & bình luận
 │   └── weather.js        # API dự báo thời tiết Open-Meteo & AI thẩm định mặt sân
 ├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung giữa Backend & Frontend (UMD)
 │   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định ban đầu
+│   ├── officialTactics.js # Kịch bản bài tập chiến thuật sân 7 chuẩn mẫu (SSOT)
 │   ├── playerAliases.js   # Từ điển alias và phân giải tên cầu thủ cho AI NLP & Voice
 │   ├── rateLimiter.js     # Bộ lọc trượt (Sliding Window) chống Brute-force PIN, lạm dụng AI, Spam Comment & Avatar DoS
 │   ├── validators.js      # Bộ kiểm chuẩn dữ liệu đầu vào (Avatar, Comment, Reactions) dùng chung UMD
@@ -90,6 +95,7 @@ Tách rời các endpoint từ `server.js` thành các module độc lập theo 
 - `auth.js`: Xác thực mã PIN quản trị (`/api/auth/login`), đổi PIN (`/api/auth/change-pin`), kiểm tra token (`/api/auth/check`) và middleware `requireAdmin`. Đồng thời quản lý hệ thống tài khoản thành viên: đăng nhập cầu thủ (`/api/auth/player/login`), đổi mật khẩu (`/api/auth/player/change-password`), Admin cấp tài khoản khởi tạo (`/api/auth/player/provision`), lấy thông tin cá nhân (`/api/auth/player/me`) và cập nhật hồ sơ (`/api/auth/player/profile`).
 - `players.js`: Quản lý danh sách cầu thủ (`/api/players`), thêm/sửa/xóa cầu thủ và cập nhật avatar tự do (tự động loại trừ `passwordHash` khi trả về danh sách công khai).
 - `matches.js`: Lịch sử trận đấu (`/api/matches`) và quản lý thu chi/quỹ trận sân bóng.
+- `tactics.js`: API lưu trữ và quản lý kịch bản sa bàn chiến thuật (`/api/tactics`), bài tập cố định (phạt góc, ném biên, thoát pressing) và bình luận thảo luận chiến thuật thực chiến.
 - `ai.js`: AI chấm điểm phong độ & viết nhận xét cá nhân hóa bằng Gemini API kết hợp NLP (`/api/ai/rate-match`).
 - `liveMatch.js`: Đồng bộ trạng thái bản nháp trận đấu Live đa thiết bị qua Socket.IO (`/api/live-match/*`).
 - `moments.js`: Bảng tin khoảnh khắc (`/api/moments`), đăng bài, thả cảm xúc (react) và bình luận (comments).
@@ -101,6 +107,7 @@ Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
 - `Match.js`: Chi tiết trận đấu (ngày giờ, đối thủ, sân đấu, sơ đồ sân 7, bàn thắng, kiến tạo, điểm rating, MOTM, chi phí trận).
 - `LiveMatchDraft.js`: Lưu trữ trạng thái tạm thời của trận đấu đang live/chưa kết thúc để đồng bộ thời gian thực.
 - `Moment.js`: Dữ liệu bài đăng kỷ niệm đội bóng (tiêu đề, hình ảnh, video, danh sách gắn thẻ, biểu cảm reactions, bình luận).
+- `Tactic.js`: Lưu trữ bài tập sa bàn chiến thuật (tọa độ x/y 14 quân cờ sân 7 + bóng, các nét vẽ mũi tên/vùng highlight, sơ đồ đội hình, tác giả và danh sách bình luận góp ý).
 - `Team.js`: Thông tin chung của đội và cấu hình mã PIN quản trị (Admin PIN).
 
 ### `js/` (Logic Xử Lý Phía Client)
@@ -108,6 +115,7 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
 - `core.js`: [Decoupling & Clean Architecture] Cung cấp không gian tên tập trung `window.TNT` cùng Event Bus nội bộ (`TNT.events`), áp dụng mẫu Service Locator & Mediator Pattern. Giải quyết triệt để vấn đề Tight Coupling (liên kết chặt chẽ) giữa các module qua biến toàn cục tự do, đồng thời duy trì khả năng tương thích ngược hoàn hảo.
 - `state.js`: Quản lý state tập trung (`APP_STATE`), tiện ích khử độc XSS (`window.escapeHtml`), xử lý xác thực song song (Admin PIN & Tài khoản Thành viên PBKDF2 Token), hàm gọi API chung, bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
 - `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính, điều khiển modal đăng nhập thành viên, modal hồ sơ cá nhân (My Profile Hub), modal đổi mật khẩu và toast thông báo.
+- `tactics.js`: Bảng sa bàn chiến thuật sân 7 tương tác HTML5 Canvas, engine kéo thả (Drag & Drop / Touch) cho 14 cầu thủ + bóng thi đấu, bộ công cụ vẽ mũi tên chạy chỗ / đường chuyền nét đứt / khoanh vùng, thư viện bài tập mẫu (Playbook Presets) và đồng bộ trực tiếp phòng họp qua Socket.IO.
 - `matches.js` & `matches/`: [Mô-đun hoá] Quản lý toàn bộ nghiệp vụ trận đấu, được điều phối qua facade `matches.js` và phân tách thành các submodule:
   - `matches/matches-list.js`: Quản lý danh sách trận, hiển thị chi tiết, tạo/sửa trận và xác thực PIN an toàn khi xóa.
   - `matches/matches-pitch.js`: Sa bàn chiến thuật sân 7 Sofascore (3-1-2), engine kéo-thả (Drag & Drop) và Quick Edit điểm số.

@@ -20,6 +20,7 @@ window.appModule = {
     if (window.posterModule) window.posterModule.init();
     if (window.momentsModule) window.momentsModule.init();
     if (window.weatherModule) window.weatherModule.init();
+    if (window.tacticsModule) window.tacticsModule.init();
 
     // Re-render when state updates
     window.stateManager.subscribe(() => {
@@ -30,6 +31,7 @@ window.appModule = {
       if (window.awardsModule) window.awardsModule.renderAwards();
       if (window.momentsModule) window.momentsModule.renderMoments();
       if (window.weatherModule) window.weatherModule.renderDashboardWidget();
+      if (window.tacticsModule) window.tacticsModule.renderPlaybookList();
     });
   },
 
@@ -574,6 +576,10 @@ window.appModule = {
     if (tabName === 'matches' && window.matchesModule) window.matchesModule.renderMatches();
     if (tabName === 'players' && window.playersModule) window.playersModule.renderPlayers();
     if (tabName === 'moments' && window.momentsModule) window.momentsModule.renderMoments();
+    if (tabName === 'tactics' && window.tacticsModule) {
+      window.tacticsModule.renderPlaybookList();
+      window.tacticsModule.initCanvas();
+    }
     if (tabName === 'weather' && window.weatherModule) {
       window.weatherModule.render7DayCards();
       window.weatherModule.renderDayDetail();

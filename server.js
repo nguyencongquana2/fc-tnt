@@ -24,6 +24,7 @@ const Match = require('./models/Match');
 const Team = require('./models/Team');
 const Moment = require('./models/Moment');
 const LiveMatchDraft = require('./models/LiveMatchDraft');
+const Tactic = require('./models/Tactic');
 
 // Modular Route Handlers
 const { createAuthRouter, requireAdmin, getValidAdminPins } = require('./routes/auth');
@@ -33,7 +34,9 @@ const { createAiRouter } = require('./routes/ai');
 const { createLiveMatchRouter } = require('./routes/liveMatch');
 const { createMomentsRouter } = require('./routes/moments');
 const { createWeatherRouter } = require('./routes/weather');
+const { createTacticsRouter } = require('./routes/tactics');
 const { securityHeadersMiddleware } = require('./utils/securityHeaders');
+const OFFICIAL_TACTICS = require('./utils/officialTactics');
 
 const app = express();
 const server = http.createServer(app);
@@ -66,6 +69,38 @@ const broadcastDataUpdate = (type, message, extra = {}) => {
 
 io.on('connection', (socket) => {
   console.log(`⚡ Realtime Client kết nối: ${socket.id}`);
+
+  // Đồng bộ phòng sa bàn chiến thuật trực tiếp (Live Tactical Whiteboard Room)
+  socket.on('join_tactics_room', () => {
+    socket.join('tactics_room');
+  });
+  socket.on('tactics_piece_move', (data) => {
+    if (data && typeof data === 'object' && data.id) {
+      socket.to('tactics_room').emit('tactics_piece_moved', data);
+    }
+  });
+  socket.on('tactics_draw_add', (data) => {
+    if (data && typeof data === 'object' && data.id) {
+      socket.to('tactics_room').emit('tactics_draw_added', data);
+    }
+  });
+  socket.on('tactics_board_reset', (data) => {
+    socket.to('tactics_room').emit('tactics_board_resetted', data);
+  });
+  socket.on('tactics_comment_add', (data) => {
+    if (data && typeof data === 'object' && data.tacticId) {
+      socket.to('tactics_room').emit('tactics_comment_added', data);
+    }
+  });
+  socket.on('tactics_load_playbook', (data) => {
+    socket.to('tactics_room').emit('tactics_playbook_loaded', data);
+  });
+  socket.on('tactics_piece_edit', (data) => {
+    if (data && typeof data === 'object' && data.id) {
+      socket.to('tactics_room').emit('tactics_piece_edited', data);
+    }
+  });
+
   socket.on('disconnect', () => {});
 });
 
@@ -143,7 +178,8 @@ const fallbackData = {
   },
   players: [...OFFICIAL_PLAYERS],
   matches: [],
-  moments: [...INITIAL_MOMENTS]
+  moments: [...INITIAL_MOMENTS],
+  tactics: [...OFFICIAL_TACTICS]
 };
 
 // Seed initial database
@@ -183,6 +219,16 @@ async function seedInitialData() {
       await Moment.insertMany(INITIAL_MOMENTS);
       console.log('✅ Seeded initial moments successfully!');
     }
+
+    console.log('🌱 Synchronizing official tactical playbooks to MongoDB...');
+    for (const preset of OFFICIAL_TACTICS) {
+      await Tactic.findOneAndUpdate(
+        { id: preset.id },
+        { $setOnInsert: preset },
+        { upsert: true }
+      );
+    }
+    console.log('✅ Synchronized official tactics successfully!');
   } catch (err) {
     console.error('Error during database seeding:', err);
   }
@@ -248,6 +294,7 @@ app.get('/api/data', async (req, res) => {
       const players = await Player.find().select('-passwordHash').sort({ number: 1 });
       const matches = await Match.find().sort({ createdAt: -1 });
       const moments = await Moment.find().sort({ date: -1, createdAt: -1 });
+      const tactics = await Tactic.find().sort({ updatedAt: -1, createdAt: -1 });
 
       return res.json({
         teamInfo: {
@@ -258,7 +305,8 @@ app.get('/api/data', async (req, res) => {
         },
         players,
         matches,
-        moments
+        moments,
+        tactics
       });
     }
 
@@ -367,6 +415,7 @@ app.use('/api/ai', createAiRouter());
 app.use('/api/live-match', createLiveMatchRouter(routeContext));
 app.use('/api/moments', createMomentsRouter(routeContext));
 app.use('/api/weather', createWeatherRouter());
+app.use('/api/tactics', createTacticsRouter(routeContext));
 
 // =========================================================================
 // STATIC ASSETS & COMPATIBILITY ROUTES

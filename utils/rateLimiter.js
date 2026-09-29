@@ -80,11 +80,19 @@ const avatarRateLimiter = createRateLimiter({
   message: 'Bạn đã cập nhật ảnh đại diện quá nhiều lần liên tiếp! Vui lòng thử lại sau 10 phút.'
 });
 
+// 6. Rate limiter cho tạo/sửa chiến thuật (Tối đa 15 lần trong 5 phút)
+const tacticRateLimiter = createRateLimiter({
+  windowMs: 5 * 60 * 1000,
+  max: 15,
+  message: 'Bạn đã lưu quá nhiều bài chiến thuật liên tiếp! Vui lòng chờ ít phút.'
+});
+
 module.exports = {
   createRateLimiter,
   loginRateLimiter,
   aiRateLimiter,
   commentRateLimiter,
   reactionRateLimiter,
-  avatarRateLimiter
+  avatarRateLimiter,
+  tacticRateLimiter
 };

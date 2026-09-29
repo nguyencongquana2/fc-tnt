@@ -118,6 +118,7 @@
   <link rel="stylesheet" href="css/moments.css?v=4.5">
   <link rel="stylesheet" href="css/finance.css?v=4.5">
   <link rel="stylesheet" href="css/weather.css?v=4.5">
+  <link rel="stylesheet" href="css/tactics.css?v=4.6">
   <link rel="stylesheet" href="css/effects.css?v=4.5">
   <link rel="stylesheet" href="css/responsive.css?v=4.5">
 
@@ -215,6 +216,9 @@
         </button>
         <button class="tab-btn" data-tab="matches" id="tab-btn-matches" title="Lịch sử trận đấu">
           ⚽ <span>Trận Đấu & Chấm Điểm</span>
+        </button>
+        <button class="tab-btn" data-tab="tactics" id="tab-btn-tactics" title="Sa bàn chiến thuật & Playbook">
+          📋 <span>Sa Bàn</span>
         </button>
         <button class="tab-btn" data-tab="weather" id="tab-btn-weather"
           title="Dự báo thời tiết 7 ngày & AI thẩm định mặt sân AKKA">
@@ -479,6 +483,167 @@
       </div>
 
       <div id="matches-list-container" class="matches-list"></div>
+    </section>
+
+    <!-- TAB: SA BÀN CHIẾN THUẬT SÂN 7 & THẢO LUẬN ĐỘI BÓNG -->
+    <section id="tab-tactics" class="tab-content">
+      <!-- Header bar -->
+      <div class="tactics-header-bar">
+        <div class="tactics-title-group">
+          <h2 id="active-tactic-title-display">📋 Bảng Sa Bàn Chiến Thuật Sân 7 & Thảo Luận Thực Chiến</h2>
+          <p id="active-tactic-desc-display">Kéo thả vị trí 14 cầu thủ + bóng, vẽ mũi tên chạy chỗ, đường chuyền và thống nhất bài đánh trước trận</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="window.tacticsModule.exportTacticImage()" title="Tải ảnh sa bàn HD & copy ảnh gửi vào nhóm Zalo">
+            📸 Xuất Ảnh HD
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.tacticsModule.resetBoard()" title="Đặt lại vị trí xuất phát">
+            🔄 Đặt Lại Cờ
+          </button>
+          <button class="btn btn-emerald" onclick="window.tacticsModule.openSaveModal()" title="Lưu bài phối hợp này vào kho Playbook">
+            💾 Lưu Kịch Bản
+          </button>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="tactics-toolbar">
+        <button type="button" class="tactics-tool-btn active" data-mode="select" title="Kéo thả di chuyển cầu thủ và bóng">
+          👆 <span>Di Chuyển</span>
+        </button>
+        <button type="button" class="tactics-tool-btn" data-mode="arrow" title="Vẽ mũi tên chạy chỗ thẳng, pressing">
+          🏹 <span>Chạy Thẳng</span>
+        </button>
+        <button type="button" class="tactics-tool-btn" data-mode="curve" title="Vẽ mũi tên uốn lượn chạy vòng lưng đối phương">
+          ↪️ <span>Uốn Lượn</span>
+        </button>
+        <button type="button" class="tactics-tool-btn" data-mode="pass" title="Vẽ đường nét đứt chuyền bóng, ban bật">
+          〰️ <span>Đường Chuyền</span>
+        </button>
+        <button type="button" class="tactics-tool-btn" data-mode="zone" title="Khoanh vùng khoảng trống, bẫy chiến thuật">
+          ⭕ <span>Khoanh Vùng</span>
+        </button>
+        <button type="button" class="tactics-tool-btn" data-mode="text" title="Gắn nhãn chữ chú thích trực tiếp lên sân">
+          🏷️ <span>Ghi Chú</span>
+        </button>
+
+        <!-- Color Palette -->
+        <div class="color-picker-group">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Màu:</span>
+          <div class="color-dot active" data-color="#10b981" style="background: #10b981;" title="Xanh Ngọc Lục Bảo"></div>
+          <div class="color-dot" data-color="#f59e0b" style="background: #f59e0b;" title="Vàng Hổ Phách"></div>
+          <div class="color-dot" data-color="#ef4444" style="background: #ef4444;" title="Đỏ Rực"></div>
+          <div class="color-dot" data-color="#38bdf8" style="background: #38bdf8;" title="Xanh Da Trời"></div>
+          <div class="color-dot" data-color="#ffffff" style="background: #ffffff;" title="Trắng"></div>
+        </div>
+
+        <!-- Quick Formations -->
+        <div class="tactics-formation-wrapper" title="Chuyển nhanh sơ đồ đội hình Đội Nhà">
+          <span style="font-size: 0.72rem; color: var(--text-muted);">🟢 Nhà:</span>
+          <select id="tactics-home-formation" class="tactics-formation-select">
+            <option value="3-1-2" selected>3-1-2 (Phủi)</option>
+            <option value="2-3-1">2-3-1 (Kiểm soát)</option>
+            <option value="3-2-1">3-2-1 (Phòng ngự)</option>
+          </select>
+        </div>
+
+        <div class="tactics-formation-wrapper" title="Chuyển nhanh sơ đồ đội hình Đội Bạn">
+          <span style="font-size: 0.72rem; color: var(--text-muted);">🔴 Bạn:</span>
+          <select id="tactics-away-formation" class="tactics-formation-select">
+            <option value="3-2-1" selected>3-2-1 (Thủ cắm)</option>
+            <option value="2-3-1">2-3-1 (Pressing)</option>
+            <option value="3-1-2">3-1-2 (Cân bằng)</option>
+          </select>
+        </div>
+
+        <!-- Action Tools -->
+        <div style="margin-left: auto; display: flex; gap: 0.35rem; align-items: center;">
+          <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.undo()" title="Hoàn tác nét vẽ gần nhất">
+            ↩️ <span>Hoàn Tác</span>
+          </button>
+          <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.redo()" title="Khôi phục nét vừa xóa">
+            ↪️ <span>Làm Lại</span>
+          </button>
+          <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.clearDrawings()" title="Xóa toàn bộ nét vẽ">
+            🧽 <span>Xóa Nét</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Tactics Layout (Pitch + Sidebar) -->
+      <div class="tactics-layout">
+        <!-- Left: Interactive Pitch -->
+        <div class="tactics-pitch-container">
+          <div class="tactics-pitch-wrapper" id="tactics-pitch-wrapper">
+            <!-- Thảm cỏ sọc -->
+            <div class="tactics-pitch-grass"></div>
+
+            <!-- Vạch sơn sân 7 chuẩn -->
+            <div class="tactics-pitch-markings">
+              <div class="pitch-center-line"></div>
+              <div class="pitch-center-circle"></div>
+              <div class="pitch-center-spot"></div>
+
+              <div class="pitch-box-left"></div>
+              <div class="pitch-penalty-left"></div>
+              <div class="pitch-goal-left"></div>
+
+              <div class="pitch-box-right"></div>
+              <div class="pitch-penalty-right"></div>
+              <div class="pitch-goal-right"></div>
+            </div>
+
+            <!-- Canvas vẽ đè lên mặt sân -->
+            <canvas id="tactics-canvas-overlay" class="tactics-canvas-overlay"></canvas>
+
+            <!-- Lớp quân cờ kéo thả -->
+            <div id="tactics-pieces-container" class="tactics-pieces-container"></div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; font-size: 0.75rem; color: var(--text-muted);">
+            <span>💡 <strong>Mẹo:</strong> Kéo thả quân cờ bằng chuột hoặc ngón tay. <strong>Chạm đúp (hoặc giữ lâu)</strong> vào quân cờ để đổi tên & số áo hoặc chọn cầu thủ FC TNT.</span>
+            <span>⚡ Đồng bộ phòng họp chiến thuật trực tiếp: <strong>Realtime Socket.IO</strong></span>
+          </div>
+        </div>
+
+        <!-- Right: Playbook Library & Discussion -->
+        <div class="tactics-sidebar">
+          <!-- Playbook Scenarios Card -->
+          <div class="tactics-playbook-card">
+            <h3>
+              <span>📚 Kho Bài Tập Mẫu</span>
+              <button class="btn btn-secondary btn-sm" onclick="window.tacticsModule.openSaveModal()" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">+ Tạo Mới</button>
+            </h3>
+
+            <!-- Bộ lọc bài tập mẫu -->
+            <div class="playbook-filter-tabs" id="playbook-filter-tabs">
+              <button type="button" class="playbook-filter-btn active" data-filter="all">Tất Cả</button>
+              <button type="button" class="playbook-filter-btn" data-filter="corner">Phạt Góc</button>
+              <button type="button" class="playbook-filter-btn" data-filter="throw_in">Ném Biên</button>
+              <button type="button" class="playbook-filter-btn" data-filter="freekick">Đá Phạt</button>
+              <button type="button" class="playbook-filter-btn" data-filter="pressing_escape">Thoát Press</button>
+              <button type="button" class="playbook-filter-btn" data-filter="attack">Tấn Công</button>
+              <button type="button" class="playbook-filter-btn" data-filter="defense">Phòng Ngự</button>
+            </div>
+
+            <div id="tactics-playbook-list" class="playbook-list"></div>
+          </div>
+
+          <!-- Tactics Discussion Box -->
+          <div class="tactics-discussion-box">
+            <h4 style="font-size: 0.95rem; color: #fff; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+              <span>💬 Thảo Luận & Góp Ý</span>
+              <span id="tactic-comments-count" style="font-size: 0.8rem; color: var(--text-muted);">(0)</span>
+            </h4>
+            <div id="tactic-comments-container" class="discussion-comments-list"></div>
+
+            <form id="tactic-comment-form" style="display: flex; gap: 0.4rem;">
+              <input type="text" id="tactic-comment-input" class="form-control" placeholder="Viết góp ý về bài chiến thuật này..." style="font-size: 0.82rem; padding: 0.4rem 0.6rem;" required autocomplete="off">
+              <button type="submit" class="btn btn-emerald btn-sm" style="white-space: nowrap;">Gửi</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- TAB 4: DANH SÁCH CẦU THỦ -->
@@ -2105,8 +2270,81 @@
   <!-- Toast Notification Hub -->
   <div class="toast-container" id="toast-container"></div>
 
+  <!-- Modal Lưu Kịch Bản Chiến Thuật -->
+  <!-- Modal Lưu Kịch Bản Chiến Thuật -->
+  <div class="modal-overlay" id="save-tactic-modal" onclick="if(event.target === this) window.tacticsModule.closeSaveModal()">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">💾 Lưu Kịch Bản Sa Bàn Chiến Thuật</h3>
+        <button type="button" class="modal-close-btn" onclick="window.tacticsModule.closeSaveModal()">&times;</button>
+      </div>
+      <form id="save-tactic-form">
+        <div class="modal-body tactic-save-modal-body">
+          <div class="form-group">
+            <label class="form-label" for="save-tactic-title">Tên kịch bản chiến thuật *</label>
+            <input type="text" class="form-control" id="save-tactic-title" placeholder="VD: Phạt góc bài 2 - Treo bóng bổng cột xa..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="save-tactic-category">Phân loại tình huống</label>
+            <select class="form-control" id="save-tactic-category">
+              <option value="corner">🚩 Phạt góc (Corner Kick)</option>
+              <option value="throw_in">🤾 Ném biên (Throw-in)</option>
+              <option value="pressing_escape">🛡️ Thoát pressing sân nhà</option>
+              <option value="freekick">🎯 Đá phạt trực tiếp / gián tiếp</option>
+              <option value="attack">⚡ Tấn công & Phản công nhanh</option>
+              <option value="defense">🧱 Phòng ngự & Bọc lót khu vực</option>
+              <option value="custom" selected>⚽ Khác / Chiến thuật tự do</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="save-tactic-desc">Mô tả ý đồ & hướng dẫn di chuyển</label>
+            <textarea class="form-control" id="save-tactic-desc" rows="3" placeholder="Ghi chú chi tiết cho anh em: ai chạy chỗ hút người, ai đón bóng hai, thời điểm ra chân..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="window.tacticsModule.closeSaveModal()">Hủy</button>
+          <button type="submit" class="btn btn-emerald">✓ Lưu Kịch Bản</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- Modal Đổi Tên / Số Áo Quân Cờ Sa Bàn -->
+  <div class="modal-overlay" id="edit-piece-modal" onclick="if(event.target === this) window.tacticsModule.closeEditPieceModal()">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="edit-piece-modal-title">✏️ Chỉnh Sửa Quân Cờ</h3>
+        <button type="button" class="modal-close-btn" onclick="window.tacticsModule.closeEditPieceModal()">&times;</button>
+      </div>
+      <form id="edit-piece-form">
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 0.9rem;">
+          <div id="quick-pick-squad-group" class="form-group">
+            <label class="form-label" for="edit-piece-squad-select">Chọn nhanh cầu thủ FC TNT</label>
+            <select class="form-control" id="edit-piece-squad-select">
+              <option value="">-- Chọn từ danh sách đội bóng --</option>
+            </select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label" for="edit-piece-number">Số áo *</label>
+              <input type="text" class="form-control" id="edit-piece-number" maxlength="4" placeholder="VD: 5" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-piece-name">Tên hiển thị *</label>
+              <input type="text" class="form-control" id="edit-piece-name" maxlength="24" placeholder="VD: Văn Quân" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="window.tacticsModule.closeEditPieceModal()">Hủy</button>
+          <button type="submit" class="btn btn-emerald">✓ Lưu Thay Đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Shared Utilities & Constants (SSOT) -->
   <script src="utils/officialPlayers.js?v=4.6"></script>
+  <script src="utils/officialTactics.js?v=4.6"></script>
   <script src="utils/playerAliases.js?v=4.6"></script>
   <script src="utils/validators.js?v=4.7"></script>
   <!-- Javascript Modules & Core Architecture -->
@@ -2126,6 +2364,7 @@
   <script src="js/awards.js?v=4.3"></script>
   <script src="js/poster.js?v=4.3"></script>
   <script src="js/moments.js?v=4.3"></script>
+  <script src="js/tactics.js?v=4.6"></script>
   <script src="js/weather.js?v=4.3"></script>
   <script src="js/splash.js?v=4.3"></script>
   <script src="js/effects.js?v=4.3"></script>
