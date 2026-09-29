@@ -33,10 +33,23 @@ const DEFAULT_DATA = {
 };
 
 const ADMIN_AUTH_KEY = 'fc_tnt_admin_token';
+const PLAYER_AUTH_KEY = 'fc_tnt_player_token_v1';
+const PLAYER_PROFILE_KEY = 'fc_tnt_player_profile_v1';
 
 class StateManager {
   constructor() {
     this.isAdmin = !!sessionStorage.getItem(ADMIN_AUTH_KEY) || !!localStorage.getItem(ADMIN_AUTH_KEY);
+    this.playerToken = localStorage.getItem(PLAYER_AUTH_KEY) || sessionStorage.getItem(PLAYER_AUTH_KEY) || '';
+    this.currentPlayer = null;
+    try {
+      const savedProfile = localStorage.getItem(PLAYER_PROFILE_KEY) || sessionStorage.getItem(PLAYER_PROFILE_KEY);
+      if (savedProfile) {
+        this.currentPlayer = JSON.parse(savedProfile);
+      }
+    } catch (e) {
+      console.warn('[State] Không thể nạp profile cầu thủ từ bộ nhớ tạm:', e.message);
+    }
+
     this.data = this.loadData();
     this.listeners = [];
     this.isServerSynced = false;
@@ -151,6 +164,208 @@ class StateManager {
     this.notify();
   }
 
+  // =========================================================================
+  // XÁC THỰC & QUẢN LÝ TÀI KHOẢN THÀNH VIÊN (MEMBER AUTH METHODS)
+  // =========================================================================
+
+  getPlayerToken() {
+    return this.playerToken || localStorage.getItem(PLAYER_AUTH_KEY) || sessionStorage.getItem(PLAYER_AUTH_KEY) || '';
+  }
+
+  isPlayerLoggedIn() {
+    return Boolean(this.currentPlayer && this.getPlayerToken());
+  }
+
+  async loginPlayer(username, password, remember = true) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/player/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        this.playerToken = data.token;
+        this.currentPlayer = data.player;
+
+        if (remember) {
+          localStorage.setItem(PLAYER_AUTH_KEY, data.token);
+          localStorage.setItem(PLAYER_PROFILE_KEY, JSON.stringify(data.player));
+        } else {
+          sessionStorage.setItem(PLAYER_AUTH_KEY, data.token);
+          sessionStorage.setItem(PLAYER_PROFILE_KEY, JSON.stringify(data.player));
+        }
+
+        // Cập nhật lại trong danh sách players bộ nhớ nếu có
+        if (this.data && Array.isArray(this.data.players)) {
+          const idx = this.data.players.findIndex(p => p.id === data.player.id);
+          if (idx !== -1) {
+            this.data.players[idx] = { ...this.data.players[idx], ...data.player };
+          }
+        }
+
+        this.notify();
+        return {
+          success: true,
+          player: data.player,
+          mustChangePassword: Boolean(data.mustChangePassword),
+          message: data.message
+        };
+      } else {
+        return { success: false, error: data.error || 'Đăng nhập không thành công!' };
+      }
+    } catch (err) {
+      console.warn('[State] Player login error:', err.message);
+      return { success: false, error: 'Không thể kết nối máy chủ để xác thực!' };
+    }
+  }
+
+  logoutPlayer() {
+    this.currentPlayer = null;
+    this.playerToken = '';
+    localStorage.removeItem(PLAYER_AUTH_KEY);
+    localStorage.removeItem(PLAYER_PROFILE_KEY);
+    sessionStorage.removeItem(PLAYER_AUTH_KEY);
+    sessionStorage.removeItem(PLAYER_PROFILE_KEY);
+    this.notify();
+  }
+
+  async changePlayerPassword(currentPassword, newPassword) {
+    try {
+      const token = this.getPlayerToken();
+      if (!token) return { success: false, error: 'Bạn chưa đăng nhập tài khoản thành viên!' };
+
+      const res = await fetch(`${API_BASE}/auth/player/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-player-token': token
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        if (this.currentPlayer) {
+          this.currentPlayer.mustChangePassword = false;
+          const storage = localStorage.getItem(PLAYER_AUTH_KEY) ? localStorage : sessionStorage;
+          storage.setItem(PLAYER_PROFILE_KEY, JSON.stringify(this.currentPlayer));
+        }
+        this.notify();
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, error: data.error || 'Đổi mật khẩu thất bại!' };
+      }
+    } catch (err) {
+      console.warn('[State] Change password error:', err.message);
+      return { success: false, error: 'Không thể kết nối máy chủ để đổi mật khẩu!' };
+    }
+  }
+
+  async updatePlayerProfile(updates) {
+    try {
+      const token = this.getPlayerToken();
+      if (!token) return { success: false, error: 'Bạn chưa đăng nhập tài khoản thành viên!' };
+
+      const res = await fetch(`${API_BASE}/auth/player/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-player-token': token
+        },
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        this.currentPlayer = data.player;
+        const storage = localStorage.getItem(PLAYER_AUTH_KEY) ? localStorage : sessionStorage;
+        storage.setItem(PLAYER_PROFILE_KEY, JSON.stringify(data.player));
+
+        if (this.data && Array.isArray(this.data.players)) {
+          const idx = this.data.players.findIndex(p => p.id === data.player.id);
+          if (idx !== -1) {
+            this.data.players[idx] = { ...this.data.players[idx], ...data.player };
+            this.saveData(this.data);
+          }
+        }
+
+        this.notify();
+        return { success: true, player: data.player, message: data.message };
+      } else {
+        return { success: false, error: data.error || 'Cập nhật thông tin thất bại!' };
+      }
+    } catch (err) {
+      console.warn('[State] Update profile error:', err.message);
+      return { success: false, error: 'Không thể kết nối máy chủ để cập nhật hồ sơ!' };
+    }
+  }
+
+  async provisionPlayer(playerId, username, tempPassword) {
+    try {
+      const adminToken = this.getAdminToken();
+      if (!adminToken) return { success: false, error: 'Yêu cầu quyền Quản trị viên!' };
+
+      const res = await fetch(`${API_BASE}/auth/player/provision`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': adminToken
+        },
+        body: JSON.stringify({ playerId, username, tempPassword })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        if (this.data && Array.isArray(this.data.players)) {
+          const idx = this.data.players.findIndex(p => p.id === playerId);
+          if (idx !== -1) {
+            this.data.players[idx] = { ...this.data.players[idx], ...data.player };
+            this.saveData(this.data);
+          }
+        }
+        this.notify();
+        return {
+          success: true,
+          player: data.player,
+          shareText: data.shareText,
+          message: data.message
+        };
+      } else {
+        return { success: false, error: data.error || 'Cấp tài khoản thất bại!' };
+      }
+    } catch (err) {
+      console.warn('[State] Provision player error:', err.message);
+      return { success: false, error: 'Không thể kết nối máy chủ để cấp tài khoản!' };
+    }
+  }
+
+  async restorePlayerSession() {
+    const token = this.getPlayerToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/player/me`, {
+        headers: { 'x-player-token': token }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.player) {
+          this.currentPlayer = data.player;
+          const storage = localStorage.getItem(PLAYER_AUTH_KEY) ? localStorage : sessionStorage;
+          storage.setItem(PLAYER_PROFILE_KEY, JSON.stringify(data.player));
+          this.notify();
+        }
+      } else if (res.status === 401) {
+        // Token hết hạn
+        this.logoutPlayer();
+      }
+    } catch (err) {
+      console.warn('[State] Không thể xác thực lại phiên thành viên:', err.message);
+    }
+  }
+
   loadData() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('fc_stats_master_data_v4');
@@ -224,6 +439,7 @@ class StateManager {
         if (!isSilent) {
           console.log('🌿 Đã đồng bộ dữ liệu thành công từ MongoDB Server!');
         }
+        await this.restorePlayerSession();
       }
     } catch (err) {
       console.warn('Backend API offline or unreachable, using local storage cache.');

@@ -87,8 +87,8 @@ FC-TNT/
 
 ### `routes/` (Bộ Định Tuyến API Backend)
 Tách rời các endpoint từ `server.js` thành các module độc lập theo miền nghiệp vụ:
-- `auth.js`: Xác thực mã PIN quản trị (`/api/auth/login`), đổi PIN (`/api/auth/change-pin`), kiểm tra token (`/api/auth/check`) và middleware `requireAdmin`.
-- `players.js`: Quản lý danh sách cầu thủ (`/api/players`), thêm/sửa/xóa cầu thủ và cập nhật avatar tự do.
+- `auth.js`: Xác thực mã PIN quản trị (`/api/auth/login`), đổi PIN (`/api/auth/change-pin`), kiểm tra token (`/api/auth/check`) và middleware `requireAdmin`. Đồng thời quản lý hệ thống tài khoản thành viên: đăng nhập cầu thủ (`/api/auth/player/login`), đổi mật khẩu (`/api/auth/player/change-password`), Admin cấp tài khoản khởi tạo (`/api/auth/player/provision`), lấy thông tin cá nhân (`/api/auth/player/me`) và cập nhật hồ sơ (`/api/auth/player/profile`).
+- `players.js`: Quản lý danh sách cầu thủ (`/api/players`), thêm/sửa/xóa cầu thủ và cập nhật avatar tự do (tự động loại trừ `passwordHash` khi trả về danh sách công khai).
 - `matches.js`: Lịch sử trận đấu (`/api/matches`) và quản lý thu chi/quỹ trận sân bóng.
 - `ai.js`: AI chấm điểm phong độ & viết nhận xét cá nhân hóa bằng Gemini API kết hợp NLP (`/api/ai/rate-match`).
 - `liveMatch.js`: Đồng bộ trạng thái bản nháp trận đấu Live đa thiết bị qua Socket.IO (`/api/live-match/*`).
@@ -97,7 +97,7 @@ Tách rời các endpoint từ `server.js` thành các module độc lập theo 
 
 ### `models/` (Dữ liệu & Mongoose Schemas)
 Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
-- `Player.js`: Hồ sơ cầu thủ (họ tên, biệt danh, số áo, vị trí, ảnh đại diện, thông tin ngân hàng VietQR).
+- `Player.js`: Hồ sơ cầu thủ (họ tên, biệt danh, số áo, vị trí, ảnh đại diện, thông tin ngân hàng VietQR) và hệ thống tài khoản thành viên (`username`, `passwordHash` PBKDF2, `mustChangePassword`, `role`, `accountStatus`, `preferredFoot`, `height`, `weight`, `bio`, `lastLogin`).
 - `Match.js`: Chi tiết trận đấu (ngày giờ, đối thủ, sân đấu, sơ đồ sân 7, bàn thắng, kiến tạo, điểm rating, MOTM, chi phí trận).
 - `LiveMatchDraft.js`: Lưu trữ trạng thái tạm thời của trận đấu đang live/chưa kết thúc để đồng bộ thời gian thực.
 - `Moment.js`: Dữ liệu bài đăng kỷ niệm đội bóng (tiêu đề, hình ảnh, video, danh sách gắn thẻ, biểu cảm reactions, bình luận).
@@ -106,8 +106,8 @@ Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
 ### `js/` (Logic Xử Lý Phía Client)
 Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
 - `core.js`: [Decoupling & Clean Architecture] Cung cấp không gian tên tập trung `window.TNT` cùng Event Bus nội bộ (`TNT.events`), áp dụng mẫu Service Locator & Mediator Pattern. Giải quyết triệt để vấn đề Tight Coupling (liên kết chặt chẽ) giữa các module qua biến toàn cục tự do, đồng thời duy trì khả năng tương thích ngược hoàn hảo.
-- `state.js`: Quản lý state tập trung (`APP_STATE`), tiện ích khử độc XSS (`window.escapeHtml`), xử lý xác thực/token Admin, hàm gọi API chung (`apiCall`), bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
-- `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính (Dashboard, Awards, Matches, Weather, Moments, Players), điều khiển modal và toast thông báo.
+- `state.js`: Quản lý state tập trung (`APP_STATE`), tiện ích khử độc XSS (`window.escapeHtml`), xử lý xác thực song song (Admin PIN & Tài khoản Thành viên PBKDF2 Token), hàm gọi API chung, bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
+- `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính, điều khiển modal đăng nhập thành viên, modal hồ sơ cá nhân (My Profile Hub), modal đổi mật khẩu và toast thông báo.
 - `matches.js` & `matches/`: [Mô-đun hoá] Quản lý toàn bộ nghiệp vụ trận đấu, được điều phối qua facade `matches.js` và phân tách thành các submodule:
   - `matches/matches-list.js`: Quản lý danh sách trận, hiển thị chi tiết, tạo/sửa trận và xác thực PIN an toàn khi xóa.
   - `matches/matches-pitch.js`: Sa bàn chiến thuật sân 7 Sofascore (3-1-2), engine kéo-thả (Drag & Drop) và Quick Edit điểm số.

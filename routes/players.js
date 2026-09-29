@@ -15,10 +15,15 @@ function createPlayersRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   router.get('/', async (req, res) => {
     try {
       if (isMongoConnected()) {
-        const players = await Player.find().sort({ number: 1 });
+        const players = await Player.find().select('-passwordHash').sort({ number: 1 });
         return res.json(players);
       }
-      res.json(fallbackData.players);
+      const safePlayers = (fallbackData.players || []).map(p => {
+        const copy = { ...p };
+        delete copy.passwordHash;
+        return copy;
+      });
+      res.json(safePlayers);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

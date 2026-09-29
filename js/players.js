@@ -18,6 +18,55 @@ window.playersModule = {
     }
 
     const form = document.getElementById('player-form');
+    
+    // Xử lý cấp tài khoản thành viên của Admin
+    const provisionForm = document.getElementById('admin-provision-form');
+    if (provisionForm) {
+      provisionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const playerId = document.getElementById('provision-player-id')?.value;
+        const username = document.getElementById('provision-username')?.value.trim();
+        const tempPassword = document.getElementById('provision-password')?.value.trim();
+        const errorEl = document.getElementById('provision-error');
+        const resultCard = document.getElementById('provision-result-card');
+        const shareTextarea = document.getElementById('provision-share-text');
+        const submitBtn = document.getElementById('provision-submit-btn');
+
+        if (errorEl) errorEl.innerText = '';
+        if (resultCard) resultCard.style.display = 'none';
+
+        if (!username || !tempPassword) {
+          if (errorEl) errorEl.innerText = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!';
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerText = '⏳ Đang cấp...';
+        }
+
+        const res = await window.stateManager.provisionPlayer(playerId, username, tempPassword);
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = '⚡ Cấp Tài Khoản';
+        }
+
+        if (res.success) {
+          window.showToast('🎉 ' + res.message);
+          if (resultCard && shareTextarea) {
+            shareTextarea.value = res.shareText;
+            resultCard.style.display = 'block';
+          }
+          this.renderPlayers();
+          if (document.getElementById('player-profile-modal').classList.contains('active')) {
+            this.viewPlayerProfile(playerId);
+          }
+        } else {
+          if (errorEl) errorEl.innerText = res.error || 'Cấp tài khoản thất bại!';
+        }
+      });
+    }
     if (form) {
       form.addEventListener('submit', (e) => this.handleSavePlayer(e));
     }
@@ -237,6 +286,9 @@ window.playersModule = {
               <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới từ máy" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
                 📷 Đổi Ảnh
               </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openProvisionModal('${p.id}')" title="${p.username ? 'Đổi mật khẩu / tài khoản' : 'Cấp tài khoản thành viên'}" style="padding: 0.25rem 0.5rem; font-size: 0.78rem; color: var(--accent-gold);">
+                🔑 ${p.username ? 'Đổi MK' : 'Cấp TK'}
+              </button>
               <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openPlayerModal('${p.id}')" title="Chỉnh sửa thông tin" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
                 ✏️ Sửa
               </button>
@@ -383,6 +435,90 @@ window.playersModule = {
     }
   },
 
+
+  openProvisionModal(playerId) {
+    const player = window.stateManager.getPlayerById(playerId);
+    if (!player) return;
+
+    const modal = document.getElementById('admin-provision-modal');
+    const idInp = document.getElementById('provision-player-id');
+    const nameEl = document.getElementById('provision-player-name');
+    const avEl = document.getElementById('provision-player-avatar');
+    const stEl = document.getElementById('provision-player-status');
+    const userInp = document.getElementById('provision-username');
+    const passInp = document.getElementById('provision-password');
+    const errorEl = document.getElementById('provision-error');
+    const resultCard = document.getElementById('provision-result-card');
+
+    if (errorEl) errorEl.innerText = '';
+    if (resultCard) resultCard.style.display = 'none';
+    if (idInp) idInp.value = player.id;
+    if (nameEl) nameEl.innerText = player.name + ' (#' + (player.number !== undefined ? player.number : '-') + ')';
+    if (avEl) avEl.src = player.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+    if (stEl) {
+      stEl.innerText = player.username ? ('Trạng thái: Đã có tài khoản (@' + player.username + ')') : 'Trạng thái: Chưa cấp tài khoản';
+      stEl.style.color = player.username ? 'var(--accent-emerald)' : 'var(--text-muted)';
+    }
+
+    // Tự sinh username gợi ý nếu chưa có
+    if (userInp) {
+      if (player.username) {
+        userInp.value = player.username;
+      } else {
+        userInp.value = this.suggestUsername(player.name);
+      }
+    }
+
+    // Tự sinh mật khẩu khởi tạo ngẫu nhiên
+    if (passInp) {
+      passInp.value = 'TNT@' + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    if (modal) {
+      modal.classList.add('active');
+    }
+  },
+
+  generateRandomPassword() {
+    const passInp = document.getElementById('provision-password');
+    if (passInp) {
+      passInp.value = 'TNT@' + Math.floor(1000 + Math.random() * 9000);
+    }
+  },
+
+  suggestUsername(fullName) {
+    if (!fullName) return 'player' + Math.floor(100 + Math.random() * 900);
+    const clean = fullName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+      .toLowerCase()
+      .trim();
+    const parts = clean.split(/\s+/);
+    if (parts.length === 1) return parts[0];
+    const lastName = parts[parts.length - 1];
+    const initials = parts.slice(0, parts.length - 1).map(p => p[0]).join('');
+    return lastName + initials;
+  },
+
+  copyProvisionText() {
+    const shareTextarea = document.getElementById('provision-share-text');
+    const copyBtn = document.getElementById('provision-copy-btn');
+    if (!shareTextarea) return;
+
+    shareTextarea.select();
+    navigator.clipboard.writeText(shareTextarea.value).then(() => {
+      window.showToast('📋 Đã sao chép thông tin tài khoản! Giờ bạn có thể dán vào Zalo gửi cho anh em.');
+      if (copyBtn) {
+        const originalText = copyBtn.innerText;
+        copyBtn.innerText = '✅ Đã Sao Chép!';
+        setTimeout(() => copyBtn.innerText = originalText, 2500);
+      }
+    }).catch(() => {
+      window.showToast('Không thể sao chép tự động, vui lòng chọn văn bản và bấm Copy.', 'warning');
+    });
+  },
+
   viewPlayerProfile(id) {
     const player = window.stateManager.getPlayerById(id);
     if (!player) return;
@@ -420,6 +556,9 @@ window.playersModule = {
               📷 Đổi Ảnh
             </button>
             ${isAdmin ? `
+              <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openProvisionModal('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; color: var(--accent-gold);">
+                🔑 ${player.username ? 'Đổi Mật Khẩu TK' : 'Cấp Tài Khoản'}
+              </button>
               <button class="btn btn-secondary btn-sm" onclick="window.playersModule.closeProfileModal(); window.playersModule.openPlayerModal('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
                 ✏️ Sửa Thông Tin
               </button>

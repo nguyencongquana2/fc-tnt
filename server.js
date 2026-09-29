@@ -245,7 +245,7 @@ app.get('/api/data', async (req, res) => {
       if (!team) {
         team = { name: 'FC TNT', slogan: 'Đá hết mình - Thắng cùng mừng, Thua cùng uống', logo: '⚽' };
       }
-      const players = await Player.find().sort({ number: 1 });
+      const players = await Player.find().select('-passwordHash').sort({ number: 1 });
       const matches = await Match.find().sort({ createdAt: -1 });
       const moments = await Moment.find().sort({ date: -1, createdAt: -1 });
 
@@ -262,7 +262,16 @@ app.get('/api/data', async (req, res) => {
       });
     }
 
-    res.json(fallbackData);
+    const safeFallbackPlayers = (fallbackData.players || []).map(p => {
+      const copy = { ...p };
+      delete copy.passwordHash;
+      return copy;
+    });
+
+    res.json({
+      ...fallbackData,
+      players: safeFallbackPlayers
+    });
   } catch (err) {
     console.error('Error in GET /api/data:', err);
     res.json(fallbackData);

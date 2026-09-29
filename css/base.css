@@ -488,6 +488,19 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
+.auth-role-badge.player {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  cursor: pointer;
+}
+
+.auth-role-badge.player:hover {
+  background: rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
+}
+
 .auth-role-badge.admin {
   background: rgba(245, 158, 11, 0.15);
   color: #fbbf24;
