@@ -83,12 +83,46 @@ const allTacticsSocketLimiters = [
   tacticsPlaybookLimiter
 ];
 
+// Snapshot trạng thái phòng Sa bàn chiến thuật thời gian thực trong RAM (Room State Sync)
+function getDefaultTacticsPieces() {
+  return [
+    { id: 'home_gk', team: 'home', number: 8, name: 'Giang', role: 'GK', x: 6, y: 50 },
+    { id: 'home_df_l', team: 'home', number: 6, name: 'Vinh', role: 'DF', x: 26, y: 18 },
+    { id: 'home_df_c', team: 'home', number: 5, name: 'Quân', role: 'DF', x: 22, y: 50 },
+    { id: 'home_df_r', team: 'home', number: 10, name: 'Hùng', role: 'DF', x: 26, y: 82 },
+    { id: 'home_mf', team: 'home', number: 88, name: 'Thành Nam', role: 'MF', x: 42, y: 50 },
+    { id: 'home_fw_l', team: 'home', number: 7, name: 'Tài', role: 'FW', x: 65, y: 32 },
+    { id: 'home_fw_r', team: 'home', number: 24, name: 'Tố', role: 'FW', x: 65, y: 68 },
+    { id: 'away_gk', team: 'away', number: 'GK', name: 'GK Bạn', role: 'GK', x: 94, y: 50 },
+    { id: 'away_df_l', team: 'away', number: 2, name: 'HV Bạn 1', role: 'DF', x: 74, y: 22 },
+    { id: 'away_df_c', team: 'away', number: 4, name: 'Thòng Bạn', role: 'DF', x: 78, y: 50 },
+    { id: 'away_df_r', team: 'away', number: 3, name: 'HV Bạn 2', role: 'DF', x: 74, y: 78 },
+    { id: 'away_mf', team: 'away', number: 6, name: 'TV Bạn', role: 'MF', x: 58, y: 50 },
+    { id: 'away_fw_l', team: 'away', number: 9, name: 'TĐ Bạn 1', role: 'FW', x: 35, y: 32 },
+    { id: 'away_fw_r', team: 'away', number: 11, name: 'TĐ Bạn 2', role: 'FW', x: 35, y: 68 },
+    { id: 'ball', team: 'ball', number: '⚽', name: 'Bóng', role: 'ball', x: 50, y: 50 }
+  ];
+}
+
+const tacticsRoomSnapshot = {
+  pieces: getDefaultTacticsPieces(),
+  drawings: [],
+  hasCustomState: false
+};
+
 io.on('connection', (socket) => {
   console.log(`⚡ Realtime Client kết nối: ${socket.id}`);
 
   // Đồng bộ phòng sa bàn chiến thuật trực tiếp (Live Tactical Whiteboard Room)
   socket.on('join_tactics_room', () => {
     socket.join('tactics_room');
+    // Gửi Snapshot tức thời cho thành viên mới nếu sa bàn đã có thay đổi
+    if (tacticsRoomSnapshot.hasCustomState) {
+      socket.emit('tactics_room_snapshot', {
+        pieces: tacticsRoomSnapshot.pieces,
+        drawings: tacticsRoomSnapshot.drawings
+      });
+    }
   });
 
   socket.on('leave_tactics_room', () => {
@@ -109,6 +143,15 @@ io.on('connection', (socket) => {
       x: Math.max(0, Math.min(100, Math.round(x * 10) / 10)),
       y: Math.max(0, Math.min(100, Math.round(y * 10) / 10))
     };
+
+    if (tacticsRoomSnapshot.pieces) {
+      const p = tacticsRoomSnapshot.pieces.find(item => item.id === sanitized.id);
+      if (p) {
+        p.x = sanitized.x;
+        p.y = sanitized.y;
+        tacticsRoomSnapshot.hasCustomState = true;
+      }
+    }
 
     socket.to('tactics_room').emit('tactics_piece_moved', sanitized);
   });
@@ -138,7 +181,61 @@ io.on('connection', (socket) => {
       sanitized.text = typeof data.text === 'string' ? data.text.trim().slice(0, 80) : '';
     }
 
+    tacticsRoomSnapshot.drawings.push(sanitized);
+    tacticsRoomSnapshot.hasCustomState = true;
+    if (tacticsRoomSnapshot.drawings.length > 100) {
+      tacticsRoomSnapshot.drawings.shift();
+    }
+
     socket.to('tactics_room').emit('tactics_draw_added', sanitized);
+  });
+
+  // 2b. Hoàn tác nét vẽ (Undo) đồng bộ qua Socket
+  socket.on('tactics_draw_undo', () => {
+    if (!tacticsDrawLimiter.allow(socket.id)) return;
+    if (tacticsRoomSnapshot.drawings.length > 0) {
+      tacticsRoomSnapshot.drawings.pop();
+      tacticsRoomSnapshot.hasCustomState = true;
+    }
+    socket.to('tactics_room').emit('tactics_draw_undone');
+  });
+
+  // 2c. Làm lại nét vẽ (Redo) đồng bộ qua Socket
+  socket.on('tactics_draw_redo', (data) => {
+    if (!tacticsDrawLimiter.allow(socket.id)) return;
+    if (!data || typeof data !== 'object' || typeof data.id !== 'string') return;
+
+    const allowedTypes = ['arrow', 'curve', 'pass', 'pass_arrow', 'zone', 'text', 'freehand'];
+    const shapeType = allowedTypes.includes(data.type) ? data.type : 'arrow';
+
+    const sanitized = {
+      id: String(data.id).slice(0, 60),
+      type: shapeType,
+      color: typeof data.color === 'string' ? data.color.slice(0, 25) : '#10b981',
+      width: typeof data.width === 'number' ? Math.max(1, Math.min(10, data.width)) : 3,
+      points: Array.isArray(data.points)
+        ? data.points.slice(0, 100).map(pt => ({
+            x: Math.max(0, Math.min(100, Math.round((Number(pt.x) || 0) * 10) / 10)),
+            y: Math.max(0, Math.min(100, Math.round((Number(pt.y) || 0) * 10) / 10))
+          }))
+        : []
+    };
+
+    tacticsRoomSnapshot.drawings.push(sanitized);
+    tacticsRoomSnapshot.hasCustomState = true;
+    if (tacticsRoomSnapshot.drawings.length > 100) {
+      tacticsRoomSnapshot.drawings.shift();
+    }
+
+    socket.to('tactics_room').emit('tactics_draw_redone', sanitized);
+  });
+
+  // 2d. Xóa toàn bộ nét vẽ (Clear Drawings) đồng bộ qua Socket
+  socket.on('tactics_draw_clear', () => {
+    if (!tacticsResetLimiter.allow(socket.id)) return;
+    tacticsRoomSnapshot.drawings = [];
+    tacticsRoomSnapshot.hasCustomState = true;
+    socket.to('tactics_room').emit('tactics_draw_cleared');
   });
 
   // 3. Đặt lại sa bàn / chuyển sơ đồ chiến thuật (Giới hạn tối đa 4 lần/5s)
@@ -164,6 +261,16 @@ io.on('connection', (socket) => {
       }
     }
 
+    if (sanitized && sanitized.pieces) {
+      tacticsRoomSnapshot.pieces = sanitized.pieces;
+      tacticsRoomSnapshot.drawings = sanitized.drawings || [];
+      tacticsRoomSnapshot.hasCustomState = true;
+    } else {
+      tacticsRoomSnapshot.pieces = getDefaultTacticsPieces();
+      tacticsRoomSnapshot.drawings = [];
+      tacticsRoomSnapshot.hasCustomState = false;
+    }
+
     socket.to('tactics_room').emit('tactics_board_resetted', sanitized);
   });
 
@@ -186,6 +293,16 @@ io.on('connection', (socket) => {
     };
 
     if (!sanitized.name) return;
+
+    if (tacticsRoomSnapshot.pieces) {
+      const p = tacticsRoomSnapshot.pieces.find(item => item.id === sanitized.id);
+      if (p) {
+        p.name = sanitized.name;
+        p.number = sanitized.number;
+        tacticsRoomSnapshot.hasCustomState = true;
+      }
+    }
+
     socket.to('tactics_room').emit('tactics_piece_edited', sanitized);
   });
 

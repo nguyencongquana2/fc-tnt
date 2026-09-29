@@ -101,6 +101,14 @@ Object.assign(window.tacticsModule, {
       this.openMobileLandscape();
     }
 
+    // Đồng bộ bài chiến thuật vừa nạp cho toàn bộ phòng họp realtime
+    if (this.socket) {
+      this.socket.emit('tactics_board_reset', {
+        pieces: this.pieces,
+        drawings: this.drawings
+      });
+    }
+
     window.showToast(`📋 Đã mở chiến thuật: "${tactic.title}"`);
   },
 

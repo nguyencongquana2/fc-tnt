@@ -30,6 +30,47 @@ Object.assign(window.tacticsModule, {
         this.redrawCanvas();
       });
 
+      // Nhận Snapshot sa bàn tức thời khi vừa tham gia phòng
+      this.socket.on('tactics_room_snapshot', (snapshot) => {
+        if (!snapshot) return;
+        let hasChange = false;
+        if (Array.isArray(snapshot.pieces) && snapshot.pieces.length > 0) {
+          this.pieces = JSON.parse(JSON.stringify(snapshot.pieces));
+          this.renderPieces();
+          hasChange = true;
+        }
+        if (Array.isArray(snapshot.drawings) && snapshot.drawings.length > 0) {
+          this.drawings = JSON.parse(JSON.stringify(snapshot.drawings));
+          this.redoHistory = [];
+          this.redrawCanvas();
+          hasChange = true;
+        }
+        if (hasChange && window.showToast) {
+          window.showToast('📡 Đã đồng bộ sa bàn trực tiếp từ phòng chiến thuật!', 'info');
+        }
+      });
+
+      this.socket.on('tactics_draw_undone', () => {
+        if (this.drawings.length > 0) {
+          const popped = this.drawings.pop();
+          this.redoHistory.push(popped);
+          this.redrawCanvas();
+        }
+      });
+
+      this.socket.on('tactics_draw_redone', (shape) => {
+        if (shape) {
+          this.drawings.push(shape);
+          this.redrawCanvas();
+        }
+      });
+
+      this.socket.on('tactics_draw_cleared', () => {
+        this.drawings = [];
+        this.redoHistory = [];
+        this.redrawCanvas();
+      });
+
       this.socket.on('tactics_board_resetted', (remoteData) => {
         if (remoteData && remoteData.pieces) {
           this.pieces = remoteData.pieces;

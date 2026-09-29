@@ -288,6 +288,9 @@ Object.assign(window.tacticsModule, {
     const popped = this.drawings.pop();
     this.redoHistory.push(popped);
     this.redrawCanvas();
+    if (this.socket) {
+      this.socket.emit('tactics_draw_undo');
+    }
     window.showToast('↩️ Đã hoàn tác nét vẽ gần nhất');
   },
 
@@ -299,6 +302,9 @@ Object.assign(window.tacticsModule, {
     const restored = this.redoHistory.pop();
     this.drawings.push(restored);
     this.redrawCanvas();
+    if (this.socket) {
+      this.socket.emit('tactics_draw_redo', restored);
+    }
     window.showToast('↪️ Đã khôi phục lại nét vẽ');
   },
 
@@ -307,6 +313,9 @@ Object.assign(window.tacticsModule, {
     this.drawings = [];
     this.redoHistory = [];
     this.redrawCanvas();
+    if (this.socket) {
+      this.socket.emit('tactics_draw_clear');
+    }
     window.showToast('🧽 Đã làm sạch toàn bộ nét vẽ');
   }
 });
