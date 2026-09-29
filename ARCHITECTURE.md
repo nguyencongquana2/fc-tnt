@@ -37,7 +37,14 @@ FC-TNT/
 │   ├── core.js           # [Decoupling] Service Locator & Event Bus trung tâm (window.TNT)
 │   ├── app.js            # Điều hướng tab, modal, toast
 │   ├── state.js          # Quản lý state tập trung & socket realtime
-│   ├── tactics.js        # Sa bàn sân 7 canvas, kéo thả quân cờ, vẽ mũi tên & playbook realtime
+│   ├── tactics.js        # [Facade] Bộ điều phối trung tâm module sa bàn chiến thuật
+│   ├── tactics/          # [Mô-đun hoá] Phân tách nghiệp vụ sa bàn sân 7
+│   │   ├── tactics-screen.js      # Toàn màn hình (Fullscreen) & tự động xoay ngang 90° trên Mobile
+│   │   ├── tactics-canvas.js      # Canvas vector engine, math uốn lượn, mũi tên & rAF 60fps
+│   │   ├── tactics-pieces.js      # Quản lý 14 quân cờ, ma trận sơ đồ (3-1-2, 2-3-1, 3-2-1), kéo thả cảm ứng
+│   │   ├── tactics-export.js      # Xuất ảnh sa bàn 1600x900 nét cao & copy Zalo Clipboard
+│   │   ├── tactics-playbook.js    # Kho bài tập mẫu, bộ lọc danh mục, thảo luận & lưu kịch bản
+│   │   └── tactics-realtime.js    # Điều phối phòng họp Socket.IO trực tiếp
 │   ├── matches.js        # Bộ điều phối trung tâm (Facade) module trận đấu
 │   ├── matches/          # [Mô-đun hoá] Phân tách nghiệp vụ trận đấu chi tiết
 │   │   ├── matches-list.js        # Danh sách trận đấu, modal chi tiết & CRUD
@@ -115,7 +122,13 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
 - `core.js`: [Decoupling & Clean Architecture] Cung cấp không gian tên tập trung `window.TNT` cùng Event Bus nội bộ (`TNT.events`), áp dụng mẫu Service Locator & Mediator Pattern. Giải quyết triệt để vấn đề Tight Coupling (liên kết chặt chẽ) giữa các module qua biến toàn cục tự do, đồng thời duy trì khả năng tương thích ngược hoàn hảo.
 - `state.js`: Quản lý state tập trung (`APP_STATE`), tiện ích khử độc XSS (`window.escapeHtml`), xử lý xác thực song song (Admin PIN & Tài khoản Thành viên PBKDF2 Token), hàm gọi API chung, bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
 - `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính, điều khiển modal đăng nhập thành viên, modal hồ sơ cá nhân (My Profile Hub), modal đổi mật khẩu và toast thông báo.
-- `tactics.js`: Bảng sa bàn chiến thuật sân 7 tương tác HTML5 Canvas, engine kéo thả (Drag & Drop / Touch) cho 14 cầu thủ + bóng thi đấu, bộ công cụ vẽ mũi tên chạy chỗ / đường chuyền nét đứt / khoanh vùng, thư viện bài tập mẫu (Playbook Presets) và đồng bộ trực tiếp phòng họp qua Socket.IO.
+- `tactics.js` & `tactics/`: [Mô-đun hoá] Sa bàn chiến thuật sân 7 HTML5 Canvas, điều phối qua Facade trung tâm và phân tách thành 6 submodule chuyên biệt:
+  - `tactics/tactics-screen.js`: Bộ điều khiển toàn màn hình (Fullscreen) và tự động xoay ngang 90° trên điện thoại.
+  - `tactics/tactics-canvas.js`: Engine vẽ vector (mũi tên, đường chuyền nét đứt, uốn cong Bézier, khoanh vùng highlight, nhãn chữ), Undo/Redo và render đồng bộ 60fps qua `requestAnimationFrame`.
+  - `tactics/tactics-pieces.js`: Quản lý 14 quân cờ sân 7 + bóng, ma trận sơ đồ (3-1-2, 2-3-1, 3-2-1), kéo thả cảm ứng mượt mà (rAF & `touchcancel`), modal đổi tên/số áo.
+  - `tactics/tactics-export.js`: Engine xuất ảnh sa bàn 1600x900 nét cao, gắn Watermark FC TNT và tự động copy vào Clipboard để gửi nhanh Zalo.
+  - `tactics/tactics-playbook.js`: Kho kịch bản bài tập mẫu, bộ lọc danh mục, thảo luận góp ý, thả tim và modal lưu bài tập mới.
+  - `tactics/tactics-realtime.js`: Điều phối phòng họp chiến thuật trực tiếp qua Socket.IO, tự động vào/rời phòng theo tab để tiết kiệm tài nguyên.
 - `matches.js` & `matches/`: [Mô-đun hoá] Quản lý toàn bộ nghiệp vụ trận đấu, được điều phối qua facade `matches.js` và phân tách thành các submodule:
   - `matches/matches-list.js`: Quản lý danh sách trận, hiển thị chi tiết, tạo/sửa trận và xác thực PIN an toàn khi xóa.
   - `matches/matches-pitch.js`: Sa bàn chiến thuật sân 7 Sofascore (3-1-2), engine kéo-thả (Drag & Drop) và Quick Edit điểm số.
