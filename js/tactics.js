@@ -375,23 +375,13 @@ window.tacticsModule = {
       container.classList.add('is-fullscreen');
       document.body.classList.add('no-scroll');
 
-      // Kích hoạt HTML5 Native Fullscreen nếu có (ẩn thanh công cụ trình duyệt & taskbar máy tính)
+      // Kích hoạt HTML5 Native Fullscreen nếu có (ẩn thanh URL trình duyệt & taskbar máy tính)
       try {
         if (!document.fullscreenElement && container.requestFullscreen) {
           container.requestFullscreen().catch(() => {});
         }
       } catch (e) {
-        // Bỏ qua nếu bị chính sách trình duyệt chặn
-      }
-
-      // Trên màn hình điện thoại dọc: tự động kích hoạt xoay ngang 90 độ
-      const isMobilePortrait = window.innerWidth <= 768 && window.innerHeight > window.innerWidth;
-      if (isMobilePortrait) {
-        this.isRotated = true;
-        container.classList.add('is-rotated');
-      } else {
-        this.isRotated = false;
-        container.classList.remove('is-rotated');
+        console.warn('[Tactics] requestFullscreen failed:', e.message);
       }
 
       // Tự động xoay sang landscape trên thiết bị hỗ trợ Screen Orientation API
@@ -400,7 +390,7 @@ window.tacticsModule = {
           screen.orientation.lock('landscape').catch(() => {});
         }
       } catch (e) {
-        // Không hỗ trợ hoặc bị chặn bởi user gesture
+        console.warn('[Tactics] orientation.lock not supported or blocked');
       }
     } else {
       // Thoát Native Fullscreen nếu đang bật
@@ -409,12 +399,10 @@ window.tacticsModule = {
           document.exitFullscreen().catch(() => {});
         }
       } catch (e) {
-        // Bỏ qua
+        console.warn('[Tactics] exitFullscreen failed:', e.message);
       }
 
       container.classList.remove('is-fullscreen');
-      container.classList.remove('is-rotated');
-      this.isRotated = false;
       document.body.classList.remove('no-scroll');
 
       // Khôi phục container về lại đúng vị trí ban đầu trong giao diện
@@ -429,17 +417,17 @@ window.tacticsModule = {
           screen.orientation.unlock();
         }
       } catch (e) {
-        // Bỏ qua
+        console.warn('[Tactics] orientation.unlock error');
       }
     }
 
-    // Cập nhật text nút ngoài toolbar
+    // Cập nhật text nút ngoài toolbar nếu có
     const fsBtn = document.querySelector('.tactics-fullscreen-btn span');
     if (fsBtn) {
       fsBtn.textContent = this.isFullscreen ? 'Thu Nhỏ' : 'Toàn Màn Hình';
     }
 
-    // Đồng bộ lại kích thước canvas để tọa độ nét vẽ & quân cờ không bị lệch
+    // Đồng bộ lại kích thước canvas để tọa độ nét vẽ & quân cờ luôn chính xác
     setTimeout(() => {
       this.initCanvas();
     }, 100);
@@ -448,26 +436,8 @@ window.tacticsModule = {
     }, 300);
   },
 
-  toggleRotation() {
-    const container = document.getElementById('tactics-pitch-container');
-    if (!container || !this.isFullscreen) return;
-    this.isRotated = !this.isRotated;
-    container.classList.toggle('is-rotated', this.isRotated);
-    setTimeout(() => {
-      this.initCanvas();
-    }, 150);
-  },
-
   openMobileLandscape() {
     this.toggleFullscreen(true);
-    this.isRotated = true;
-    const container = document.getElementById('tactics-pitch-container');
-    if (container) {
-      container.classList.add('is-rotated');
-    }
-    setTimeout(() => {
-      this.initCanvas();
-    }, 150);
   },
 
   // =========================================================================
@@ -565,15 +535,8 @@ window.tacticsModule = {
         if (currentX === undefined || currentY === undefined) return;
 
         const rect = pitchWrapper.getBoundingClientRect();
-        const container = document.getElementById('tactics-pitch-container');
-        let pctX, pctY;
-        if (container && container.classList.contains('is-rotated')) {
-          pctX = ((currentY - rect.top) / rect.height) * 100;
-          pctY = ((rect.right - currentX) / rect.width) * 100;
-        } else {
-          pctX = ((currentX - rect.left) / rect.width) * 100;
-          pctY = ((currentY - rect.top) / rect.height) * 100;
-        }
+        let pctX = ((currentX - rect.left) / rect.width) * 100;
+        let pctY = ((currentY - rect.top) / rect.height) * 100;
 
         // Giới hạn trong sân cỏ
         pctX = Math.max(3, Math.min(97, pctX));
@@ -656,19 +619,13 @@ window.tacticsModule = {
 
   getCanvasPoint(e) {
     const canvas = document.getElementById('tactics-canvas-overlay');
-    const container = document.getElementById('tactics-pitch-container');
+    if (!canvas) return { x: 50, y: 50 };
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
-    let x, y;
-    if (container && container.classList.contains('is-rotated')) {
-      x = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
-      y = Math.max(0, Math.min(100, ((rect.right - clientX) / rect.width) * 100));
-    } else {
-      x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-      y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
-    }
+    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
     return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
   },
 

@@ -118,7 +118,7 @@
   <link rel="stylesheet" href="css/moments.css?v=4.5">
   <link rel="stylesheet" href="css/finance.css?v=4.5">
   <link rel="stylesheet" href="css/weather.css?v=4.5">
-  <link rel="stylesheet" href="css/tactics.css?v=4.9">
+  <link rel="stylesheet" href="css/tactics.css?v=5.0">
   <link rel="stylesheet" href="css/effects.css?v=4.5">
   <link rel="stylesheet" href="css/responsive.css?v=4.5">
 
@@ -522,125 +522,80 @@
         </button>
       </div>
 
-      <!-- Toolbar -->
-      <div class="tactics-toolbar">
-        <button type="button" class="tactics-tool-btn active" data-mode="select" title="Kéo thả di chuyển cầu thủ và bóng">
-          👆 <span>Di Chuyển</span>
-        </button>
-        <button type="button" class="tactics-tool-btn" data-mode="arrow" title="Vẽ mũi tên chạy chỗ thẳng, pressing">
-          🏹 <span>Chạy Thẳng</span>
-        </button>
-        <button type="button" class="tactics-tool-btn" data-mode="curve" title="Vẽ mũi tên uốn lượn chạy vòng lưng đối phương">
-          ↪️ <span>Uốn Lượn</span>
-        </button>
-        <button type="button" class="tactics-tool-btn" data-mode="pass" title="Vẽ đường nét đứt chuyền bóng, ban bật">
-          〰️ <span>Đường Chuyền</span>
-        </button>
-        <button type="button" class="tactics-tool-btn" data-mode="zone" title="Khoanh vùng khoảng trống, bẫy chiến thuật">
-          ⭕ <span>Khoanh Vùng</span>
-        </button>
-        <button type="button" class="tactics-tool-btn" data-mode="text" title="Gắn nhãn chữ chú thích trực tiếp lên sân">
-          🏷️ <span>Ghi Chú</span>
-        </button>
-
-        <!-- Color Palette -->
-        <div class="color-picker-group">
-          <span style="font-size: 0.75rem; color: var(--text-muted);">Màu:</span>
-          <div class="color-dot active" data-color="#10b981" style="background: #10b981;" title="Xanh Ngọc Lục Bảo"></div>
-          <div class="color-dot" data-color="#f59e0b" style="background: #f59e0b;" title="Vàng Hổ Phách"></div>
-          <div class="color-dot" data-color="#ef4444" style="background: #ef4444;" title="Đỏ Rực"></div>
-          <div class="color-dot" data-color="#38bdf8" style="background: #38bdf8;" title="Xanh Da Trời"></div>
-          <div class="color-dot" data-color="#ffffff" style="background: #ffffff;" title="Trắng"></div>
-        </div>
-
-        <!-- Quick Formations -->
-        <div class="tactics-formation-wrapper" title="Chuyển nhanh sơ đồ đội hình Đội Nhà">
-          <span style="font-size: 0.72rem; color: var(--text-muted);">🟢 Nhà:</span>
-          <select id="tactics-home-formation" class="tactics-formation-select">
-            <option value="3-1-2" selected>3-1-2 (Phủi)</option>
-            <option value="2-3-1">2-3-1 (Kiểm soát)</option>
-            <option value="3-2-1">3-2-1 (Phòng ngự)</option>
-          </select>
-        </div>
-
-        <div class="tactics-formation-wrapper" title="Chuyển nhanh sơ đồ đội hình Đội Bạn">
-          <span style="font-size: 0.72rem; color: var(--text-muted);">🔴 Bạn:</span>
-          <select id="tactics-away-formation" class="tactics-formation-select">
-            <option value="3-2-1" selected>3-2-1 (Thủ cắm)</option>
-            <option value="2-3-1">2-3-1 (Pressing)</option>
-            <option value="3-1-2">3-1-2 (Cân bằng)</option>
-          </select>
-        </div>
-
-        <!-- Action Tools -->
-        <div style="margin-left: auto; display: flex; gap: 0.35rem; align-items: center;">
-          <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.undo()" title="Hoàn tác nét vẽ gần nhất">
-            ↩️ <span>Hoàn Tác</span>
-          </button>
-          <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.redo()" title="Khôi phục nét vừa xóa">
-            ↪️ <span>Làm Lại</span>
-          </button>
-          <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.clearDrawings()" title="Xóa toàn bộ nét vẽ">
-            🧽 <span>Xóa Nét</span>
-          </button>
-          <button type="button" class="tactics-tool-btn tactics-fullscreen-btn" onclick="window.tacticsModule.toggleFullscreen()" title="Phóng to toàn màn hình sa bàn">
-            ⛶ <span>Toàn Màn Hình</span>
-          </button>
-        </div>
-      </div>
-
       <!-- Main Tactics Layout (Pitch + Sidebar) -->
       <div class="tactics-layout">
-        <!-- Left: Interactive Pitch -->
+        <!-- Left: Interactive Pitch & Toolbar Container -->
         <div class="tactics-pitch-container" id="tactics-pitch-container">
-          <!-- Fullscreen Floating HUD Bar (Hiển thị khi phóng to toàn màn hình) -->
-          <div class="tactics-fullscreen-hud">
-            <div class="tactics-hud-group">
-              <button type="button" class="tactics-tool-btn active" data-mode="select" onclick="window.tacticsModule.setMode('select')" title="Di chuyển quân cờ">👆 <span>Di Chuyển</span></button>
-              <button type="button" class="tactics-tool-btn" data-mode="arrow" onclick="window.tacticsModule.setMode('arrow')" title="Chạy thẳng">🏹 <span>Chạy Thẳng</span></button>
-              <button type="button" class="tactics-tool-btn" data-mode="curve" onclick="window.tacticsModule.setMode('curve')" title="Uốn lượn">↪️ <span>Uốn Lượn</span></button>
-              <button type="button" class="tactics-tool-btn" data-mode="pass" onclick="window.tacticsModule.setMode('pass')" title="Chuyền bóng">〰️ <span>Chuyền</span></button>
-              <button type="button" class="tactics-tool-btn" data-mode="zone" onclick="window.tacticsModule.setMode('zone')" title="Khoanh vùng">⭕ <span>Vùng</span></button>
-              <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.undo()" title="Hoàn tác">↩️</button>
-              <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.clearDrawings()" title="Xóa nét">🧽</button>
+          <!-- Thanh Bar Công Cụ (Hiển thị phía trên sa bàn - Hình 2) -->
+          <div class="tactics-toolbar" id="tactics-toolbar">
+            <button type="button" class="tactics-tool-btn active" data-mode="select" title="Kéo thả di chuyển cầu thủ và bóng">
+              👆 <span>Di Chuyển</span>
+            </button>
+            <button type="button" class="tactics-tool-btn" data-mode="arrow" title="Vẽ mũi tên chạy chỗ thẳng, pressing">
+              🏹 <span>Chạy Thẳng</span>
+            </button>
+            <button type="button" class="tactics-tool-btn" data-mode="curve" title="Vẽ mũi tên uốn lượn chạy vòng lưng đối phương">
+              ↪️ <span>Uốn Lượn</span>
+            </button>
+            <button type="button" class="tactics-tool-btn" data-mode="pass" title="Vẽ đường nét đứt chuyền bóng, ban bật">
+              〰️ <span>Đường Chuyền</span>
+            </button>
+            <button type="button" class="tactics-tool-btn" data-mode="zone" title="Khoanh vùng khoảng trống, bẫy chiến thuật">
+              ⭕ <span>Khoanh Vùng</span>
+            </button>
+            <button type="button" class="tactics-tool-btn" data-mode="text" title="Gắn nhãn chữ chú thích trực tiếp lên sân">
+              🏷️ <span>Ghi Chú</span>
+            </button>
+
+            <!-- Color Palette -->
+            <div class="color-picker-group">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Màu:</span>
+              <div class="color-dot active" data-color="#10b981" style="background: #10b981;" title="Xanh Ngọc Lục Bảo"></div>
+              <div class="color-dot" data-color="#f59e0b" style="background: #f59e0b;" title="Vàng Hổ Phách"></div>
+              <div class="color-dot" data-color="#ef4444" style="background: #ef4444;" title="Đỏ Rực"></div>
+              <div class="color-dot" data-color="#38bdf8" style="background: #38bdf8;" title="Xanh Da Trời"></div>
+              <div class="color-dot" data-color="#ffffff" style="background: #ffffff;" title="Trắng"></div>
             </div>
 
-            <div class="tactics-hud-group tactics-hud-right">
-              <!-- Sơ đồ nhanh trong Fullscreen HUD -->
-              <div class="tactics-formation-wrapper" title="Sơ đồ Đội Nhà">
-                <span style="font-size: 0.72rem; color: var(--text-muted);">🟢</span>
-                <select id="tactics-fs-home-formation" class="tactics-formation-select" onchange="window.tacticsModule.applyFormation('home', this.value)">
-                  <option value="3-1-2" selected>3-1-2</option>
-                  <option value="2-3-1">2-3-1</option>
-                  <option value="3-2-1">3-2-1</option>
-                </select>
-              </div>
-              <div class="tactics-formation-wrapper" title="Sơ đồ Đội Bạn">
-                <span style="font-size: 0.72rem; color: var(--text-muted);">🔴</span>
-                <select id="tactics-fs-away-formation" class="tactics-formation-select" onchange="window.tacticsModule.applyFormation('away', this.value)">
-                  <option value="3-2-1" selected>3-2-1</option>
-                  <option value="2-3-1">2-3-1</option>
-                  <option value="3-1-2">3-1-2</option>
-                </select>
-              </div>
+            <!-- Quick Formations -->
+            <div class="tactics-formation-wrapper" title="Chuyển nhanh sơ đồ đội hình Đội Nhà">
+              <span style="font-size: 0.72rem; color: var(--text-muted);">🟢 Nhà:</span>
+              <select id="tactics-home-formation" class="tactics-formation-select">
+                <option value="3-1-2" selected>3-1-2 (Phủi)</option>
+                <option value="2-3-1">2-3-1 (Kiểm soát)</option>
+                <option value="3-2-1">3-2-1 (Phòng ngự)</option>
+              </select>
+            </div>
 
-              <!-- Nút Xoay Ngang / Dọc Màn Hình (Mobile & Tablet) -->
-              <button type="button" class="tactics-tool-btn tactics-fs-rotate-btn" onclick="window.tacticsModule.toggleRotation()" title="Xoay ngang / dọc sa bàn">
-                🔄 <span>Xoay</span>
+            <div class="tactics-formation-wrapper" title="Chuyển nhanh sơ đồ đội hình Đội Bạn">
+              <span style="font-size: 0.72rem; color: var(--text-muted);">🔴 Bạn:</span>
+              <select id="tactics-away-formation" class="tactics-formation-select">
+                <option value="3-2-1" selected>3-2-1 (Thủ cắm)</option>
+                <option value="2-3-1">2-3-1 (Pressing)</option>
+                <option value="3-1-2">3-1-2 (Cân bằng)</option>
+              </select>
+            </div>
+
+            <!-- Action Tools -->
+            <div style="margin-left: auto; display: flex; gap: 0.35rem; align-items: center;">
+              <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.undo()" title="Hoàn tác nét vẽ gần nhất">
+                ↩️ <span>Hoàn Tác</span>
               </button>
-
-              <!-- Nút Thoát Toàn Màn Hình -->
-              <button type="button" class="tactics-exit-fullscreen-btn" onclick="window.tacticsModule.toggleFullscreen(false)" title="Thu nhỏ / Thoát toàn màn hình">
-                ✕ <span>Thu Nhỏ</span>
+              <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.redo()" title="Khôi phục nét vừa xóa">
+                ↪️ <span>Làm Lại</span>
+              </button>
+              <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.clearDrawings()" title="Xóa toàn bộ nét vẽ">
+                🧽 <span>Xóa Nét</span>
               </button>
             </div>
           </div>
 
+          <!-- Mặt Sân Bóng (Hình 3) -->
           <div class="tactics-pitch-wrapper" id="tactics-pitch-wrapper">
-            <!-- Nút Phóng to / Thu nhỏ nổi trực tiếp trên góc sa bàn -->
-            <button type="button" class="tactics-pitch-fs-toggle-btn" onclick="window.tacticsModule.toggleFullscreen()" title="Phóng to / Thu nhỏ toàn màn hình">
+            <!-- Nút Toàn Màn Hình / Thoát (Góc trên bên phải sân - Hình 3) -->
+            <button type="button" class="tactics-pitch-fs-toggle-btn" id="tactics-pitch-fs-btn" onclick="window.tacticsModule.toggleFullscreen()" title="Toàn Màn Hình / Thoát">
               <span class="fs-icon-expand">⛶ Toàn Màn Hình</span>
-              <span class="fs-icon-compress">✕ Thu Nhỏ</span>
+              <span class="fs-icon-compress">⛶ Thoát</span>
             </button>
 
             <!-- Thảm cỏ sọc -->
@@ -2432,7 +2387,7 @@
   <script src="js/awards.js?v=4.3"></script>
   <script src="js/poster.js?v=4.3"></script>
   <script src="js/moments.js?v=4.3"></script>
-  <script src="js/tactics.js?v=4.9"></script>
+  <script src="js/tactics.js?v=5.0"></script>
   <script src="js/weather.js?v=4.3"></script>
   <script src="js/splash.js?v=4.3"></script>
   <script src="js/effects.js?v=4.3"></script>
