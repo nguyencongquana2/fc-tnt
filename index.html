@@ -112,13 +112,13 @@
   <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="manifest.json">
   <!-- Modular UI Stylesheets -->
-  <link rel="stylesheet" href="css/base.css?v=4.5">
+  <link rel="stylesheet" href="css/base.css?v=4.8">
   <link rel="stylesheet" href="css/matches.css?v=4.5">
   <link rel="stylesheet" href="css/live.css?v=4.5">
   <link rel="stylesheet" href="css/moments.css?v=4.5">
   <link rel="stylesheet" href="css/finance.css?v=4.5">
   <link rel="stylesheet" href="css/weather.css?v=4.5">
-  <link rel="stylesheet" href="css/tactics.css?v=4.6">
+  <link rel="stylesheet" href="css/tactics.css?v=4.8">
   <link rel="stylesheet" href="css/effects.css?v=4.5">
   <link rel="stylesheet" href="css/responsive.css?v=4.5">
 
@@ -567,14 +567,66 @@
           <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.clearDrawings()" title="Xóa toàn bộ nét vẽ">
             🧽 <span>Xóa Nét</span>
           </button>
+          <button type="button" class="tactics-tool-btn tactics-fullscreen-btn" onclick="window.tacticsModule.toggleFullscreen()" title="Phóng to toàn màn hình sa bàn">
+            ⛶ <span>Toàn Màn Hình</span>
+          </button>
         </div>
       </div>
 
       <!-- Main Tactics Layout (Pitch + Sidebar) -->
       <div class="tactics-layout">
         <!-- Left: Interactive Pitch -->
-        <div class="tactics-pitch-container">
+        <div class="tactics-pitch-container" id="tactics-pitch-container">
+          <!-- Fullscreen Floating HUD Bar (Hiển thị khi phóng to toàn màn hình) -->
+          <div class="tactics-fullscreen-hud">
+            <div class="tactics-hud-group">
+              <button type="button" class="tactics-tool-btn active" data-mode="select" onclick="window.tacticsModule.setMode('select')" title="Di chuyển quân cờ">👆 <span>Di Chuyển</span></button>
+              <button type="button" class="tactics-tool-btn" data-mode="arrow" onclick="window.tacticsModule.setMode('arrow')" title="Chạy thẳng">🏹 <span>Chạy Thẳng</span></button>
+              <button type="button" class="tactics-tool-btn" data-mode="curve" onclick="window.tacticsModule.setMode('curve')" title="Uốn lượn">↪️ <span>Uốn Lượn</span></button>
+              <button type="button" class="tactics-tool-btn" data-mode="pass" onclick="window.tacticsModule.setMode('pass')" title="Chuyền bóng">〰️ <span>Chuyền</span></button>
+              <button type="button" class="tactics-tool-btn" data-mode="zone" onclick="window.tacticsModule.setMode('zone')" title="Khoanh vùng">⭕ <span>Vùng</span></button>
+              <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.undo()" title="Hoàn tác">↩️</button>
+              <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.clearDrawings()" title="Xóa nét">🧽</button>
+            </div>
+
+            <div class="tactics-hud-group tactics-hud-right">
+              <!-- Sơ đồ nhanh trong Fullscreen HUD -->
+              <div class="tactics-formation-wrapper" title="Sơ đồ Đội Nhà">
+                <span style="font-size: 0.72rem; color: var(--text-muted);">🟢</span>
+                <select id="tactics-fs-home-formation" class="tactics-formation-select" onchange="window.tacticsModule.applyFormation('home', this.value)">
+                  <option value="3-1-2" selected>3-1-2</option>
+                  <option value="2-3-1">2-3-1</option>
+                  <option value="3-2-1">3-2-1</option>
+                </select>
+              </div>
+              <div class="tactics-formation-wrapper" title="Sơ đồ Đội Bạn">
+                <span style="font-size: 0.72rem; color: var(--text-muted);">🔴</span>
+                <select id="tactics-fs-away-formation" class="tactics-formation-select" onchange="window.tacticsModule.applyFormation('away', this.value)">
+                  <option value="3-2-1" selected>3-2-1</option>
+                  <option value="2-3-1">2-3-1</option>
+                  <option value="3-1-2">3-1-2</option>
+                </select>
+              </div>
+
+              <!-- Nút Xoay Ngang / Dọc Màn Hình (Mobile & Tablet) -->
+              <button type="button" class="tactics-tool-btn tactics-fs-rotate-btn" onclick="window.tacticsModule.toggleRotation()" title="Xoay ngang / dọc sa bàn">
+                🔄 <span>Xoay</span>
+              </button>
+
+              <!-- Nút Thoát Toàn Màn Hình -->
+              <button type="button" class="tactics-exit-fullscreen-btn" onclick="window.tacticsModule.toggleFullscreen(false)" title="Thu nhỏ / Thoát toàn màn hình">
+                ✕ <span>Thu Nhỏ</span>
+              </button>
+            </div>
+          </div>
+
           <div class="tactics-pitch-wrapper" id="tactics-pitch-wrapper">
+            <!-- Nút Phóng to / Thu nhỏ nổi trực tiếp trên góc sa bàn -->
+            <button type="button" class="tactics-pitch-fs-toggle-btn" onclick="window.tacticsModule.toggleFullscreen()" title="Phóng to / Thu nhỏ toàn màn hình">
+              <span class="fs-icon-expand">⛶ Toàn Màn Hình</span>
+              <span class="fs-icon-compress">✕ Thu Nhỏ</span>
+            </button>
+
             <!-- Thảm cỏ sọc -->
             <div class="tactics-pitch-grass"></div>
 
@@ -2364,7 +2416,7 @@
   <script src="js/awards.js?v=4.3"></script>
   <script src="js/poster.js?v=4.3"></script>
   <script src="js/moments.js?v=4.3"></script>
-  <script src="js/tactics.js?v=4.6"></script>
+  <script src="js/tactics.js?v=4.8"></script>
   <script src="js/weather.js?v=4.3"></script>
   <script src="js/splash.js?v=4.3"></script>
   <script src="js/effects.js?v=4.3"></script>

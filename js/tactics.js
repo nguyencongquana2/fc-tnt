@@ -18,6 +18,8 @@ window.tacticsModule = {
   draggedPieceId: null,
   editingPieceId: null,
   socket: null,
+  isFullscreen: false,
+  isRotated: false,
 
   // Sơ đồ chuẩn sân 7 vị trí (Formations Matrix)
   formations: {
@@ -271,6 +273,24 @@ window.tacticsModule = {
     window.addEventListener('resize', () => {
       this.initCanvas();
     });
+
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => this.initCanvas(), 250);
+    });
+
+    // Bắt phím Esc để tự động thoát fullscreen trên desktop/tablet
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isFullscreen) {
+        this.toggleFullscreen(false);
+      }
+    });
+
+    // Lắng nghe sự kiện thoát Fullscreen của trình duyệt
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && this.isFullscreen) {
+        this.toggleFullscreen(false);
+      }
+    });
   },
 
   setMode(mode) {
@@ -320,7 +340,122 @@ window.tacticsModule = {
         drawings: this.drawings
       });
     }
+
+    // Giữ đồng bộ cả thanh công cụ chính và floating HUD
+    const mainSelect = document.getElementById(team === 'home' ? 'tactics-home-formation' : 'tactics-away-formation');
+    if (mainSelect && mainSelect.value !== formationName) mainSelect.value = formationName;
+    const fsSelect = document.getElementById(team === 'home' ? 'tactics-fs-home-formation' : 'tactics-fs-away-formation');
+    if (fsSelect && fsSelect.value !== formationName) fsSelect.value = formationName;
+
     window.showToast(`⚡ Đã chuyển sơ đồ ${team === 'home' ? 'Đội Nhà' : 'Đội Bạn'} sang ${formationName}`);
+  },
+
+  // =========================================================================
+  // PHÓNG TO / THU NHỎ TOÀN MÀN HÌNH (FULLSCREEN CONTROLLER)
+  // =========================================================================
+
+  toggleFullscreen(forceState) {
+    const container = document.getElementById('tactics-pitch-container');
+    if (!container) return;
+
+    this.isFullscreen = typeof forceState === 'boolean' ? forceState : !this.isFullscreen;
+
+    if (this.isFullscreen) {
+      // Đưa container ra trực tiếp document.body để chiếm trọn 100vw x 100vh thực sự
+      if (!this._pitchPlaceholder) {
+        this._pitchPlaceholder = document.createElement('div');
+        this._pitchPlaceholder.id = 'tactics-pitch-placeholder';
+        this._pitchPlaceholder.style.display = 'none';
+      }
+      if (container.parentNode && container.parentNode !== document.body) {
+        container.parentNode.insertBefore(this._pitchPlaceholder, container);
+        document.body.appendChild(container);
+      }
+
+      container.classList.add('is-fullscreen');
+      document.body.classList.add('no-scroll');
+
+      // Kích hoạt HTML5 Native Fullscreen nếu có (ẩn thanh công cụ trình duyệt & taskbar máy tính)
+      try {
+        if (!document.fullscreenElement && container.requestFullscreen) {
+          container.requestFullscreen().catch(() => {});
+        }
+      } catch (e) {
+        // Bỏ qua nếu bị chính sách trình duyệt chặn
+      }
+
+      // Trên màn hình điện thoại dọc: tự động kích hoạt xoay ngang 90 độ
+      const isMobilePortrait = window.innerWidth <= 768 && window.innerHeight > window.innerWidth;
+      if (isMobilePortrait) {
+        this.isRotated = true;
+        container.classList.add('is-rotated');
+      } else {
+        this.isRotated = false;
+        container.classList.remove('is-rotated');
+      }
+
+      // Tự động xoay sang landscape trên thiết bị hỗ trợ Screen Orientation API
+      try {
+        if (screen.orientation && typeof screen.orientation.lock === 'function') {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (e) {
+        // Không hỗ trợ hoặc bị chặn bởi user gesture
+      }
+    } else {
+      // Thoát Native Fullscreen nếu đang bật
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } catch (e) {
+        // Bỏ qua
+      }
+
+      container.classList.remove('is-fullscreen');
+      container.classList.remove('is-rotated');
+      this.isRotated = false;
+      document.body.classList.remove('no-scroll');
+
+      // Khôi phục container về lại đúng vị trí ban đầu trong giao diện
+      if (this._pitchPlaceholder && this._pitchPlaceholder.parentNode) {
+        this._pitchPlaceholder.parentNode.insertBefore(container, this._pitchPlaceholder);
+        this._pitchPlaceholder.remove();
+        this._pitchPlaceholder = null;
+      }
+
+      try {
+        if (screen.orientation && typeof screen.orientation.unlock === 'function') {
+          screen.orientation.unlock();
+        }
+      } catch (e) {
+        // Bỏ qua
+      }
+    }
+
+    // Cập nhật text nút ngoài toolbar
+    const fsBtn = document.querySelector('.tactics-fullscreen-btn span');
+    if (fsBtn) {
+      fsBtn.textContent = this.isFullscreen ? 'Thu Nhỏ' : 'Toàn Màn Hình';
+    }
+
+    // Đồng bộ lại kích thước canvas để tọa độ nét vẽ & quân cờ không bị lệch
+    setTimeout(() => {
+      this.initCanvas();
+    }, 100);
+    setTimeout(() => {
+      this.initCanvas();
+    }, 300);
+  },
+
+  toggleRotation() {
+    const container = document.getElementById('tactics-pitch-container');
+    if (!container || !this.isFullscreen) return;
+    this.isRotated = !this.isRotated;
+    container.classList.toggle('is-rotated', this.isRotated);
+    setTimeout(() => {
+      this.initCanvas();
+    }, 150);
   },
 
   // =========================================================================
@@ -418,8 +553,15 @@ window.tacticsModule = {
         if (currentX === undefined || currentY === undefined) return;
 
         const rect = pitchWrapper.getBoundingClientRect();
-        let pctX = ((currentX - rect.left) / rect.width) * 100;
-        let pctY = ((currentY - rect.top) / rect.height) * 100;
+        const container = document.getElementById('tactics-pitch-container');
+        let pctX, pctY;
+        if (container && container.classList.contains('is-rotated')) {
+          pctX = ((currentY - rect.top) / rect.height) * 100;
+          pctY = ((rect.right - currentX) / rect.width) * 100;
+        } else {
+          pctX = ((currentX - rect.left) / rect.width) * 100;
+          pctY = ((currentY - rect.top) / rect.height) * 100;
+        }
 
         // Giới hạn trong sân cỏ
         pctX = Math.max(3, Math.min(97, pctX));
@@ -502,12 +644,19 @@ window.tacticsModule = {
 
   getCanvasPoint(e) {
     const canvas = document.getElementById('tactics-canvas-overlay');
+    const container = document.getElementById('tactics-pitch-container');
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
-    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+    let x, y;
+    if (container && container.classList.contains('is-rotated')) {
+      x = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+      y = Math.max(0, Math.min(100, ((rect.right - clientX) / rect.width) * 100));
+    } else {
+      x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+      y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+    }
     return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
   },
 
