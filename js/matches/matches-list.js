@@ -110,7 +110,7 @@ Object.assign(window.matchesModule, {
 
             <div class="match-scoreboard">
               <div class="team-box home">
-                <span class="team-title">${teamInfo?.name || 'FC TNT'}</span>
+                <span class="team-title">${window.escapeHtml(teamInfo?.name || 'FC TNT')}</span>
                 <div class="brand-icon-box">⚽</div>
               </div>
 

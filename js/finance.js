@@ -280,7 +280,7 @@ class FinanceModule {
           <td style="width: 40px; text-align: center; color: var(--text-dim); font-weight: 600;">${idx + 1}</td>
           <td>
             <div style="display: flex; align-items: center; gap: 0.6rem;">
-              <img src="${avatar}" alt="${p.playerName}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid ${p.isPaid ? 'var(--accent-emerald)' : 'rgba(255,255,255,0.1)'};">
+              <img src="${avatar}" alt="${window.escapeHtml(p.playerName)}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid ${p.isPaid ? 'var(--accent-emerald)' : 'rgba(255,255,255,0.1)'};">
               <div>
                 <strong style="color: var(--text-main); font-size: 0.95rem;">${window.escapeHtml(p.playerName)}</strong>
                 ${isPayer ? '<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); font-size: 0.7rem; margin-left: 4px; padding: 2px 6px; border-radius: 4px;">Người ứng tiền</span>' : ''}

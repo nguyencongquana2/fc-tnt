@@ -36,8 +36,12 @@ FC-TNT/
 ├── js/                   # Module logic phía Client (SPA)
 │   ├── core.js           # [Decoupling] Service Locator & Event Bus trung tâm (window.TNT)
 │   ├── app.js            # Điều hướng tab, modal, toast
-│   ├── state.js          # Quản lý state tập trung & socket realtime
-│   ├── tactics.js        # [Facade] Bộ điều phối trung tâm module sa bàn chiến thuật
+│   ├── state.js          # [Facade] Bộ điều phối trung tâm quản lý State & Realtime (~280 dòng)
+│   ├── state/            # [Mô-đun hoá] Phân tách nghiệp vụ State & LocalStorage
+│   │   ├── state-auth.js      # Quản lý PIN Admin, Token PBKDF2 của Cầu thủ & Session
+│   │   ├── state-players.js   # Quản lý danh sách cầu thủ, avatar, thống kê phong độ & Leaderboards
+│   │   ├── state-matches.js   # Lịch sử trận đấu, kết quả, chi phí quỹ và tổng quan phong độ đội
+│   │   └── state-social.js    # Khoảnh khắc (Moments), cảm xúc, bình luận & kịch bản sa bàn (Tactics)
 │   ├── tactics/          # [Mô-đun hoá] Phân tách nghiệp vụ sa bàn sân 7
 │   │   ├── tactics-screen.js      # Toàn màn hình (Fullscreen) & tự động xoay ngang 90° trên Mobile
 │   │   ├── tactics-canvas.js      # Canvas vector engine, math uốn lượn, mũi tên & rAF 60fps
@@ -77,9 +81,12 @@ FC-TNT/
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc reactions & bình luận
 │   └── weather.js        # API dự báo thời tiết Open-Meteo & AI thẩm định mặt sân
+├── sockets/              # [Mô-đun hoá] Socket.IO event controllers
+│   └── tacticsSocket.js  # Phòng họp sa bàn trực tiếp, sync kéo thả & vẽ vector
 ├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung giữa Backend & Frontend (UMD)
 │   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định ban đầu
 │   ├── officialTactics.js # Kịch bản bài tập chiến thuật sân 7 chuẩn mẫu (SSOT)
+│   ├── tacticsPieces.js  # 15 quân cờ sân 7 mặc định & bóng dùng chung Server/Client (SSOT)
 │   ├── playerAliases.js   # Từ điển alias và phân giải tên cầu thủ cho AI NLP & Voice
 │   ├── rateLimiter.js     # Bộ lọc trượt (Sliding Window) chống Brute-force PIN, lạm dụng AI, Spam Comment & Avatar DoS
 │   ├── validators.js      # Bộ kiểm chuẩn dữ liệu đầu vào (Avatar, Comment, Reactions) dùng chung UMD
@@ -92,7 +99,7 @@ FC-TNT/
 ├── manifest.json         # Cấu hình Progressive Web App (PWA)
 ├── package.json          # Quản lý dependencies (Express, Mongoose, Socket.IO)
 ├── robots.txt            # Chỉ thị SEO cho Googlebot
-├── server.js             # App bootstrap gọn gàng (~220 dòng), kết nối DB & Socket.IO
+├── server.js             # App bootstrap tinh gọn (~390 dòng), kết nối DB & Socket.IO
 └── sitemap.xml           # Sơ đồ trang web phục vụ SEO
 ```
 
@@ -119,7 +126,11 @@ Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
 ### `js/` (Logic Xử Lý Phía Client)
 Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
 - `core.js`: [Decoupling & Clean Architecture] Cung cấp không gian tên tập trung `window.TNT` cùng Event Bus nội bộ (`TNT.events`), áp dụng mẫu Service Locator & Mediator Pattern. Giải quyết triệt để vấn đề Tight Coupling (liên kết chặt chẽ) giữa các module qua biến toàn cục tự do, đồng thời duy trì khả năng tương thích ngược hoàn hảo.
-- `state.js`: Quản lý state tập trung (`APP_STATE`), tiện ích khử độc XSS (`window.escapeHtml`), xử lý xác thực song song (Admin PIN & Tài khoản Thành viên PBKDF2 Token), hàm gọi API chung, bộ đệm LocalStorage và lắng nghe Socket.IO (`data_updated`).
+- `state.js` & `state/`: [Mô-đun hoá] Quản lý state tập trung (`APP_STATE`), điều phối qua Facade trung tâm (~280 dòng) và phân tách thành 4 submodule chuyên biệt:
+  - `state/state-auth.js`: Quản lý mã PIN Quản trị viên, xác thực tài khoản thành viên PBKDF2 Token, đổi mật khẩu và cấp tài khoản.
+  - `state/state-players.js`: Quản lý danh sách cầu thủ, avatar, tính toán thống kê phong độ & bảng vinh danh (Top Goals/Assists/MOTM).
+  - `state/state-matches.js`: Quản lý lịch sử trận đấu, kết quả, chi phí quỹ và tổng quan phong độ toàn đội.
+  - `state/state-social.js`: Quản lý bài đăng khoảnh khắc (Moments), cảm xúc reactions, bình luận và kịch bản sa bàn chiến thuật (Tactics).
 - `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính, điều khiển modal đăng nhập thành viên, modal hồ sơ cá nhân (My Profile Hub), modal đổi mật khẩu và toast thông báo.
 - `tactics.js` & `tactics/`: [Mô-đun hoá] Sa bàn chiến thuật sân 7 HTML5 Canvas, điều phối qua Facade trung tâm và phân tách thành 5 submodule chuyên biệt:
   - `tactics/tactics-screen.js`: Bộ điều khiển toàn màn hình (Fullscreen) và tự động xoay ngang 90° trên điện thoại.
@@ -160,17 +171,24 @@ Toàn bộ stylesheet được mô-đun hóa chuyên biệt theo từng miền g
 - `assets/icons/`: Bộ icon favicon đa kích cỡ (`favicon.ico`, `favicon-48.png`, `favicon-192.png`, `favicon.png`, `favicon.svg`, `apple-touch-icon.png`).
 - `assets/images/`: Logo chính thức của đội bóng (`logo.png`, `logo.svg`, `logo-512.png`) và hình ảnh nền.
 
+### `sockets/` (Điều Phối Realtime Socket.IO)
+- `tacticsSocket.js`: Quản lý toàn bộ phòng họp chiến thuật trực tiếp qua Socket.IO: đồng bộ kéo thả 15 quân cờ, nét vẽ vector (mũi tên, đường chuyền nét đứt, Bézier), Undo/Redo, đặt lại sa bàn, nạp bài tập mẫu và áp dụng Sliding Window Rate Limiter chống DoS/Spam.
+
 ### `utils/` (Mô-đun Dùng Chung - Nguyên Tắc DRY)
 Áp dụng mẫu Universal Module Definition (UMD) để tái sử dụng mã nguồn đồng thời trên cả Node.js Backend (`module.exports`) và Trình duyệt Frontend (`window` global) mà không phụ thuộc vào bundler:
 - `officialPlayers.js`: Nguồn sự thật duy nhất (Single Source of Truth - SSOT) cho danh sách 15 cầu thủ chính thức mặc định. Loại bỏ hoàn toàn sự trùng lặp dữ liệu giữa `server.js` và `js/state.js`.
+- `officialTactics.js`: Kịch bản các bài tập chiến thuật sân 7 chuẩn mẫu (phạt góc, ném biên, thoát pressing) đồng bộ giữa client và server.
+- `tacticsPieces.js`: Nguồn sự thật duy nhất (SSOT) cho 15 quân cờ sân 7 và bóng mặc định, dùng chung giữa `sockets/tacticsSocket.js` và `js/tactics/tactics-pieces.js`.
 - `playerAliases.js`: Bảng ánh xạ từ khóa/biệt danh phủi (`FC_TNT_KNOWN_ALIASES`) và thuật toán chuẩn hóa tên cầu thủ (`getPlayerAliases`). Phục vụ phân tích giọng nói (Voice-to-Event) ở frontend và NLP rating trận đấu của Gemini AI ở backend.
+- `validators.js`: Bộ kiểm chuẩn dữ liệu đầu vào (Avatar 2.5MB, Comment, Reactions) dùng chung UMD.
 - `rateLimiter.js`: Middleware giới hạn tần suất yêu cầu (Sliding Window Rate Limiter) thuần Node.js không phụ thuộc thư viện ngoài, bảo vệ cổng đăng nhập mã PIN khỏi tấn công dò quét (Brute-force) và bảo vệ hạn ngạch gọi Google Gemini API khỏi hành vi spam.
+- `securityHeaders.js`: Bộ tạo HTTP Headers bảo vệ web (CSP, HSTS, X-Frame, No-Sniff, Permissions).
 
 ### `scripts/` (Công Cụ Tiện Ích)
 - `generate_favicons.py`: Script Python tự động sinh toàn bộ bộ nhận diện icon và favicon từ vector sang `assets/icons/` và `assets/images/`.
 
 ### `server.js` (App Bootstrap)
-- Đóng vai trò bootstrap tinh gọn: khởi tạo Express, kết nối MongoDB, Socket.IO, cấu hình phục vụ static/fallback và gắn kết các route từ thư mục `routes/`.
+- Đóng vai trò bootstrap tinh gọn (~390 dòng): khởi tạo Express, kết nối MongoDB, Socket.IO, cấu hình phục vụ static/fallback và gắn kết các route từ thư mục `routes/` cùng controller `sockets/`.
 - Tích hợp middleware kiểm soát kích thước payload an toàn (`10mb`) và xử lý lỗi chuẩn HTTP 413 (`PayloadTooLargeError`), kết hợp thuật toán nén ảnh Canvas ở Client ([js/moments.js](file:///c:/Users/ADMIN/Documents/Cong_Quan/01_HocTap/03_DuAn/02_DuAnCaNhan/Bong_Da/Web/js/moments.js), [js/players.js](file:///c:/Users/ADMIN/Documents/Cong_Quan/01_HocTap/03_DuAn/02_DuAnCaNhan/Bong_Da/Web/js/players.js)) để bảo vệ RAM tiến trình Node.js và tuân thủ giới hạn 16MB BSON của MongoDB.
 
 ---
@@ -215,6 +233,8 @@ Khi cần can thiệp vào một tính năng, tra cứu trực tiếp theo bản
 | **Xác thực PIN, phân quyền Admin** | [routes/auth.js](file:///routes/auth.js) | Đăng nhập PIN, đổi PIN, middleware `requireAdmin` |
 | **API Cầu thủ & Upload Avatar** | [routes/players.js](file:///routes/players.js) | Quản lý danh sách và hồ sơ cầu thủ |
 | **API Trận đấu, Quỹ sân, Live Match, AI Rating** | [routes/matches.js](file:///routes/matches.js) | Lịch sử trận, chia tiền, live draft, AI chấm điểm |
+| **API Sa bàn chiến thuật, Playbook mẫu** | [routes/tactics.js](file:///routes/tactics.js) | Kịch bản sa bàn, thảo luận & bài tập mẫu |
+| **Realtime Whiteboard Socket sa bàn** | [sockets/tacticsSocket.js](file:///sockets/tacticsSocket.js) | Điều phối phòng họp chiến thuật trực tiếp |
 | **API Khoảnh khắc, Cảm xúc, Bình luận** | [routes/moments.js](file:///routes/moments.js) | Feed khoảnh khắc, tương tác |
 | **API Thời tiết Sân AKKA & Cố vấn AI** | [routes/weather.js](file:///routes/weather.js) | Open-Meteo API và tư vấn chiến thuật |
 | **Cấu trúc trường dữ liệu MongoDB** | [models/](file:///models/) | Mở model tương ứng (`Match.js`, `Player.js`, ...) |

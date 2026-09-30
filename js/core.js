@@ -72,5 +72,8 @@
     }
   };
 
+  // Alias chuẩn Event Bus theo quy chuẩn coding-standards.md (TNT.bus.emit / TNT.bus.on)
+  TNT.bus = TNT.events;
+
   root.TNT = TNT;
 })(typeof self !== 'undefined' ? self : this);
