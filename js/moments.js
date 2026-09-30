@@ -882,6 +882,19 @@ window.momentsModule = {
   },
 
   openCreateMomentModal(editId = null) {
+    const isAdmin = window.stateManager.isAdmin;
+    const isPlayer = typeof window.stateManager.isPlayerLoggedIn === 'function' ? window.stateManager.isPlayerLoggedIn() : Boolean(window.stateManager.currentPlayer);
+
+    if (!isAdmin && !isPlayer) {
+      if (window.showToast) {
+        window.showToast('Vui lòng đăng nhập (mã PIN Quản trị viên hoặc Tài khoản Cầu thủ) để đăng bài!', 'warning');
+      }
+      if (window.appModule && window.appModule.openAdminModal) {
+        window.appModule.openAdminModal();
+      }
+      return;
+    }
+
     this.currentEditMomentId = editId;
     const modal = document.getElementById('moment-form-modal');
     const title = document.getElementById('moment-form-title');
@@ -1181,12 +1194,15 @@ window.momentsModule = {
         if (this.cloudinaryConfig.hasPreset && this.cloudinaryConfig.uploadPreset) {
           formData.append('upload_preset', this.cloudinaryConfig.uploadPreset);
         } else {
+          const sigHeaders = { 'Content-Type': 'application/json' };
+          const adminTok = window.stateManager.getAdminToken ? window.stateManager.getAdminToken() : '';
+          const playerTok = window.stateManager.getPlayerToken ? window.stateManager.getPlayerToken() : '';
+          if (adminTok) sigHeaders['x-admin-token'] = adminTok;
+          if (playerTok) sigHeaders['x-player-token'] = playerTok;
+
           const sigRes = await fetch('/api/upload/signature', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-admin-token': window.stateManager.getAdminToken()
-            }
+            headers: sigHeaders
           });
           const sigData = await sigRes.json();
           if (sigData.success) {
@@ -1328,8 +1344,14 @@ window.momentsModule = {
       this.renderMoments();
     } catch (err) {
       console.error('Submit moment error:', err);
-      if (window.appModule && window.appModule.showToast) {
-        window.appModule.showToast('Lỗi khi lưu khoảnh khắc: ' + err.message, 'error');
+      const errMsg = err.message || 'Lỗi khi lưu khoảnh khắc';
+      if (window.showToast) {
+        window.showToast('❌ ' + errMsg, 'error');
+      } else if (window.appModule && window.appModule.showToast) {
+        window.appModule.showToast('❌ ' + errMsg, 'error');
+      }
+      if (errMsg.toLowerCase().includes('đăng nhập') && window.appModule && window.appModule.openAdminModal) {
+        window.appModule.openAdminModal();
       }
     } finally {
       if (submitBtn) {

@@ -28,11 +28,34 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   });
 
   // POST /api/moments
-  router.post('/', requireAdmin, async (req, res) => {
+  router.post('/', async (req, res) => {
     try {
+      const adminToken = req.headers['x-admin-token'];
+      const playerToken = req.headers['x-player-token'];
+      const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
+      const playerSession = verifyPlayerToken(playerToken);
+
+      if (!isAdmin && !playerSession) {
+        return res.status(401).json({
+          success: false,
+          error: 'Vui lòng đăng nhập (mã PIN Quản trị viên hoặc Tài khoản Cầu thủ) để đăng khoảnh khắc!',
+          requireAuth: true
+        });
+      }
+
       const momentData = req.body;
+      if (!momentData || !momentData.title || !momentData.date) {
+        return res.status(400).json({ error: 'Tiêu đề và ngày diễn ra kỷ niệm là bắt buộc!' });
+      }
+
       if (!momentData.id) {
         momentData.id = 'moment_' + Date.now();
+      }
+      if (!momentData.authorId) {
+        momentData.authorId = isAdmin ? 'admin' : (playerSession ? playerSession.playerId : '');
+      }
+      if (!momentData.authorName) {
+        momentData.authorName = isAdmin ? 'Ban Quản Trị' : (playerSession ? playerSession.name : 'Thành viên FC TNT');
       }
       if (!momentData.reactions) {
         momentData.reactions = { heart: 0, football: 0, beer: 0, fire: 0, userReactions: [] };
@@ -52,19 +75,39 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       broadcastDataUpdate('moments', `📸 Có bài đăng kỷ niệm mới: "${momentData.title}"!`);
       res.status(201).json(momentData);
     } catch (err) {
-      res.status(400).json({ error: err.message });
+      console.warn('[Moments] Lỗi tạo bài đăng:', err);
+      res.status(400).json({ error: err.message || 'Lỗi khi lưu bài đăng vào cơ sở dữ liệu' });
     }
   });
 
   // PUT /api/moments/:id
-  router.put('/:id', requireAdmin, async (req, res) => {
+  router.put('/:id', async (req, res) => {
     try {
       const { id } = req.params;
+      const adminToken = req.headers['x-admin-token'];
+      const playerToken = req.headers['x-player-token'];
+      const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
+      const playerSession = verifyPlayerToken(playerToken);
+
+      if (!isAdmin && !playerSession) {
+        return res.status(401).json({
+          success: false,
+          error: 'Vui lòng đăng nhập để chỉnh sửa khoảnh khắc!',
+          requireAuth: true
+        });
+      }
+
       const updateData = req.body;
 
       if (isMongoConnected()) {
+        const existing = await Moment.findOne({ id });
+        if (!existing) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+
+        if (!isAdmin && existing.authorId && playerSession && existing.authorId !== playerSession.playerId) {
+          return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới được sửa bài này!' });
+        }
+
         const updated = await Moment.findOneAndUpdate({ id }, updateData, { new: true });
-        if (!updated) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
         broadcastDataUpdate('moments', `📸 Bài viết "${updated.title}" vừa được cập nhật!`);
         return res.json(updated);
       }
@@ -72,7 +115,11 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       fallbackData.moments = fallbackData.moments || [];
       const idx = fallbackData.moments.findIndex(m => m.id === id);
       if (idx !== -1) {
-        fallbackData.moments[idx] = { ...fallbackData.moments[idx], ...updateData };
+        const existing = fallbackData.moments[idx];
+        if (!isAdmin && existing.authorId && playerSession && existing.authorId !== playerSession.playerId) {
+          return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới được sửa bài này!' });
+        }
+        fallbackData.moments[idx] = { ...existing, ...updateData };
         broadcastDataUpdate('moments', `📸 Bài viết "${fallbackData.moments[idx].title}" vừa được cập nhật!`);
         return res.json(fallbackData.moments[idx]);
       }
@@ -83,21 +130,47 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   });
 
   // DELETE /api/moments/:id
-  router.delete('/:id', requireAdmin, async (req, res) => {
+  router.delete('/:id', async (req, res) => {
     try {
       const { id } = req.params;
+      const adminToken = req.headers['x-admin-token'];
+      const playerToken = req.headers['x-player-token'];
+      const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
+      const playerSession = verifyPlayerToken(playerToken);
+
+      if (!isAdmin && !playerSession) {
+        return res.status(401).json({
+          success: false,
+          error: 'Vui lòng đăng nhập để xóa khoảnh khắc!',
+          requireAuth: true
+        });
+      }
 
       if (isMongoConnected()) {
-        const deleted = await Moment.findOneAndDelete({ id });
-        if (!deleted) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc để xóa' });
+        const existing = await Moment.findOne({ id });
+        if (!existing) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc để xóa' });
+
+        if (!isAdmin && existing.authorId && playerSession && existing.authorId !== playerSession.playerId) {
+          return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới có quyền xóa bài này!' });
+        }
+
+        await Moment.findOneAndDelete({ id });
         broadcastDataUpdate('moments', '📸 Một khoảnh khắc vừa được xóa.');
         return res.json({ success: true, id });
       }
 
       fallbackData.moments = fallbackData.moments || [];
-      fallbackData.moments = fallbackData.moments.filter(m => m.id !== id);
-      broadcastDataUpdate('moments', '📸 Một khoảnh khắc vừa được xóa.');
-      res.json({ success: true, id });
+      const idx = fallbackData.moments.findIndex(m => m.id === id);
+      if (idx !== -1) {
+        const existing = fallbackData.moments[idx];
+        if (!isAdmin && existing.authorId && playerSession && existing.authorId !== playerSession.playerId) {
+          return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới có quyền xóa bài này!' });
+        }
+        fallbackData.moments.splice(idx, 1);
+        broadcastDataUpdate('moments', '📸 Một khoảnh khắc vừa được xóa.');
+        return res.json({ success: true, id });
+      }
+      res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

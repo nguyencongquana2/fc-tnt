@@ -29,55 +29,91 @@
       if (!moment.comments) moment.comments = [];
       if (!this.data.moments) this.data.moments = [];
 
-      this.data.moments.unshift(moment);
-      this.saveData();
+      const headers = { 'Content-Type': 'application/json' };
+      const adminToken = typeof this.getAdminToken === 'function' ? this.getAdminToken() : (this.adminToken || '');
+      const playerToken = typeof this.getPlayerToken === 'function' ? this.getPlayerToken() : (this.playerToken || '');
+      if (adminToken) headers['x-admin-token'] = adminToken;
+      if (playerToken) headers['x-player-token'] = playerToken;
 
-      this._syncToServer(`${API_BASE}/moments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': this.getAdminToken()
-        },
-        body: JSON.stringify(moment)
-      }, 'addMoment');
+      try {
+        const res = await fetch(`${API_BASE}/moments`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(moment)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Máy chủ từ chối lưu bài viết!');
+        }
 
-      return moment;
+        const savedMoment = data || moment;
+        this.data.moments.unshift(savedMoment);
+        this.saveData();
+        return savedMoment;
+      } catch (err) {
+        console.error('[State addMoment] Lỗi lưu khoảnh khắc:', err);
+        throw err;
+      }
     },
 
     async updateMoment(id, updateData) {
       if (!this.data.moments) this.data.moments = [];
       const idx = this.data.moments.findIndex(m => m.id === id);
-      if (idx !== -1) {
-        this.data.moments[idx] = { ...this.data.moments[idx], ...updateData };
-        this.saveData();
 
-        this._syncToServer(`${API_BASE}/moments/${id}`, {
+      const headers = { 'Content-Type': 'application/json' };
+      const adminToken = typeof this.getAdminToken === 'function' ? this.getAdminToken() : (this.adminToken || '');
+      const playerToken = typeof this.getPlayerToken === 'function' ? this.getPlayerToken() : (this.playerToken || '');
+      if (adminToken) headers['x-admin-token'] = adminToken;
+      if (playerToken) headers['x-player-token'] = playerToken;
+
+      try {
+        const res = await fetch(`${API_BASE}/moments/${id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-token': this.getAdminToken()
-          },
+          headers,
           body: JSON.stringify(updateData)
-        }, 'updateMoment');
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Máy chủ từ chối cập nhật bài viết!');
+        }
 
-        return this.data.moments[idx];
+        if (idx !== -1) {
+          this.data.moments[idx] = { ...this.data.moments[idx], ...updateData };
+          this.saveData();
+        }
+        return data;
+      } catch (err) {
+        console.error('[State updateMoment] Lỗi cập nhật khoảnh khắc:', err);
+        throw err;
       }
-      return null;
     },
 
     async deleteMoment(id) {
-      if (!this.data.moments) this.data.moments = [];
-      this.data.moments = this.data.moments.filter(m => m.id !== id);
-      this.saveData();
+      const headers = {};
+      const adminToken = typeof this.getAdminToken === 'function' ? this.getAdminToken() : (this.adminToken || '');
+      const playerToken = typeof this.getPlayerToken === 'function' ? this.getPlayerToken() : (this.playerToken || '');
+      if (adminToken) headers['x-admin-token'] = adminToken;
+      if (playerToken) headers['x-player-token'] = playerToken;
 
-      this._syncToServer(`${API_BASE}/moments/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'x-admin-token': this.getAdminToken()
+      try {
+        const res = await fetch(`${API_BASE}/moments/${id}`, {
+          method: 'DELETE',
+          headers
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Máy chủ từ chối xóa bài viết!');
         }
-      }, 'deleteMoment');
 
-      return true;
+        if (this.data.moments) {
+          this.data.moments = this.data.moments.filter(m => m.id !== id);
+          this.saveData();
+        }
+        return true;
+      } catch (err) {
+        console.error('[State deleteMoment] Lỗi xóa khoảnh khắc:', err);
+        throw err;
+      }
     },
 
     async toggleReaction(momentId, reactionType, customUserKey = null) {

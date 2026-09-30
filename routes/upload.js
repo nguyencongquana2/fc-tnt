@@ -6,9 +6,32 @@
 
 const express = require('express');
 const crypto = require('crypto');
+const { verifyAdminToken, verifyPlayerToken } = require('./auth');
 
-function createUploadRouter({ requireAdmin }) {
+function createUploadRouter({ isMongoConnected }) {
   const router = express.Router();
+
+  const authenticateUploader = async (req, res, next) => {
+    try {
+      const adminToken = req.headers['x-admin-token'];
+      const playerToken = req.headers['x-player-token'];
+      const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
+      const playerSession = verifyPlayerToken(playerToken);
+
+      if (!isAdmin && !playerSession) {
+        return res.status(401).json({
+          success: false,
+          error: 'Vui lòng đăng nhập (Quản trị viên hoặc Cầu thủ) để tải lên tệp!',
+          requireAuth: true
+        });
+      }
+      req.isAdmin = isAdmin;
+      req.playerSession = playerSession;
+      next();
+    } catch (e) {
+      res.status(500).json({ success: false, error: 'Lỗi xác thực người dùng' });
+    }
+  };
 
   // GET /api/upload/config
   // Kiểm tra trạng thái cấu hình Cloudinary (không bao giờ lộ Secret Key)
@@ -32,7 +55,7 @@ function createUploadRouter({ requireAdmin }) {
   // POST /api/upload/signature
   // Tạo timestamp và signature bảo mật để Client tải trực tiếp lên Cloudinary CDN
   // Tránh tắc nghẽn băng thông và tràn RAM trên máy chủ Render Free
-  router.post('/signature', requireAdmin, (req, res) => {
+  router.post('/signature', authenticateUploader, (req, res) => {
     try {
       const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
       const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -72,7 +95,7 @@ function createUploadRouter({ requireAdmin }) {
 
   // POST /api/upload/direct
   // Dự phòng tải qua server (Base64 data URI)
-  router.post('/direct', requireAdmin, async (req, res) => {
+  router.post('/direct', authenticateUploader, async (req, res) => {
     try {
       const { fileData, mediaType } = req.body;
       if (!fileData) {

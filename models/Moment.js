@@ -66,6 +66,16 @@ const momentSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  authorId: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  authorName: {
+    type: String,
+    default: '',
+    trim: true
+  },
   title: {
     type: String,
     required: true,
