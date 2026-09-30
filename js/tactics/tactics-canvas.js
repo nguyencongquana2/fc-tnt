@@ -52,23 +52,9 @@ Object.assign(window.tacticsModule, {
 
     const pt = this.getCanvasPoint(e);
 
-    // Chế độ gắn nhãn chữ chú thích (Text Annotation)
+    // Chế độ gắn nhãn chữ chú thích trực tiếp trên cỏ (Inline In-Place Note Editor)
     if (this.currentMode === 'text') {
-      const text = prompt('Nhập chữ chú thích chiến thuật trên sân (VD: Cắt mặt, Pressing, Dứt điểm):');
-      if (text && text.trim()) {
-        const shape = {
-          id: 'text_' + Date.now(),
-          type: 'text',
-          text: text.trim(),
-          points: [pt],
-          color: this.currentColor
-        };
-        this.drawings.push(shape);
-        this.drawingHistory.push({ action: 'add', shape });
-        this.redoHistory = [];
-        this.redrawCanvas();
-        if (this.socket) this.socket.emit('tactics_draw_add', shape);
-      }
+      this.openInlineNoteEditor(pt);
       return;
     }
 
@@ -324,6 +310,7 @@ Object.assign(window.tacticsModule, {
   },
 
   clearDrawings() {
+    this.closeInlineNoteEditor();
     if (this.drawings.length === 0) return;
     this.drawings = [];
     this.redoHistory = [];
@@ -332,5 +319,134 @@ Object.assign(window.tacticsModule, {
       this.socket.emit('tactics_draw_clear');
     }
     window.showToast('🧽 Đã làm sạch toàn bộ nét vẽ');
+  },
+
+  openInlineNoteEditor(pt) {
+    this.closeInlineNoteEditor();
+
+    const pitchWrapper = document.getElementById('tactics-pitch-wrapper');
+    if (!pitchWrapper) return;
+
+    const color = this.currentColor || '#10b981';
+
+    const editor = document.createElement('div');
+    editor.className = 'tactics-inline-note-editor';
+    editor.id = 'tactics-inline-note-editor';
+
+    // Đảm bảo editor luôn nằm gọn trong sân cỏ
+    const clampedX = Math.max(14, Math.min(86, pt.x));
+    const clampedY = Math.max(9, Math.min(91, pt.y));
+
+    editor.style.left = `${clampedX}%`;
+    editor.style.top = `${clampedY}%`;
+    editor.style.borderColor = color;
+    editor.style.boxShadow = `0 8px 24px rgba(0, 0, 0, 0.7), 0 0 14px ${color}55`;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'tactics-inline-note-input';
+    input.placeholder = 'Ghi chú...';
+    input.maxLength = 30;
+    input.autocomplete = 'off';
+    input.style.color = color;
+
+    const btnSubmit = document.createElement('button');
+    btnSubmit.type = 'button';
+    btnSubmit.className = 'tactics-inline-note-btn submit';
+    btnSubmit.textContent = '✓';
+    btnSubmit.title = 'Xác nhận ghi chú';
+    btnSubmit.style.background = color;
+    btnSubmit.style.color = color === '#ffffff' ? '#000000' : '#ffffff';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.type = 'button';
+    btnCancel.className = 'tactics-inline-note-btn cancel';
+    btnCancel.textContent = '✕';
+    btnCancel.title = 'Hủy';
+
+    editor.appendChild(input);
+    editor.appendChild(btnSubmit);
+    editor.appendChild(btnCancel);
+    pitchWrapper.appendChild(editor);
+
+    // Ngăn chặn sự kiện mousedown/touchstart lan truyền xuống canvas vẽ
+    const stopPropagation = (ev) => ev.stopPropagation();
+    editor.addEventListener('mousedown', stopPropagation);
+    editor.addEventListener('touchstart', stopPropagation, { passive: true });
+    editor.addEventListener('pointerdown', stopPropagation);
+
+    let isCommitted = false;
+    const commitNote = () => {
+      if (isCommitted) return;
+      isCommitted = true;
+      const text = input.value.trim();
+      if (text) {
+        const shape = {
+          id: 'text_' + Date.now(),
+          type: 'text',
+          text,
+          points: [pt],
+          color
+        };
+        this.drawings.push(shape);
+        this.drawingHistory.push({ action: 'add', shape });
+        this.redoHistory = [];
+        this.redrawCanvas();
+        if (this.socket) {
+          this.socket.emit('tactics_draw_add', shape);
+        }
+        if (typeof window.showToast === 'function') {
+          window.showToast('🏷️ Đã thêm ghi chú: ' + text);
+        }
+      }
+      this.closeInlineNoteEditor();
+    };
+
+    const cancelNote = () => {
+      if (isCommitted) return;
+      isCommitted = true;
+      this.closeInlineNoteEditor();
+    };
+
+    btnSubmit.onclick = (ev) => {
+      ev.stopPropagation();
+      commitNote();
+    };
+
+    btnCancel.onclick = (ev) => {
+      ev.stopPropagation();
+      cancelNote();
+    };
+
+    input.onkeydown = (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        commitNote();
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        cancelNote();
+      }
+    };
+
+    // Tự động đóng/commit khi click ra ngoài editor
+    const handleOutsideClick = (ev) => {
+      if (!editor.contains(ev.target)) {
+        document.removeEventListener('pointerdown', handleOutsideClick);
+        commitNote();
+      }
+    };
+    setTimeout(() => {
+      document.addEventListener('pointerdown', handleOutsideClick);
+    }, 100);
+
+    // Đặt tiêu điểm vào ô nhập
+    input.focus();
+  },
+
+  closeInlineNoteEditor() {
+    const existing = document.getElementById('tactics-inline-note-editor');
+    if (existing) {
+      existing.remove();
+    }
   }
 });

@@ -163,6 +163,9 @@ Object.assign(window.tacticsModule, {
   },
 
   setMode(mode) {
+    if (typeof this.closeInlineNoteEditor === 'function') {
+      this.closeInlineNoteEditor();
+    }
     this.currentMode = mode;
     document.querySelectorAll('.tactics-tool-btn[data-mode]').forEach(btn => {
       if (btn.getAttribute('data-mode') === mode) {
