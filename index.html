@@ -115,7 +115,7 @@
   <link rel="stylesheet" href="css/base.css?v=4.9">
   <link rel="stylesheet" href="css/matches.css?v=4.5">
   <link rel="stylesheet" href="css/live.css?v=4.5">
-  <link rel="stylesheet" href="css/moments.css?v=5.0">
+  <link rel="stylesheet" href="css/moments.css?v=5.1">
   <link rel="stylesheet" href="css/finance.css?v=4.5">
   <link rel="stylesheet" href="css/weather.css?v=4.5">
   <link rel="stylesheet" href="css/tactics.css?v=5.3">
@@ -1825,59 +1825,53 @@
               placeholder="Chia sẻ cảm xúc, những pha bóng vui, chém gió về buổi liên hoan..."></textarea>
           </div>
 
-          <!-- Photo Upload Section -->
+          <!-- ======================================================== -->
+          <!-- UNIFIED MIXED MEDIA SECTION (PHOTOS & VIDEOS - CLOUDINARY) -->
+          <!-- ======================================================== -->
           <div class="form-group">
-            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
-              <span>🖼️ Album Ảnh Kỷ Niệm (Tải nhiều ảnh)</span>
-              <span style="font-size: 0.75rem; color: var(--accent-emerald);">Chọn file từ máy hoặc dán link</span>
-            </label>
+            <div class="media-section-header">
+              <label class="form-label" style="margin-bottom: 0;">
+                📸 Album Đa Phương Tiện (Ảnh & Video)
+              </label>
+              <div class="media-cloud-badge" id="media-cloud-badge" title="Tối ưu hóa & Lưu trữ đám mây">
+                <span class="cloud-icon">☁️</span> <span id="media-cloud-status">Cloud Storage</span>
+              </div>
+            </div>
+            <p class="media-section-tip">
+              Chọn cùng lúc nhiều ảnh và video. Dùng mũi tên ◀ ▶ để sắp xếp vị trí hiển thị (video ở giữa hoặc đầu) chuẩn như Facebook.
+            </p>
 
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
-              <input type="file" id="moment-img-file-input" accept="image/*" multiple style="display: none;">
-              <button type="button" class="btn btn-secondary btn-sm"
-                onclick="document.getElementById('moment-img-file-input').click()">
-                📁 Tải Ảnh Lên Từ Máy Tính / ĐT
+            <div class="media-upload-toolbar">
+              <input type="file" id="moment-media-file-input" accept="image/*,video/*" multiple style="display: none;">
+              <button type="button" class="btn btn-secondary btn-sm btn-pick-media"
+                onclick="document.getElementById('moment-media-file-input').click()">
+                📁 + Thêm Ảnh / Video từ Máy & ĐT
               </button>
-              <div style="display: flex; gap: 0.4rem; flex: 1; min-width: 260px;">
-                <input type="url" class="form-control form-control-sm" id="moment-img-url-input"
-                  placeholder="Hoặc dán URL ảnh online...">
+
+              <div class="media-url-input-wrap">
+                <input type="url" class="form-control form-control-sm" id="moment-media-url-input"
+                  placeholder="Hoặc dán link ảnh online / link YouTube / TikTok / Facebook / MP4...">
                 <button type="button" class="btn btn-secondary btn-sm"
-                  onclick="window.momentsModule.addImageUrlManual()">+ Thêm</button>
+                  onclick="window.momentsModule.addMediaUrlManual()">+ Thêm</button>
               </div>
             </div>
 
-            <!-- Image preview strip -->
-            <div id="moment-images-preview-list" class="moment-images-preview-grid"></div>
-          </div>
-
-          <!-- Video Section (Upload from Device or Link) -->
-          <div class="form-group">
-            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
-              <span>🎬 Video / Clip Kỷ Niệm (Tải video hoặc dán link)</span>
-              <span id="moment-video-status" style="font-size: 0.75rem; color: var(--accent-cyan);"></span>
-            </label>
-
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-              <input type="file" id="moment-video-file-input" accept="video/*" style="display: none;">
-              <button type="button" class="btn btn-secondary btn-sm"
-                onclick="document.getElementById('moment-video-file-input').click()">
-                📁 Tải Video Lên Từ Máy / ĐT
-              </button>
-              <div style="display: flex; gap: 0.4rem; flex: 1; min-width: 260px;">
-                <input type="url" class="form-control form-control-sm" id="moment-input-video"
-                  placeholder="Hoặc dán link YouTube / TikTok / Facebook / MP4...">
+            <!-- Uploading Progress Bar -->
+            <div id="moment-upload-progress" class="moment-upload-progress" style="display: none;">
+              <div class="upload-progress-info">
+                <span id="moment-upload-progress-label">Đang tải tệp lên đám mây...</span>
+                <span id="moment-upload-progress-pct">0%</span>
+              </div>
+              <div class="upload-progress-track">
+                <div class="upload-progress-bar" id="moment-upload-progress-bar" style="width: 0%;"></div>
               </div>
             </div>
 
-            <!-- Video Preview Container in Modal -->
-            <div id="moment-video-preview-box" class="moment-video-preview-box" style="display: none;">
-              <div class="video-preview-header">
-                <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan);">🎥 Video đã chọn:</span>
-                <button type="button" class="remove-video-btn" onclick="window.momentsModule.removeVideo()">&times; Bỏ
-                  video</button>
+            <!-- Unified Media Queue / Preview Grid -->
+            <div id="moment-media-preview-queue" class="moment-media-preview-queue">
+              <div class="media-queue-empty-placeholder" id="media-queue-empty">
+                Chưa có ảnh hoặc video nào. Hãy bấm "+ Thêm Ảnh / Video" để chọn tệp!
               </div>
-              <video id="moment-video-preview-player" controls preload="metadata"
-                style="max-height: 200px; width: 100%; border-radius: var(--radius-sm); background: #000;"></video>
             </div>
           </div>
 
@@ -1890,14 +1884,14 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary"
             onclick="window.momentsModule.closeCreateMomentModal()">Hủy</button>
-          <button type="submit" class="btn btn-primary">📸 Lưu & Đăng Khoảnh Khắc</button>
+          <button type="submit" class="btn btn-primary" id="moment-submit-btn">📸 Lưu & Đăng Khoảnh Khắc</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL: LIGHTBOX XEM ẢNH FULL HD            -->
+  <!-- MODAL: LIGHTBOX XEM ẢNH & VIDEO FULL HD    -->
   <!-- ========================================== -->
   <div class="modal-overlay lightbox-overlay" id="moment-lightbox-modal">
     <div class="lightbox-wrapper">
@@ -1905,6 +1899,12 @@
       <button class="lightbox-nav-btn prev" onclick="window.momentsModule.prevLightbox()">&#10094;</button>
       <div class="lightbox-content">
         <img id="lightbox-current-img" src="" alt="Ảnh phóng to HD">
+        <div id="lightbox-video-wrap" class="lightbox-video-wrap" style="display: none;">
+          <video id="lightbox-current-video" controls playsinline preload="auto"></video>
+        </div>
+        <div id="lightbox-iframe-wrap" class="lightbox-iframe-wrap" style="display: none;">
+          <iframe id="lightbox-current-iframe" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
         <div class="lightbox-counter-badge" id="lightbox-counter">1 / 1</div>
       </div>
       <button class="lightbox-nav-btn next" onclick="window.momentsModule.nextLightbox()">&#10095;</button>
@@ -2437,7 +2437,7 @@
   <script src="js/finance.js?v=4.3"></script>
   <script src="js/awards.js?v=4.3"></script>
   <script src="js/poster.js?v=4.3"></script>
-  <script src="js/moments.js?v=5.0"></script>
+  <script src="js/moments.js?v=5.1"></script>
   <script src="js/tactics/tactics-screen.js?v=5.4"></script>
   <script src="js/tactics/tactics-canvas.js?v=5.4"></script>
   <script src="js/tactics/tactics-pieces.js?v=5.4"></script>

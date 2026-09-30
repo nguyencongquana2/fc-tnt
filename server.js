@@ -35,6 +35,7 @@ const { createLiveMatchRouter } = require('./routes/liveMatch');
 const { createMomentsRouter } = require('./routes/moments');
 const { createWeatherRouter } = require('./routes/weather');
 const { createTacticsRouter } = require('./routes/tactics');
+const createUploadRouter = require('./routes/upload');
 const { securityHeadersMiddleware } = require('./utils/securityHeaders');
 const OFFICIAL_TACTICS = require('./utils/officialTactics');
 const { getDefaultTacticsPieces } = require('./utils/tacticsPieces');
@@ -387,6 +388,7 @@ app.use('/api/live-match', createLiveMatchRouter(routeContext));
 app.use('/api/moments', createMomentsRouter(routeContext));
 app.use('/api/weather', createWeatherRouter());
 app.use('/api/tactics', createTacticsRouter(routeContext));
+app.use('/api/upload', createUploadRouter(routeContext));
 
 // =========================================================================
 // STATIC ASSETS & COMPATIBILITY ROUTES

@@ -29,6 +29,37 @@ const commentSubSchema = new mongoose.Schema({
   }
 });
 
+const mediaItemSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['image', 'video'],
+    default: 'image'
+  },
+  url: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  thumbnail: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  duration: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  width: {
+    type: Number,
+    default: null
+  },
+  height: {
+    type: Number,
+    default: null
+  }
+}, { _id: false });
+
 const momentSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -59,6 +90,8 @@ const momentSchema = new mongoose.Schema({
     default: '',
     trim: true
   },
+  // Unified Mixed Media Items (Photos + Videos)
+  media: [mediaItemSchema],
   images: [{
     type: String
   }],

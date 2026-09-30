@@ -80,6 +80,7 @@ FC-TNT/
 │   ├── ai.js             # API AI rate match chấm điểm trận đấu & NLP Gemini
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc reactions & bình luận
+│   ├── upload.js         # API chữ ký số & tải đa phương tiện Cloudinary (Ảnh/Video)
 │   └── weather.js        # API dự báo thời tiết Open-Meteo & AI thẩm định mặt sân
 ├── sockets/              # [Mô-đun hoá] Socket.IO event controllers
 │   └── tacticsSocket.js  # Phòng họp sa bàn trực tiếp, sync kéo thả & vẽ vector

@@ -6,14 +6,15 @@
 window.momentsModule = {
   currentCategory: 'all',
   currentEditMomentId: null,
-  uploadedImages: [],
-  uploadedVideoData: null,
-  currentLightboxImages: [],
+  uploadedMedia: [],
+  cloudinaryConfig: null,
+  currentLightboxMedia: [],
   currentLightboxIndex: 0,
   pendingDeleteComment: null,
 
   init() {
     this.bindEvents();
+    this.fetchUploadConfig();
     this.renderMoments();
   },
 
@@ -37,32 +38,11 @@ window.momentsModule = {
       });
     }
 
-    // Image Upload Input in Modal
-    const imgFileInput = document.getElementById('moment-img-file-input');
-    if (imgFileInput) {
-      imgFileInput.addEventListener('change', (e) => {
-        this.handleImageFiles(e.target.files);
-      });
-    }
-
-    // Video Upload Input in Modal
-    const videoFileInput = document.getElementById('moment-video-file-input');
-    if (videoFileInput) {
-      videoFileInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-          this.handleVideoFile(e.target.files[0]);
-        }
-      });
-    }
-
-    // Manual video URL input listener
-    const videoUrlInput = document.getElementById('moment-input-video');
-    if (videoUrlInput) {
-      videoUrlInput.addEventListener('input', (e) => {
-        if (e.target.value.trim() && !this.uploadedVideoData) {
-          const status = document.getElementById('moment-video-status');
-          if (status) status.innerText = '🔗 Đã nhập link video';
-        }
+    // Unified Media (Photos & Videos) File Input in Modal
+    const mediaFileInput = document.getElementById('moment-media-file-input');
+    if (mediaFileInput) {
+      mediaFileInput.addEventListener('change', (e) => {
+        this.handleMediaFiles(e.target.files);
       });
     }
 
@@ -284,11 +264,8 @@ window.momentsModule = {
             </div>
           ` : ''}
 
-          <!-- Photo Gallery (Facebook Style Grid) -->
-          ${images.length > 0 ? this.renderPhotoGrid(m.id, images) : ''}
-
-          <!-- Video Embed if any -->
-          ${m.videoUrl ? this.renderVideoEmbed(m.videoUrl) : ''}
+          <!-- Mixed Media Gallery (Facebook Style Grid with Photos & Videos) -->
+          ${this.renderMediaGallery(m.id, m)}
 
           <!-- Reactions & Interaction Bar -->
           <div class="moment-interaction-bar">
@@ -327,24 +304,78 @@ window.momentsModule = {
     container.setAttribute('data-user-key', String(userKey));
   },
 
-  renderPhotoGrid(momentId, images) {
-    const count = images.length;
+  // Chuẩn hóa danh sách media hỗn hợp (Ảnh + Video) từ bài đăng
+  getNormalizedMedia(moment) {
+    if (Array.isArray(moment.media) && moment.media.length > 0) {
+      return moment.media;
+    }
+    const list = [];
+    if (Array.isArray(moment.images)) {
+      moment.images.forEach(img => {
+        if (img) list.push({ type: 'image', url: img });
+      });
+    }
+    if (moment.videoUrl || moment.video) {
+      const vUrl = moment.videoUrl || moment.video;
+      list.push({
+        type: 'video',
+        url: vUrl,
+        thumbnail: '',
+        duration: ''
+      });
+    }
+    return list;
+  },
+
+  renderMediaGallery(momentId, moment) {
+    const media = this.getNormalizedMedia(moment);
+    if (!media || media.length === 0) return '';
+
+    // Nếu chỉ có đúng 1 video dạng Embed (YouTube / Facebook / TikTok / Drive) thì hiển thị khung iframe trực tiếp
+    if (media.length === 1 && media[0].type === 'video') {
+      const embedUrl = this.getEmbedUrl(media[0].url);
+      if (embedUrl) {
+        return this.renderVideoEmbed(media[0].url);
+      }
+    }
+
+    return this.renderMediaGrid(momentId, media);
+  },
+
+  renderMediaGrid(momentId, media) {
+    const count = media.length;
     let gridClass = 'photo-grid-1';
     if (count === 2) gridClass = 'photo-grid-2';
     else if (count === 3) gridClass = 'photo-grid-3';
     else if (count === 4) gridClass = 'photo-grid-4';
     else if (count >= 5) gridClass = 'photo-grid-5';
 
-    // JSON encoded images for lightbox
-    const safeImagesJson = encodeURIComponent(JSON.stringify(images));
+    const safeMediaJson = encodeURIComponent(JSON.stringify(media));
 
     return `
       <div class="moment-photo-gallery ${gridClass}">
-        ${images.slice(0, 5).map((imgUrl, index) => {
+        ${media.slice(0, 5).map((item, index) => {
           const isFifthOverlay = count > 5 && index === 4;
+          const isVideo = item.type === 'video';
+
           return `
-            <div class="moment-photo-item" onclick="window.momentsModule.openLightboxFromEnc('${safeImagesJson}', ${index})">
-              <img src="${imgUrl}" alt="Ảnh kỷ niệm FC TNT" loading="lazy">
+            <div class="moment-photo-item ${isVideo ? 'is-video-item' : ''}" onclick="window.momentsModule.openLightboxFromEnc('${safeMediaJson}', ${index})">
+              ${isVideo ? `
+                ${item.thumbnail ? `
+                  <img src="${item.thumbnail}" alt="Video thumbnail" loading="lazy">
+                ` : `
+                  <video src="${item.url}#t=0.5" muted playsinline preload="metadata"></video>
+                `}
+                <div class="media-video-overlay">
+                  <div class="media-play-circle">
+                    <span class="media-play-triangle">▶</span>
+                  </div>
+                  ${item.duration ? `<span class="media-video-duration">${item.duration}</span>` : ''}
+                </div>
+              ` : `
+                <img src="${item.url}" alt="Ảnh kỷ niệm FC TNT" loading="lazy">
+              `}
+
               ${isFifthOverlay ? `
                 <div class="photo-overlay-more">
                   <span>+${count - 4}</span>
@@ -355,6 +386,27 @@ window.momentsModule = {
         }).join('')}
       </div>
     `;
+  },
+
+  getEmbedUrl(url) {
+    if (!url) return null;
+    const trimmed = url.trim();
+    const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/|live\/|watch\?.+&v=))([\w-]{11})/);
+    if (ytMatch && ytMatch[1]) {
+      return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0&modestbranding=1`;
+    }
+    if (trimmed.includes('facebook.com') && (trimmed.includes('/videos/') || trimmed.includes('/watch/') || trimmed.includes('/reel/'))) {
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(trimmed)}&show_text=0&autoplay=1`;
+    }
+    const gdriveMatch = trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (gdriveMatch && gdriveMatch[1]) {
+      return `https://drive.google.com/file/d/${gdriveMatch[1]}/preview`;
+    }
+    const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch && vimeoMatch[1]) {
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+    }
+    return null;
   },
 
   renderVideoEmbed(url) {
@@ -699,19 +751,19 @@ window.momentsModule = {
     }
   },
 
-  // Open / Close Lightbox
+  // Open / Close Lightbox (Hỗ trợ cả Ảnh & Video)
   openLightboxFromEnc(encJson, index) {
     try {
-      const images = JSON.parse(decodeURIComponent(encJson));
-      this.openLightbox(images, index);
+      const media = JSON.parse(decodeURIComponent(encJson));
+      this.openLightbox(media, index);
     } catch (e) {
       console.error(e);
     }
   },
 
-  openLightbox(images, startIndex = 0) {
-    if (!images || images.length === 0) return;
-    this.currentLightboxImages = images;
+  openLightbox(media, startIndex = 0) {
+    if (!media || media.length === 0) return;
+    this.currentLightboxMedia = media;
     this.currentLightboxIndex = startIndex;
 
     const modal = document.getElementById('moment-lightbox-modal');
@@ -724,48 +776,113 @@ window.momentsModule = {
   closeLightbox() {
     const modal = document.getElementById('moment-lightbox-modal');
     if (modal) modal.classList.remove('active');
+
+    const videoPlayer = document.getElementById('lightbox-current-video');
+    if (videoPlayer) {
+      videoPlayer.pause();
+      videoPlayer.src = '';
+    }
+    const iframePlayer = document.getElementById('lightbox-current-iframe');
+    if (iframePlayer) {
+      iframePlayer.src = '';
+    }
   },
 
   prevLightbox() {
     if (this.currentLightboxIndex > 0) {
       this.currentLightboxIndex--;
-      this.updateLightboxView();
     } else {
-      this.currentLightboxIndex = this.currentLightboxImages.length - 1;
-      this.updateLightboxView();
+      this.currentLightboxIndex = this.currentLightboxMedia.length - 1;
     }
+    this.updateLightboxView();
   },
 
   nextLightbox() {
-    if (this.currentLightboxIndex < this.currentLightboxImages.length - 1) {
+    if (this.currentLightboxIndex < this.currentLightboxMedia.length - 1) {
       this.currentLightboxIndex++;
-      this.updateLightboxView();
     } else {
       this.currentLightboxIndex = 0;
-      this.updateLightboxView();
     }
+    this.updateLightboxView();
   },
 
   updateLightboxView() {
+    if (!this.currentLightboxMedia || this.currentLightboxMedia.length === 0) return;
+    const item = this.currentLightboxMedia[this.currentLightboxIndex];
     const img = document.getElementById('lightbox-current-img');
+    const videoWrap = document.getElementById('lightbox-video-wrap');
+    const videoPlayer = document.getElementById('lightbox-current-video');
+    const iframeWrap = document.getElementById('lightbox-iframe-wrap');
+    const iframePlayer = document.getElementById('lightbox-current-iframe');
     const counter = document.getElementById('lightbox-counter');
-    if (!img) return;
 
-    img.src = this.currentLightboxImages[this.currentLightboxIndex];
     if (counter) {
-      counter.innerText = `${this.currentLightboxIndex + 1} / ${this.currentLightboxImages.length}`;
+      counter.innerText = `${this.currentLightboxIndex + 1} / ${this.currentLightboxMedia.length}`;
+    }
+
+    // Reset previous playback
+    if (videoPlayer) {
+      videoPlayer.pause();
+      videoPlayer.src = '';
+    }
+    if (iframePlayer) {
+      iframePlayer.src = '';
+    }
+    if (img) img.style.display = 'none';
+    if (videoWrap) videoWrap.style.display = 'none';
+    if (iframeWrap) iframeWrap.style.display = 'none';
+
+    // Chuẩn hóa item
+    const mediaObj = typeof item === 'string' ? { type: 'image', url: item } : item;
+
+    if (mediaObj.type === 'video') {
+      const embedUrl = this.getEmbedUrl(mediaObj.url);
+      if (embedUrl && iframeWrap && iframePlayer) {
+        iframePlayer.src = embedUrl;
+        iframeWrap.style.display = 'flex';
+      } else if (videoWrap && videoPlayer) {
+        videoPlayer.src = mediaObj.url;
+        videoWrap.style.display = 'flex';
+        videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+      }
+    } else {
+      if (img) {
+        img.src = mediaObj.url;
+        img.style.display = 'block';
+      }
     }
   },
 
   // Modal Create / Edit Moment
+  async fetchUploadConfig() {
+    try {
+      const res = await fetch('/api/upload/config');
+      if (res.ok) {
+        this.cloudinaryConfig = await res.json();
+        const badge = document.getElementById('media-cloud-badge');
+        const statusText = document.getElementById('media-cloud-status');
+        if (badge && statusText) {
+          if (this.cloudinaryConfig && this.cloudinaryConfig.configured) {
+            badge.classList.add('connected');
+            statusText.textContent = `Cloudinary Ready (${this.cloudinaryConfig.cloudName || 'CDN'})`;
+          } else {
+            badge.classList.remove('connected');
+            statusText.textContent = 'Lưu trữ Đám Mây (Auto)';
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Cannot fetch upload config:', e);
+    }
+  },
+
   openCreateMomentModal(editId = null) {
     this.currentEditMomentId = editId;
     const modal = document.getElementById('moment-form-modal');
     const title = document.getElementById('moment-form-title');
     const form = document.getElementById('moment-form');
     form.reset();
-    this.uploadedImages = [];
-    this.uploadedVideoData = null;
+    this.uploadedMedia = [];
 
     const tagsContainer = document.getElementById('moment-tagged-players-select');
     const allPlayers = window.stateManager.getPlayers();
@@ -780,11 +897,6 @@ window.momentsModule = {
       `).join('');
     }
 
-    const videoPreviewBox = document.getElementById('moment-video-preview-box');
-    const videoStatus = document.getElementById('moment-video-status');
-    if (videoPreviewBox) videoPreviewBox.style.display = 'none';
-    if (videoStatus) videoStatus.innerText = '';
-
     if (editId) {
       title.innerText = '✏️ Chỉnh Sửa Khoảnh Khắc';
       const m = window.stateManager.getMomentById(editId);
@@ -795,19 +907,8 @@ window.momentsModule = {
         document.getElementById('moment-input-category').value = m.category || 'party';
         document.getElementById('moment-input-description').value = m.description || '';
 
-        if (m.videoUrl) {
-          if (m.videoUrl.startsWith('data:video/') || m.videoUrl.endsWith('.mp4') || m.videoUrl.endsWith('.webm')) {
-            this.uploadedVideoData = m.videoUrl;
-            const player = document.getElementById('moment-video-preview-player');
-            if (player) player.src = m.videoUrl;
-            if (videoPreviewBox) videoPreviewBox.style.display = 'block';
-            if (videoStatus) videoStatus.innerText = '✅ Đã có video';
-          } else {
-            document.getElementById('moment-input-video').value = m.videoUrl;
-          }
-        }
-
-        this.uploadedImages = [...(m.images || [])];
+        // Nạp media hiện có
+        this.uploadedMedia = this.getNormalizedMedia(m).map(item => ({ ...item, file: null }));
 
         // Check tagged
         if (tagsContainer && m.taggedPlayerIds) {
@@ -823,19 +924,17 @@ window.momentsModule = {
       document.getElementById('moment-input-date').value = todayStr;
     }
 
-    this.renderModalImagesPreview();
+    this.renderMediaQueuePreview();
     modal.classList.add('active');
   },
 
   closeCreateMomentModal() {
     const modal = document.getElementById('moment-form-modal');
     if (modal) modal.classList.remove('active');
-    this.uploadedVideoData = null;
-    const player = document.getElementById('moment-video-preview-player');
-    if (player) player.src = '';
+    this.uploadedMedia = [];
   },
 
-  compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+  compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.85) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -845,7 +944,6 @@ window.momentsModule = {
           let width = img.width;
           let height = img.height;
 
-          // Giữ tỷ lệ và scale về tối đa 1200x1200px
           if (width > maxWidth || height > maxHeight) {
             if (width > height) {
               height = Math.round((height * maxWidth) / width);
@@ -870,119 +968,255 @@ window.momentsModule = {
     });
   },
 
-  async handleImageFiles(fileList) {
+  async handleMediaFiles(fileList) {
     if (!fileList || fileList.length === 0) return;
 
-    for (const file of Array.from(fileList)) {
-      if (!file.type.startsWith('image/')) continue;
-      try {
-        const compressedBase64 = await this.compressImage(file, 1200, 1200, 0.8);
-        this.uploadedImages.push(compressedBase64);
-        this.renderModalImagesPreview();
-      } catch (err) {
-        console.warn('[Moments] Không thể nén ảnh, sử dụng ảnh gốc:', err.message);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.uploadedImages.push(e.target.result);
-          this.renderModalImagesPreview();
-        };
-        reader.readAsDataURL(file);
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      if (file.type.startsWith('image/')) {
+        try {
+          const compressedDataUrl = await this.compressImage(file, 1600, 1600, 0.85);
+          this.uploadedMedia.push({
+            type: 'image',
+            url: compressedDataUrl,
+            file,
+            thumbnail: '',
+            name: file.name
+          });
+        } catch (e) {
+          console.warn('Lỗi nén ảnh:', e);
+        }
+      } else if (file.type.startsWith('video/')) {
+        const blobUrl = URL.createObjectURL(file);
+        const meta = await this.extractVideoMeta(file, blobUrl);
+        this.uploadedMedia.push({
+          type: 'video',
+          url: blobUrl,
+          file,
+          thumbnail: meta.thumbnail,
+          duration: meta.duration,
+          name: file.name
+        });
       }
     }
-  },
 
-  handleVideoFile(file) {
-    if (!file) return;
-
-    if (!file.type.startsWith('video/')) {
-      if (window.appModule && window.appModule.showToast) {
-        window.appModule.showToast('Vui lòng chọn file định dạng video (.mp4, .mov, .webm)!', 'warning');
-      }
-      return;
-    }
-
-    if (file.size > 8 * 1024 * 1024) {
-      if (window.appModule && window.appModule.showToast) {
-        window.appModule.showToast('⚠️ Dung lượng video quá lớn (>8MB). Để đảm bảo tốc độ tải mượt mà, bạn vui lòng dán link YouTube/Drive hoặc nén video dưới 8MB nhé!', 'warning');
-      }
-      return;
-    }
-
-    const status = document.getElementById('moment-video-status');
-    if (status) status.innerText = '⏳ Đang tải video...';
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      this.uploadedVideoData = e.target.result;
-      document.getElementById('moment-input-video').value = '';
-
-      const previewBox = document.getElementById('moment-video-preview-box');
-      const player = document.getElementById('moment-video-preview-player');
-
-      if (player) player.src = this.uploadedVideoData;
-      if (previewBox) previewBox.style.display = 'block';
-      if (status) status.innerText = `✅ Đã chọn video (${(file.size / (1024 * 1024)).toFixed(1)}MB)`;
-
-      if (window.appModule && window.appModule.showToast) {
-        window.appModule.showToast('🎬 Đã tải video lên thành công!', 'success');
-      }
-    };
-    reader.readAsDataURL(file);
-  },
-
-  removeVideo() {
-    this.uploadedVideoData = null;
-    document.getElementById('moment-input-video').value = '';
-    const fileInput = document.getElementById('moment-video-file-input');
+    const fileInput = document.getElementById('moment-media-file-input');
     if (fileInput) fileInput.value = '';
 
-    const previewBox = document.getElementById('moment-video-preview-box');
-    const player = document.getElementById('moment-video-preview-player');
-    const status = document.getElementById('moment-video-status');
-
-    if (player) player.src = '';
-    if (previewBox) previewBox.style.display = 'none';
-    if (status) status.innerText = '';
+    this.renderMediaQueuePreview();
   },
 
-  addImageUrlManual() {
-    const input = document.getElementById('moment-img-url-input');
+  extractVideoMeta(file, blobUrl) {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.src = blobUrl;
+      video.muted = true;
+      video.playsInline = true;
+
+      let resolved = false;
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve({ thumbnail: '', duration: '' });
+        }
+      }, 4000);
+
+      video.onloadedmetadata = () => {
+        const durationSec = video.duration;
+        video.currentTime = Math.min(1, durationSec / 2 || 0.5);
+      };
+
+      video.onseeked = () => {
+        if (resolved) return;
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.min(640, video.videoWidth || 480);
+          canvas.height = Math.min(480, video.videoHeight || 360);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
+          resolved = true;
+          clearTimeout(timeout);
+          resolve({ thumbnail, duration: this.formatSeconds(video.duration) });
+        } catch (e) {
+          resolved = true;
+          clearTimeout(timeout);
+          resolve({ thumbnail: '', duration: this.formatSeconds(video.duration) });
+        }
+      };
+
+      video.onerror = () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          resolve({ thumbnail: '', duration: '' });
+        }
+      };
+    });
+  },
+
+  formatSeconds(seconds) {
+    if (!seconds || isNaN(seconds)) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  },
+
+  addMediaUrlManual() {
+    const input = document.getElementById('moment-media-url-input');
     if (!input || !input.value.trim()) return;
-    this.uploadedImages.push(input.value.trim());
+    const url = input.value.trim();
+
+    const isVideo = this.isVideoUrl(url);
+
+    this.uploadedMedia.push({
+      type: isVideo ? 'video' : 'image',
+      url,
+      file: null,
+      thumbnail: '',
+      duration: ''
+    });
+
     input.value = '';
-    this.renderModalImagesPreview();
+    this.renderMediaQueuePreview();
   },
 
-  removeUploadedImage(index) {
-    this.uploadedImages.splice(index, 1);
-    this.renderModalImagesPreview();
+  isVideoUrl(url) {
+    if (!url) return false;
+    const trimmed = url.toLowerCase();
+    return (
+      trimmed.includes('youtube.com') ||
+      trimmed.includes('youtu.be') ||
+      trimmed.includes('facebook.com') ||
+      trimmed.includes('tiktok.com') ||
+      trimmed.includes('drive.google.com') ||
+      trimmed.endsWith('.mp4') ||
+      trimmed.endsWith('.webm') ||
+      trimmed.endsWith('.mov') ||
+      trimmed.startsWith('data:video/')
+    );
   },
 
-  renderModalImagesPreview() {
-    const container = document.getElementById('moment-images-preview-list');
+  removeMediaItem(index) {
+    if (index >= 0 && index < this.uploadedMedia.length) {
+      this.uploadedMedia.splice(index, 1);
+      this.renderMediaQueuePreview();
+    }
+  },
+
+  moveMediaItem(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < this.uploadedMedia.length) {
+      const item = this.uploadedMedia.splice(index, 1)[0];
+      this.uploadedMedia.splice(newIndex, 0, item);
+      this.renderMediaQueuePreview();
+    }
+  },
+
+  renderMediaQueuePreview() {
+    const container = document.getElementById('moment-media-preview-queue');
     if (!container) return;
 
-    if (this.uploadedImages.length === 0) {
-      container.innerHTML = '<div style="color: var(--text-dim); font-size: 0.85rem; font-style: italic;">Chưa có ảnh nào được thêm.</div>';
+    if (this.uploadedMedia.length === 0) {
+      container.innerHTML = `
+        <div class="media-queue-empty-placeholder" id="media-queue-empty">
+          Chưa có ảnh hoặc video nào. Hãy bấm "+ Thêm Ảnh / Video" để chọn tệp!
+        </div>
+      `;
       return;
     }
 
-    container.innerHTML = this.uploadedImages.map((img, idx) => `
-      <div class="modal-img-preview-chip">
-        <img src="${img}" alt="Preview">
-        <button type="button" class="remove-img-btn" onclick="window.momentsModule.removeUploadedImage(${idx})">&times;</button>
-      </div>
-    `).join('');
+    container.innerHTML = this.uploadedMedia.map((item, idx) => {
+      const isVideo = item.type === 'video';
+      return `
+        <div class="media-preview-card" id="media-preview-${idx}">
+          ${isVideo ? `
+            ${item.thumbnail ? `
+              <img src="${item.thumbnail}" alt="Thumbnail">
+            ` : `
+              <video src="${item.url}#t=0.5" muted preload="metadata"></video>
+            `}
+            <span class="media-type-badge video">🎬 Video ${item.duration ? `(${item.duration})` : ''}</span>
+          ` : `
+            <img src="${item.url}" alt="Ảnh xem trước">
+            <span class="media-type-badge">📸 Ảnh</span>
+          `}
+          <div class="media-preview-actions">
+            ${idx > 0 ? `<button type="button" class="media-action-btn" onclick="window.momentsModule.moveMediaItem(${idx}, -1)" title="Chuyển sang trái">◀</button>` : ''}
+            ${idx < this.uploadedMedia.length - 1 ? `<button type="button" class="media-action-btn" onclick="window.momentsModule.moveMediaItem(${idx}, 1)" title="Chuyển sang phải">▶</button>` : ''}
+            <button type="button" class="media-action-btn del" onclick="window.momentsModule.removeMediaItem(${idx})" title="Xóa tệp này">&times;</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  async uploadMediaItemToCloudinary(item) {
+    if (!item.file) return item; // Already an online URL
+
+    try {
+      if (this.cloudinaryConfig && this.cloudinaryConfig.configured) {
+        const formData = new FormData();
+        formData.append('file', item.file);
+
+        let uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudinaryConfig.cloudName}/auto/upload`;
+
+        if (this.cloudinaryConfig.hasPreset && this.cloudinaryConfig.uploadPreset) {
+          formData.append('upload_preset', this.cloudinaryConfig.uploadPreset);
+        } else {
+          const sigRes = await fetch('/api/upload/signature', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-token': window.stateManager.getAdminToken()
+            }
+          });
+          const sigData = await sigRes.json();
+          if (sigData.success) {
+            formData.append('api_key', sigData.apiKey);
+            formData.append('timestamp', sigData.timestamp);
+            formData.append('folder', sigData.folder);
+            formData.append('signature', sigData.signature);
+            uploadUrl = sigData.uploadUrl;
+          }
+        }
+
+        const cldRes = await fetch(uploadUrl, {
+          method: 'POST',
+          body: formData
+        });
+        const cldData = await cldRes.json();
+
+        if (cldRes.ok && cldData.secure_url) {
+          const isVideo = cldData.resource_type === 'video' || item.type === 'video';
+          return {
+            type: isVideo ? 'video' : 'image',
+            url: cldData.secure_url,
+            thumbnail: isVideo ? cldData.secure_url.replace(/\.[^/.]+$/, '.jpg') : (item.thumbnail || ''),
+            duration: cldData.duration ? this.formatSeconds(cldData.duration) : (item.duration || '')
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('[CloudinaryUpload] Direct upload failed, falling back to direct server route:', err.message);
+    }
+
+    return {
+      type: item.type,
+      url: item.url,
+      thumbnail: item.thumbnail || '',
+      duration: item.duration || ''
+    };
   },
 
   async handleFormSubmit() {
+    const submitBtn = document.getElementById('moment-submit-btn');
     const title = document.getElementById('moment-input-title').value.trim();
     const date = document.getElementById('moment-input-date').value;
     const location = document.getElementById('moment-input-location').value.trim();
     const category = document.getElementById('moment-input-category').value;
     const description = document.getElementById('moment-input-description').value.trim();
-    const manualVideoUrl = document.getElementById('moment-input-video').value.trim();
-    const videoUrl = this.uploadedVideoData || manualVideoUrl;
 
     const taggedCheckboxes = document.querySelectorAll('#moment-tagged-players-select input[type="checkbox"]:checked');
     const taggedPlayerIds = Array.from(taggedCheckboxes).map(cb => cb.value);
@@ -994,31 +1228,81 @@ window.momentsModule = {
       return;
     }
 
-    const payload = {
-      title,
-      date,
-      location,
-      category,
-      description,
-      videoUrl,
-      images: this.uploadedImages,
-      taggedPlayerIds
-    };
-
-    if (this.currentEditMomentId) {
-      await window.stateManager.updateMoment(this.currentEditMomentId, payload);
-      if (window.appModule && window.appModule.showToast) {
-        window.appModule.showToast('✅ Cập nhật khoảnh khắc thành công!', 'success');
-      }
-    } else {
-      await window.stateManager.addMoment(payload);
-      if (window.appModule && window.appModule.showToast) {
-        window.appModule.showToast('🎉 Đăng khoảnh khắc kỷ niệm mới thành công!', 'success');
-      }
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Đang xử lý tải lên...';
     }
 
-    this.closeCreateMomentModal();
-    this.renderMoments();
+    const progressWrap = document.getElementById('moment-upload-progress');
+    const progressBar = document.getElementById('moment-upload-progress-bar');
+    const progressLabel = document.getElementById('moment-upload-progress-label');
+    const progressPct = document.getElementById('moment-upload-progress-pct');
+
+    const totalMedia = this.uploadedMedia.length;
+    const finalMediaList = [];
+
+    if (progressWrap && totalMedia > 0) {
+      progressWrap.style.display = 'block';
+    }
+
+    try {
+      for (let i = 0; i < totalMedia; i++) {
+        const item = this.uploadedMedia[i];
+        if (progressLabel && progressPct && progressBar) {
+          const pct = Math.round(((i + 1) / totalMedia) * 100);
+          progressLabel.textContent = `Đang tải tệp ${i + 1}/${totalMedia} lên đám mây...`;
+          progressPct.textContent = `${pct}%`;
+          progressBar.style.width = `${pct}%`;
+        }
+
+        const uploadedItem = await this.uploadMediaItemToCloudinary(item);
+        finalMediaList.push(uploadedItem);
+      }
+
+      if (progressWrap) {
+        progressWrap.style.display = 'none';
+      }
+
+      const payload = {
+        title,
+        date,
+        location,
+        category,
+        description,
+        media: finalMediaList,
+        images: finalMediaList.filter(m => m.type === 'image').map(m => m.url),
+        videoUrl: (finalMediaList.find(m => m.type === 'video') || {}).url || '',
+        taggedPlayerIds
+      };
+
+      if (this.currentEditMomentId) {
+        await window.stateManager.updateMoment(this.currentEditMomentId, payload);
+        if (window.appModule && window.appModule.showToast) {
+          window.appModule.showToast('✅ Cập nhật khoảnh khắc thành công!', 'success');
+        }
+      } else {
+        await window.stateManager.addMoment(payload);
+        if (window.appModule && window.appModule.showToast) {
+          window.appModule.showToast('🎉 Đăng khoảnh khắc kỷ niệm mới thành công!', 'success');
+        }
+      }
+
+      this.closeCreateMomentModal();
+      this.renderMoments();
+    } catch (err) {
+      console.error('Submit moment error:', err);
+      if (window.appModule && window.appModule.showToast) {
+        window.appModule.showToast('Lỗi khi lưu khoảnh khắc: ' + err.message, 'error');
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '📸 Lưu & Đăng Khoảnh Khắc';
+      }
+      if (progressWrap) {
+        progressWrap.style.display = 'none';
+      }
+    }
   },
 
   async deleteMoment(id) {
