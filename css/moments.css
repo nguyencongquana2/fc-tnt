@@ -1423,5 +1423,33 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85);
 }
 
-
-
+/* Responsive adjustments for Mobile Viewports */
+@media (max-width: 640px) {
+  .photo-grid-2 {
+    height: 220px;
+  }
+  .photo-grid-3 {
+    height: 260px;
+  }
+  .photo-grid-4 {
+    height: 260px;
+  }
+  .photo-grid-5 {
+    grid-template-rows: 165px 115px;
+    height: 284px;
+    gap: 3px;
+  }
+  .media-play-circle {
+    width: 38px;
+    height: 38px;
+  }
+  .media-play-triangle {
+    font-size: 0.92rem;
+  }
+  .media-video-duration {
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    bottom: 5px;
+    left: 5px;
+  }
+}

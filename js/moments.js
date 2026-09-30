@@ -350,8 +350,6 @@ window.momentsModule = {
     else if (count === 4) gridClass = 'photo-grid-4';
     else if (count >= 5) gridClass = 'photo-grid-5';
 
-    const safeMediaJson = encodeURIComponent(JSON.stringify(media));
-
     return `
       <div class="moment-photo-gallery ${gridClass}">
         ${media.slice(0, 5).map((item, index) => {
@@ -359,7 +357,7 @@ window.momentsModule = {
           const isVideo = item.type === 'video';
 
           return `
-            <div class="moment-photo-item ${isVideo ? 'is-video-item' : ''}" onclick="window.momentsModule.openLightboxFromEnc('${safeMediaJson}', ${index})">
+            <div class="moment-photo-item ${isVideo ? 'is-video-item' : ''}" onclick="window.momentsModule.openMomentLightbox('${momentId}', ${index})">
               ${isVideo ? `
                 ${item.thumbnail ? `
                   <img src="${item.thumbnail}" alt="Video thumbnail" loading="lazy">
@@ -752,6 +750,13 @@ window.momentsModule = {
   },
 
   // Open / Close Lightbox (Hỗ trợ cả Ảnh & Video)
+  openMomentLightbox(momentId, index = 0) {
+    const m = window.stateManager.getMomentById(momentId);
+    if (!m) return;
+    const media = this.getNormalizedMedia(m);
+    this.openLightbox(media, index);
+  },
+
   openLightboxFromEnc(encJson, index) {
     try {
       const media = JSON.parse(decodeURIComponent(encJson));
@@ -931,6 +936,13 @@ window.momentsModule = {
   closeCreateMomentModal() {
     const modal = document.getElementById('moment-form-modal');
     if (modal) modal.classList.remove('active');
+    if (Array.isArray(this.uploadedMedia)) {
+      this.uploadedMedia.forEach(item => {
+        if (item && item.url && typeof item.url === 'string' && item.url.startsWith('blob:')) {
+          try { URL.revokeObjectURL(item.url); } catch (e) { /* ignore */ }
+        }
+      });
+    }
     this.uploadedMedia = [];
   },
 
@@ -1100,6 +1112,10 @@ window.momentsModule = {
 
   removeMediaItem(index) {
     if (index >= 0 && index < this.uploadedMedia.length) {
+      const item = this.uploadedMedia[index];
+      if (item && item.url && typeof item.url === 'string' && item.url.startsWith('blob:')) {
+        try { URL.revokeObjectURL(item.url); } catch (e) { /* ignore */ }
+      }
       this.uploadedMedia.splice(index, 1);
       this.renderMediaQueuePreview();
     }
@@ -1199,12 +1215,33 @@ window.momentsModule = {
         }
       }
     } catch (err) {
-      console.warn('[CloudinaryUpload] Direct upload failed, falling back to direct server route:', err.message);
+      console.warn('[CloudinaryUpload] Direct upload failed, falling back:', err.message);
+    }
+
+    // Fallback nếu Cloudinary chưa cấu hình hoặc lỗi mạng
+    let finalUrl = item.url;
+    if (item.type === 'video' && item.file && typeof item.url === 'string' && item.url.startsWith('blob:')) {
+      if (item.file.size <= 10 * 1024 * 1024) {
+        try {
+          finalUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsDataURL(item.file);
+          });
+        } catch (e) {
+          console.warn('[Moments] Fallback video conversion error:', e);
+        }
+      } else {
+        if (window.appModule && window.appModule.showToast) {
+          window.appModule.showToast(`Video "${item.name || 'tệp'}" > 10MB. Vui lòng cấu hình Cloudinary trong .env để tải video dung lượng lớn!`, 'warning');
+        }
+      }
     }
 
     return {
       type: item.type,
-      url: item.url,
+      url: finalUrl,
       thumbnail: item.thumbnail || '',
       duration: item.duration || ''
     };
