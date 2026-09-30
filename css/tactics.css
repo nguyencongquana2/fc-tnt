@@ -857,13 +857,128 @@ body.no-scroll {
   max-width: 95px;
 }
 
+/* Khung sân khấu bọc mặt sân và 2 bên thanh dock phím tắt */
+.tactics-pitch-stage {
+  position: relative;
+  width: 100%;
+}
+
+.tactics-side-dock {
+  display: none !important;
+}
+
+/* Ẩn cụm nút thao tác ở thanh trên cùng khi Fullscreen */
+.is-fullscreen .tactics-toolbar .tactics-toolbar-actions {
+  display: none !important;
+}
+
+/* Fullscreen Pitch Stage (Dàn ngang: Cột Trái | Sân Bóng 16:9 | Cột Phải) */
+.is-fullscreen .tactics-pitch-stage {
+  flex: 1;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  height: calc(100vh - 46px) !important;
+  max-height: calc(100vh - 46px) !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  gap: 12px !important;
+  padding: 0 max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left)) !important;
+  position: relative !important;
+}
+
+/* Thanh dock phím tắt 2 bên khi Fullscreen (Công thái học ngón tay cái) */
+.is-fullscreen .tactics-side-dock {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 14px !important;
+  z-index: 100 !important;
+  flex-shrink: 0 !important;
+  width: 48px !important;
+}
+
+/* Các nút tròn phím tắt nhanh 2 bên */
+.is-fullscreen .tactics-side-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+  padding: 0;
+  outline: none;
+}
+
+.is-fullscreen .tactics-side-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(16, 185, 129, 0.7);
+  transform: scale(1.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.is-fullscreen .tactics-side-btn:active {
+  transform: scale(0.92);
+}
+
+/* Nút xóa nét cảnh báo vàng cam */
+.is-fullscreen .tactics-side-btn.tactics-side-clear:hover {
+  border-color: rgba(245, 158, 11, 0.8);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+/* Nút thoát toàn màn hình (Cột phải - Nền đỏ nổi bật, giải phóng 100% sân) */
+.is-fullscreen .tactics-side-btn.tactics-side-exit {
+  background: rgba(239, 68, 68, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.is-fullscreen .tactics-side-btn.tactics-side-exit:hover {
+  background: #dc2626 !important;
+  border-color: #fff !important;
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6), 0 0 14px rgba(239, 68, 68, 0.5) !important;
+}
+
+/* Trạng thái mờ/disabled khi chưa có nét vẽ hoặc không có nét làm lại */
+.is-fullscreen .tactics-side-btn.disabled {
+  opacity: 0.3 !important;
+  pointer-events: none !important;
+  filter: grayscale(1) !important;
+  box-shadow: none !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Ẩn nút Thoát ở góc sân khi đã Fullscreen (vì đã có nút ở dock phải) */
+.is-fullscreen #tactics-pitch-fs-btn {
+  display: none !important;
+}
+
 /* Mặt sân bóng phía dưới khi Fullscreen (Hình 3) - Khóa cứng tuyệt đối tỉ lệ 16:9 chuẩn toán học */
 .is-fullscreen .tactics-pitch-wrapper {
   aspect-ratio: 16 / 9 !important;
-  height: min(calc(100vh - 44px), calc((100vw - 16px) * 9 / 16)) !important;
-  width: min(calc((100vh - 44px) * 16 / 9), calc(100vw - 16px)) !important;
-  max-height: calc(100vh - 44px) !important;
-  max-width: calc(100vw - 16px) !important;
+  height: min(calc(100vh - 46px), calc((100vw - 128px) * 9 / 16)) !important;
+  width: min(calc((100vh - 46px) * 16 / 9), calc(100vw - 128px)) !important;
+  max-height: calc(100vh - 46px) !important;
+  max-width: calc(100vw - 128px) !important;
   flex: 0 0 auto !important;
   min-height: unset !important;
   margin: auto !important;

@@ -567,8 +567,8 @@
               </select>
             </div>
 
-            <!-- Action Tools -->
-            <div style="margin-left: auto; display: flex; gap: 0.35rem; align-items: center;">
+            <!-- Action Tools (Hiển thị trên PC / Chế độ thường) -->
+            <div class="tactics-toolbar-actions" style="margin-left: auto; display: flex; gap: 0.35rem; align-items: center;">
               <button type="button" class="tactics-tool-btn" onclick="window.tacticsModule.undo()" title="Hoàn tác nét vẽ gần nhất">
                 ↩️ <span>Hoàn Tác</span>
               </button>
@@ -581,37 +581,60 @@
             </div>
           </div>
 
-          <!-- Mặt Sân Bóng (Hình 3) -->
-          <div class="tactics-pitch-wrapper" id="tactics-pitch-wrapper">
-            <!-- Nút Toàn Màn Hình / Thoát (Góc trên bên phải sân - Hình 3) -->
-            <button type="button" class="tactics-pitch-fs-toggle-btn" id="tactics-pitch-fs-btn" onclick="window.tacticsModule.toggleFullscreen()" title="Toàn Màn Hình / Thoát">
-              <span class="fs-icon-expand">⛶ Toàn Màn Hình</span>
-              <span class="fs-icon-compress">⛶ Thoát</span>
-            </button>
-
-            <!-- Thảm cỏ sọc -->
-            <div class="tactics-pitch-grass"></div>
-
-            <!-- Vạch sơn sân 7 chuẩn -->
-            <div class="tactics-pitch-markings">
-              <div class="pitch-center-line"></div>
-              <div class="pitch-center-circle"></div>
-              <div class="pitch-center-spot"></div>
-
-              <div class="pitch-box-left"></div>
-              <div class="pitch-penalty-left"></div>
-              <div class="pitch-goal-left"></div>
-
-              <div class="pitch-box-right"></div>
-              <div class="pitch-penalty-right"></div>
-              <div class="pitch-goal-right"></div>
+          <!-- Khung Sân Khấu Sa Bàn & 2 Cột Phím Tắt Nhanh Hai Bên khi Toàn Màn Hình -->
+          <div class="tactics-pitch-stage" id="tactics-pitch-stage">
+            <!-- Cột bên Trái: Hoàn Tác, Làm Lại, Xóa Nét (Vừa tầm ngón cái tay trái) -->
+            <div class="tactics-side-dock tactics-dock-left" id="tactics-dock-left">
+              <button type="button" class="tactics-side-btn" id="tactics-side-undo-btn" onclick="window.tacticsModule.undo()" title="Hoàn tác nét vẽ (Undo)" aria-label="Hoàn tác nét vẽ">
+                ↩️
+              </button>
+              <button type="button" class="tactics-side-btn" id="tactics-side-redo-btn" onclick="window.tacticsModule.redo()" title="Làm lại nét vẽ (Redo)" aria-label="Làm lại nét vẽ">
+                ↪️
+              </button>
+              <button type="button" class="tactics-side-btn tactics-side-clear" id="tactics-side-clear-btn" onclick="window.tacticsModule.clearDrawings()" title="Xóa toàn bộ nét vẽ" aria-label="Xóa toàn bộ nét vẽ">
+                🗑️
+              </button>
             </div>
 
-            <!-- Canvas vẽ đè lên mặt sân -->
-            <canvas id="tactics-canvas-overlay" class="tactics-canvas-overlay"></canvas>
+            <!-- Mặt Sân Bóng (Hình 3) -->
+            <div class="tactics-pitch-wrapper" id="tactics-pitch-wrapper">
+              <!-- Nút Toàn Màn Hình / Thoát (Góc trên bên phải sân - Chỉ hiện ở chế độ thường) -->
+              <button type="button" class="tactics-pitch-fs-toggle-btn" id="tactics-pitch-fs-btn" onclick="window.tacticsModule.toggleFullscreen()" title="Toàn Màn Hình / Thoát">
+                <span class="fs-icon-expand">⛶ Toàn Màn Hình</span>
+                <span class="fs-icon-compress">⛶ Thoát</span>
+              </button>
 
-            <!-- Lớp quân cờ kéo thả -->
-            <div id="tactics-pieces-container" class="tactics-pieces-container"></div>
+              <!-- Thảm cỏ sọc -->
+              <div class="tactics-pitch-grass"></div>
+
+              <!-- Vạch sơn sân 7 chuẩn -->
+              <div class="tactics-pitch-markings">
+                <div class="pitch-center-line"></div>
+                <div class="pitch-center-circle"></div>
+                <div class="pitch-center-spot"></div>
+
+                <div class="pitch-box-left"></div>
+                <div class="pitch-penalty-left"></div>
+                <div class="pitch-goal-left"></div>
+
+                <div class="pitch-box-right"></div>
+                <div class="pitch-penalty-right"></div>
+                <div class="pitch-goal-right"></div>
+              </div>
+
+              <!-- Canvas vẽ đè lên mặt sân -->
+              <canvas id="tactics-canvas-overlay" class="tactics-canvas-overlay"></canvas>
+
+              <!-- Lớp quân cờ kéo thả -->
+              <div id="tactics-pieces-container" class="tactics-pieces-container"></div>
+            </div>
+
+            <!-- Cột bên Phải: Nút Thoát Toàn Màn Hình (Vừa tầm ngón cái tay phải, giải phóng 100% diện tích mặt sân) -->
+            <div class="tactics-side-dock tactics-dock-right" id="tactics-dock-right">
+              <button type="button" class="tactics-side-btn tactics-side-exit" id="tactics-side-exit-btn" onclick="window.tacticsModule.toggleFullscreen()" title="Thoát toàn màn hình" aria-label="Thoát toàn màn hình">
+                ⛶
+              </button>
+            </div>
           </div>
 
           <!-- Dòng mẹo hướng dẫn & đồng bộ (Tự ẩn khi Fullscreen) -->

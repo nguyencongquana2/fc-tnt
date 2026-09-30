@@ -146,6 +146,21 @@ Object.assign(window.tacticsModule, {
     this.drawings.forEach(shape => {
       this.drawStoredShape(ctx, shape, rect.width, rect.height);
     });
+
+    this.updateHistoryButtonsUI();
+  },
+
+  updateHistoryButtonsUI() {
+    const hasDrawings = Boolean(this.drawings && this.drawings.length > 0);
+    const hasRedo = Boolean(this.redoHistory && this.redoHistory.length > 0);
+
+    const undoBtn = document.getElementById('tactics-side-undo-btn');
+    const redoBtn = document.getElementById('tactics-side-redo-btn');
+    const clearBtn = document.getElementById('tactics-side-clear-btn');
+
+    if (undoBtn) undoBtn.classList.toggle('disabled', !hasDrawings);
+    if (clearBtn) clearBtn.classList.toggle('disabled', !hasDrawings);
+    if (redoBtn) redoBtn.classList.toggle('disabled', !hasRedo);
   },
 
   drawTempShape(mode, points, color) {
