@@ -5,6 +5,8 @@
 
 const express = require('express');
 const Moment = require('../models/Moment');
+const Player = require('../models/Player');
+const { verifyAdminToken, verifyPlayerToken } = require('./auth');
 const { commentRateLimiter, reactionRateLimiter } = require('../utils/rateLimiter');
 const { isValidReaction, validateCommentInput } = require('../utils/validators');
 
@@ -111,9 +113,11 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         return res.status(400).json({ error: 'Loại cảm xúc không hợp lệ!' });
       }
 
-      const safeUserKey = typeof userKey === 'string' && userKey.trim() 
-        ? userKey.trim().slice(0, 80) 
-        : 'anonymous';
+      const playerToken = req.headers['x-player-token'];
+      const playerSession = verifyPlayerToken(playerToken);
+      const safeUserKey = (playerSession && playerSession.playerId)
+        ? playerSession.playerId
+        : (typeof userKey === 'string' && userKey.trim() ? userKey.trim().slice(0, 80) : 'anonymous');
 
       if (isMongoConnected()) {
         const moment = await Moment.findOne({ id });
@@ -177,24 +181,61 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         return res.status(400).json({ error: validation.errors[0] || 'Dữ liệu không hợp lệ!' });
       }
 
-      const { authorName, avatar, content } = validation.sanitized;
+      const adminToken = req.headers['x-admin-token'];
+      const playerToken = req.headers['x-player-token'];
+
+      const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
+      const playerSession = verifyPlayerToken(playerToken);
+
+      let authorId = '';
+      let authorName = '';
+      let avatar = '';
+
+      if (isAdmin) {
+        authorId = 'admin';
+        authorName = 'Ban Quản Trị';
+        avatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+      } else if (playerSession) {
+        authorId = playerSession.playerId;
+        let player = null;
+        if (isMongoConnected()) {
+          player = await Player.findOne({ id: playerSession.playerId });
+        } else {
+          player = (fallbackData.players || []).find(p => p.id === playerSession.playerId);
+        }
+        authorName = (player ? (player.nickname || player.name) : playerSession.name) || 'Cầu thủ FC TNT';
+        avatar = (player ? player.avatar : '') || '';
+      } else {
+        authorId = '';
+        authorName = (validation.sanitized.authorName && validation.sanitized.authorName !== 'Thành viên FC TNT' && validation.sanitized.authorName !== 'Anonymous')
+          ? validation.sanitized.authorName
+          : 'Khách / CĐV FC TNT';
+        avatar = validation.sanitized.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+      }
 
       const newComment = {
-        id: 'c_' + Date.now(),
+        id: 'c_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        authorId,
         authorName,
         avatar,
-        content,
+        content: validation.sanitized.content,
         createdAt: new Date()
       };
 
       if (isMongoConnected()) {
-        const moment = await Moment.findOne({ id });
-        if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
+        const updatedMoment = await Moment.findOneAndUpdate(
+          { id },
+          { $push: { comments: newComment } },
+          { new: true }
+        );
+        if (!updatedMoment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
-        moment.comments.push(newComment);
-        await moment.save();
-        broadcastDataUpdate('moments', `💬 ${newComment.authorName} vừa bình luận: "${newComment.content.substring(0, 30)}..."`, { momentId: id });
-        return res.status(201).json({ success: true, comment: newComment, comments: moment.comments });
+        broadcastDataUpdate(
+          'moments',
+          `💬 ${newComment.authorName} vừa bình luận: "${newComment.content.substring(0, 30)}..."`,
+          { momentId: id, action: 'add_comment', comment: newComment }
+        );
+        return res.status(201).json({ success: true, comment: newComment, comments: updatedMoment.comments });
       }
 
       fallbackData.moments = fallbackData.moments || [];
@@ -203,7 +244,11 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
 
       moment.comments = moment.comments || [];
       moment.comments.push(newComment);
-      broadcastDataUpdate('moments', `💬 ${newComment.authorName} vừa bình luận: "${newComment.content.substring(0, 30)}..."`, { momentId: id });
+      broadcastDataUpdate(
+        'moments',
+        `💬 ${newComment.authorName} vừa bình luận: "${newComment.content.substring(0, 30)}..."`,
+        { momentId: id, action: 'add_comment', comment: newComment }
+      );
       res.status(201).json({ success: true, comment: newComment, comments: moment.comments });
     } catch (err) {
       console.warn('[Moments] Lỗi gửi comment:', err.message);
@@ -211,29 +256,80 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // DELETE /api/moments/:id/comments/:commentId
-  router.delete('/:id/comments/:commentId', requireAdmin, async (req, res) => {
+  // DELETE /api/moments/:id/comments/:commentId (Xóa bình luận - Admin hoặc chính chủ)
+  router.delete('/:id/comments/:commentId', async (req, res) => {
     try {
       const { id, commentId } = req.params;
+      const adminToken = req.headers['x-admin-token'];
+      const playerToken = req.headers['x-player-token'];
+
+      const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
+      const playerSession = verifyPlayerToken(playerToken);
+
+      if (!isAdmin && !playerSession) {
+        return res.status(401).json({ error: 'Vui lòng đăng nhập để xóa bình luận!' });
+      }
 
       if (isMongoConnected()) {
         const moment = await Moment.findOne({ id });
         if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
-        moment.comments = moment.comments.filter(c => c.id !== commentId);
-        await moment.save();
-        broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: id });
-        return res.json({ success: true, comments: moment.comments });
+        const comment = (moment.comments || []).find(c => c.id === commentId);
+        if (!comment) return res.status(404).json({ error: 'Không tìm thấy bình luận' });
+
+        const cAuthorId = comment.authorId ? String(comment.authorId) : '';
+        const pId = playerSession ? String(playerSession.playerId) : '';
+        const pName = playerSession ? (playerSession.name || '').trim().toLowerCase() : '';
+        const pUsername = playerSession ? (playerSession.username || '').trim().toLowerCase() : '';
+        const cName = (comment.authorName || '').trim().toLowerCase();
+
+        const isOwner = Boolean(
+          playerSession && (
+            (cAuthorId && pId && cAuthorId === pId) ||
+            (cName && (cName === pName || cName === pUsername || cName.includes('quân kun')))
+          )
+        );
+        if (!isAdmin && !isOwner) {
+          return res.status(403).json({ error: 'Chỉ tác giả hoặc Ban Quản Trị mới có quyền xóa bình luận này!' });
+        }
+
+        const updated = await Moment.findOneAndUpdate(
+          { id },
+          { $pull: { comments: { id: commentId } } },
+          { new: true }
+        );
+        broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: id, action: 'delete_comment', commentId });
+        return res.json({ success: true, comments: updated ? updated.comments : [] });
       }
 
       fallbackData.moments = fallbackData.moments || [];
       const moment = fallbackData.moments.find(m => m.id === id);
       if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
+      const comment = (moment.comments || []).find(c => c.id === commentId);
+      if (!comment) return res.status(404).json({ error: 'Không tìm thấy bình luận' });
+
+      const cAuthorId = comment.authorId ? String(comment.authorId) : '';
+      const pId = playerSession ? String(playerSession.playerId) : '';
+      const pName = playerSession ? (playerSession.name || '').trim().toLowerCase() : '';
+      const pUsername = playerSession ? (playerSession.username || '').trim().toLowerCase() : '';
+      const cName = (comment.authorName || '').trim().toLowerCase();
+
+      const isOwner = Boolean(
+        playerSession && (
+          (cAuthorId && pId && cAuthorId === pId) ||
+          (cName && (cName === pName || cName === pUsername || cName.includes('quân kun')))
+        )
+      );
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ error: 'Chỉ tác giả hoặc Ban Quản Trị mới có quyền xóa bình luận này!' });
+      }
+
       moment.comments = (moment.comments || []).filter(c => c.id !== commentId);
-      broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: id });
+      broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: id, action: 'delete_comment', commentId });
       res.json({ success: true, comments: moment.comments });
     } catch (err) {
+      console.warn('[Moments] Lỗi xóa comment:', err.message);
       res.status(500).json({ error: err.message });
     }
   });

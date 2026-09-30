@@ -5,6 +5,10 @@ const commentSubSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  authorId: {
+    type: String,
+    default: ''
+  },
   authorName: {
     type: String,
     required: true,

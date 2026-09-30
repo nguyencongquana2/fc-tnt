@@ -1911,6 +1911,37 @@
     </div>
   </div>
 
+  <!-- ======================================================== -->
+  <!-- MODAL: XÁC NHẬN XÓA BÌNH LUẬN (GLASSMORPHISM FC TNT)     -->
+  <!-- ======================================================== -->
+  <div class="modal-overlay delete-confirm-overlay" id="comment-delete-confirm-modal">
+    <div class="modal-container delete-confirm-card">
+      <div class="delete-confirm-header">
+        <div class="delete-confirm-icon-pulse">
+          <span class="trash-icon">🗑️</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="window.momentsModule.closeDeleteCommentModal()">&times;</button>
+      </div>
+      <div class="delete-confirm-body">
+        <h3 class="delete-confirm-title">Xóa bình luận này?</h3>
+        <p class="delete-confirm-desc">Hành động này không thể hoàn tác. Bình luận sẽ bị gỡ bỏ vĩnh viễn khỏi bài viết này.</p>
+        <div class="delete-comment-preview-box" id="delete-comment-preview-box" style="display: none;">
+          <div class="preview-author-line">
+            <span class="preview-author-badge">Tác giả:</span>
+            <span class="preview-author-name" id="delete-comment-preview-author"></span>
+          </div>
+          <div class="preview-content-text" id="delete-comment-preview-text"></div>
+        </div>
+      </div>
+      <div class="delete-confirm-footer">
+        <button type="button" class="btn btn-secondary delete-cancel-btn" onclick="window.momentsModule.closeDeleteCommentModal()">Huỷ bỏ</button>
+        <button type="button" class="btn btn-danger delete-execute-btn" id="delete-comment-execute-btn" onclick="window.momentsModule.confirmExecuteDeleteComment()">
+          <span>Xóa vĩnh viễn</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========================================== -->
   <!-- MODAL: QUẢN LÝ TIỀN SÂN & CHIA TIỀN TRẬN   -->
   <!-- ========================================== -->

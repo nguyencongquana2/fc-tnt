@@ -10,6 +10,7 @@ window.momentsModule = {
   uploadedVideoData: null,
   currentLightboxImages: [],
   currentLightboxIndex: 0,
+  pendingDeleteComment: null,
 
   init() {
     this.bindEvents();
@@ -65,8 +66,22 @@ window.momentsModule = {
       });
     }
 
-    // Lightbox keyboard navigation
+    // Confirm delete comment modal backdrop click
+    const confirmDelModal = document.getElementById('comment-delete-confirm-modal');
+    if (confirmDelModal) {
+      confirmDelModal.addEventListener('click', (e) => {
+        if (e.target === confirmDelModal) this.closeDeleteCommentModal();
+      });
+    }
+
+    // Keyboard navigation (Lightbox & Delete Confirm)
     window.addEventListener('keydown', (e) => {
+      const confirmModal = document.getElementById('comment-delete-confirm-modal');
+      if (confirmModal && confirmModal.classList.contains('active') && e.key === 'Escape') {
+        this.closeDeleteCommentModal();
+        return;
+      }
+
       const modal = document.getElementById('moment-lightbox-modal');
       if (modal && modal.classList.contains('active')) {
         if (e.key === 'Escape') this.closeLightbox();
@@ -97,13 +112,20 @@ window.momentsModule = {
     const container = document.getElementById('moments-feed-container');
     if (!container) return;
 
+    // Tránh gián đoạn nếu đang có video đang phát trực tiếp trong feed
+    const activeVideo = container.querySelector('video');
+    if (activeVideo && !activeVideo.paused && !activeVideo.ended && activeVideo.currentTime > 0) {
+      return;
+    }
+
     const moments = window.stateManager.getMoments(this.currentCategory);
-    const userKey = localStorage.getItem('fc_user_guid') || '';
-    const allPlayers = window.stateManager.getPlayers();
-    const savedPlayerId = localStorage.getItem('fc_commenter_player_id') || '';
-    const savedCommenterName = localStorage.getItem('fc_commenter_name') || '';
+    const currentPlayer = window.stateManager.currentPlayer;
+    const isAdmin = window.stateManager.isAdmin;
+    const userKey = (currentPlayer && currentPlayer.id) ? currentPlayer.id : (localStorage.getItem('fc_user_guid') || '');
 
     if (moments.length === 0) {
+      container.removeAttribute('data-rendered-cat');
+      container.removeAttribute('data-user-key');
       container.innerHTML = `
         <div class="empty-feed-card">
           <div style="font-size: 3.5rem; margin-bottom: 0.75rem;">📸</div>
@@ -119,28 +141,97 @@ window.momentsModule = {
       return;
     }
 
+    // Kiểm tra cấu trúc DOM feed hiện tại để tránh giật/lag/rebuild vô ích khi gửi/xóa comment hoặc thả reaction
+    const existingCards = container.querySelectorAll('.moment-card');
+    const isCategorySame = container.getAttribute('data-rendered-cat') === String(this.currentCategory);
+    const isUserSame = container.getAttribute('data-user-key') === String(userKey);
+    const isStructureSame = isUserSame && isCategorySame && existingCards.length === moments.length && moments.every((m, idx) => {
+      const card = existingCards[idx];
+      return card && card.id === `moment-card-${m.id}`;
+    });
+
+    if (isStructureSame) {
+      // Cấu trúc feed đã có sẵn, KHÔNG wipe container.innerHTML để chống giật lag và giữ nguyên input/video/vị trí cuộn!
+      // Chỉ đồng bộ nhẹ các giá trị động (cảm xúc reactions, số lượng bình luận)
+      moments.forEach(m => {
+        const reactionGroup = document.getElementById(`reaction-group-${m.id}`);
+        if (reactionGroup) {
+          reactionGroup.innerHTML = this.renderReactionButtonsHtml(m.id, m.reactions || {}, userKey);
+        }
+        const toggleBtn = document.getElementById(`toggle-comments-btn-${m.id}`);
+        if (toggleBtn) {
+          const span = toggleBtn.querySelector('span');
+          const count = (m.comments || []).length;
+          if (span) span.textContent = `${count} bình luận`;
+        }
+        const listEl = document.getElementById(`comments-list-${m.id}`);
+        if (listEl) {
+          const currentCommentEls = listEl.querySelectorAll('.moment-comment-item');
+          const comments = m.comments || [];
+          const commentsSame = currentCommentEls.length === comments.length && comments.every((c, idx) => {
+            const el = currentCommentEls[idx];
+            return el && el.id === `comment-${c.id}`;
+          });
+          if (!commentsSame) {
+            if (comments.length === 0) {
+              listEl.innerHTML = '<div class="no-comments-text">Chưa có bình luận nào. Hãy là người đầu tiên "chém gió"! 👇</div>';
+            } else {
+              listEl.innerHTML = comments.map(c => this.renderSingleCommentHtml(m.id, c)).join('');
+            }
+          }
+        }
+      });
+      return;
+    }
+
+    // Build comment author UI based on login identity
+    let commentAuthorBadgeHtml = '';
+    let commentPlaceholder = 'Viết bình luận, chém gió...';
+
+    if (currentPlayer) {
+      const playerName = this.escapeHtml(currentPlayer.nickname || currentPlayer.name);
+      const avatarUrl = currentPlayer.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+      const numBadge = currentPlayer.number ? `<span class="comment-user-num">#${currentPlayer.number}</span>` : '';
+      commentPlaceholder = `Bình luận với tư cách ${playerName}...`;
+      commentAuthorBadgeHtml = `
+        <div class="comment-user-badge player-badge" title="Đang bình luận với tư cách: ${playerName}">
+          <img src="${avatarUrl}" class="comment-user-avatar" alt="${playerName}">
+          <div class="comment-user-info">
+            <span class="comment-user-name">${playerName}</span>
+            ${numBadge}
+          </div>
+        </div>
+      `;
+    } else if (isAdmin) {
+      commentPlaceholder = 'Bình luận với tư cách Ban Quản Trị...';
+      commentAuthorBadgeHtml = `
+        <div class="comment-user-badge admin-badge" title="Đang bình luận với tư cách: Ban Quản Trị">
+          <span class="admin-icon-chip">🛡️</span>
+          <div class="comment-user-info">
+            <span class="comment-user-name">Ban Quản Trị</span>
+            <span class="comment-user-role">Admin</span>
+          </div>
+        </div>
+      `;
+    } else {
+      commentPlaceholder = 'Viết bình luận với tư cách CĐV FC TNT...';
+      commentAuthorBadgeHtml = `
+        <div class="comment-user-badge guest-badge" title="Bạn đang ở chế độ CĐV / Khách vãng lai">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="comment-user-avatar guest" alt="Khách">
+          <div class="comment-user-info">
+            <span class="comment-user-name">Khách / CĐV</span>
+            <button type="button" class="btn-prompt-login" onclick="window.appModule && window.appModule.openPlayerLoginModal ? window.appModule.openPlayerLoginModal() : null" title="Đăng nhập để hiện tên và số áo">Đăng nhập ⚽</button>
+          </div>
+        </div>
+      `;
+    }
+
     container.innerHTML = moments.map(m => {
       const catMeta = this.getCategoryMeta(m.category);
       const taggedPlayers = (m.taggedPlayerIds || []).map(id => window.stateManager.getPlayerById(id)).filter(Boolean);
       const images = m.images || [];
       const reactions = m.reactions || { heart: 0, football: 0, beer: 0, fire: 0, userReactions: [] };
-      const userReactions = reactions.userReactions || [];
       const comments = m.comments || [];
-
-      // Check if this browser already reacted
-      const hasHeart = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'heart');
-      const hasFootball = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'football');
-      const hasBeer = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'beer');
-      const hasFire = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'fire');
-
-      // Member options list
-      const playerOptionsHtml = allPlayers.map(p => {
-        const isSelected = (savedPlayerId && savedPlayerId === p.id) || (!savedPlayerId && savedCommenterName && (savedCommenterName.toLowerCase() === p.name.toLowerCase() || (p.nickname && savedCommenterName.toLowerCase() === p.nickname.toLowerCase())));
-        const numPrefix = p.number ? `#${p.number} - ` : '';
-        const nickSuffix = p.nickname ? ` (${p.nickname})` : '';
-        return `<option value="${p.id}" ${isSelected ? 'selected' : ''}>${numPrefix}${this.escapeHtml(p.name)}${nickSuffix}</option>`;
-      }).join('');
-      const isGuestSelected = savedPlayerId === 'guest' || savedCommenterName === 'Khách / CĐV';
 
       return `
         <article class="moment-card" id="moment-card-${m.id}">
@@ -222,12 +313,8 @@ window.momentsModule = {
             <!-- Comment Input Box -->
             <form class="moment-comment-form" onsubmit="window.momentsModule.handleCommentSubmit(event, '${m.id}')">
               <div class="comment-inputs-row">
-                <select class="form-control comment-author-select" id="comment-author-${m.id}" required>
-                  <option value="" disabled ${!savedPlayerId && !savedCommenterName ? 'selected' : ''}>-- Chọn người gửi --</option>
-                  ${playerOptionsHtml}
-                  <option value="guest" ${isGuestSelected ? 'selected' : ''}>🌟 Khách / CĐV FC TNT</option>
-                </select>
-                <input type="text" class="form-control comment-content-input" id="comment-content-${m.id}" placeholder="Viết bình luận, chém gió..." required autocomplete="off">
+                ${commentAuthorBadgeHtml}
+                <input type="text" class="form-control comment-content-input" id="comment-content-${m.id}" placeholder="${commentPlaceholder}" required autocomplete="off">
                 <button type="submit" class="btn btn-primary btn-sm comment-submit-btn">Gửi 💬</button>
               </div>
             </form>
@@ -235,6 +322,9 @@ window.momentsModule = {
         </article>
       `;
     }).join('');
+
+    container.setAttribute('data-rendered-cat', String(this.currentCategory));
+    container.setAttribute('data-user-key', String(userKey));
   },
 
   renderPhotoGrid(momentId, images) {
@@ -324,10 +414,13 @@ window.momentsModule = {
 
   renderReactionButtonsHtml(momentId, reactions, userKey) {
     const userReactions = reactions.userReactions || [];
-    const hasHeart = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'heart');
-    const hasFootball = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'football');
-    const hasBeer = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'beer');
-    const hasFire = userReactions.some(ur => ur.userKey === userKey && ur.reactionType === 'fire');
+    const legacyGuid = localStorage.getItem('fc_user_guid') || '';
+    const isReacted = (type) => userReactions.some(ur => (ur.userKey === userKey || (legacyGuid && ur.userKey === legacyGuid)) && ur.reactionType === type);
+
+    const hasHeart = isReacted('heart');
+    const hasFootball = isReacted('football');
+    const hasBeer = isReacted('beer');
+    const hasFire = isReacted('fire');
 
     return `
       <button class="reaction-btn ${hasBeer ? 'active' : ''}" onclick="window.momentsModule.handleReaction('${momentId}', 'beer', event)" title="Cạn ly bia">
@@ -346,15 +439,32 @@ window.momentsModule = {
   },
 
   renderSingleCommentHtml(momentId, c) {
+    const currentPlayer = window.stateManager.currentPlayer;
+    const isAdmin = window.stateManager.isAdmin;
+    const cAuthorId = c.authorId ? String(c.authorId) : '';
+    const myId = currentPlayer && currentPlayer.id ? String(currentPlayer.id) : '';
+    const myName = currentPlayer ? (currentPlayer.name || '').trim().toLowerCase() : '';
+    const myNick = currentPlayer ? (currentPlayer.nickname || '').trim().toLowerCase() : '';
+    const cAuthorName = (c.authorName || '').trim().toLowerCase();
+
+    const isOwner = Boolean(
+      currentPlayer && (
+        (cAuthorId && myId && cAuthorId === myId) ||
+        (cAuthorName && (cAuthorName === myName || cAuthorName === myNick))
+      )
+    );
+    const canDelete = isAdmin || isOwner;
+
     return `
-      <div class="moment-comment-item" id="comment-${c.id}">
-        <img class="comment-avatar" src="${c.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}" alt="${c.authorName}">
+      <div class="moment-comment-item ${isOwner ? 'own-comment' : ''}" id="comment-${c.id}">
+        <img class="comment-avatar" src="${c.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}" alt="${this.escapeHtml(c.authorName)}">
         <div class="comment-bubble">
           <div class="comment-bubble-header">
             <span class="comment-author">${this.escapeHtml(c.authorName)}</span>
+            ${isOwner ? '<span class="comment-own-badge">Bạn</span>' : ''}
             <span class="comment-time">${this.formatRelativeTime(c.createdAt)}</span>
-            ${window.stateManager.isAdmin ? `
-              <button class="comment-delete-btn" onclick="window.momentsModule.deleteComment('${momentId}', '${c.id}')" title="Xóa bình luận">&times;</button>
+            ${canDelete ? `
+              <button class="comment-delete-btn" onclick="window.momentsModule.promptDeleteComment('${momentId}', '${c.id}')" title="${isOwner ? 'Xóa bình luận của bạn' : 'Xóa bình luận (Admin)'}">✕ <span class="del-label">Xóa</span></button>
             ` : ''}
           </div>
           <div class="comment-text">${this.escapeHtml(c.content)}</div>
@@ -374,8 +484,12 @@ window.momentsModule = {
 
   // Reaction Handler (Cập nhật DOM cục bộ để không gián đoạn video đang phát)
   async handleReaction(momentId, reactionType, e = null) {
-    const userKey = localStorage.getItem('fc_user_guid') || 'user_' + Math.random().toString(36).substring(2, 9);
-    localStorage.setItem('fc_user_guid', userKey);
+    const currentPlayer = window.stateManager.currentPlayer;
+    let userKey = (currentPlayer && currentPlayer.id) ? currentPlayer.id : (localStorage.getItem('fc_user_guid') || '');
+    if (!userKey) {
+      userKey = 'viewer_' + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem('fc_user_guid', userKey);
+    }
 
     if (e && e.target && window.tntEffects && window.tntEffects.spawnFloatingReaction) {
       const btn = e.target.closest('.reaction-btn') || e.target;
@@ -406,16 +520,15 @@ window.momentsModule = {
   // Comment submission (Thêm trực tiếp vào danh sách không reload bài viết)
   async handleCommentSubmit(e, momentId) {
     e.preventDefault();
-    const authorSelect = document.getElementById(`comment-author-${momentId}`);
+    const form = e.target;
     const contentInput = document.getElementById(`comment-content-${momentId}`);
-
-    if (!authorSelect || !contentInput) return;
-    const selectedValue = authorSelect.value;
+    const submitBtn = form ? form.querySelector('.comment-submit-btn') : null;
+    if (!contentInput) return;
     const content = contentInput.value.trim();
 
-    if (!selectedValue || !content) {
-      if (window.appModule && window.appModule.showToast) {
-        window.appModule.showToast('Vui lòng chọn người gửi bình luận!', 'warning');
+    if (!content) {
+      if (window.showToast) {
+        window.showToast('Vui lòng nhập nội dung bình luận!', 'warning');
       }
       return;
     }
@@ -427,58 +540,163 @@ window.momentsModule = {
       return;
     }
 
-    let authorName = 'Thành viên FC TNT';
-    let avatar = '';
+    const currentPlayer = window.stateManager.currentPlayer;
+    const isAdmin = window.stateManager.isAdmin;
 
-    if (selectedValue === 'guest') {
-      authorName = 'Khách / CĐV';
-      avatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-      localStorage.setItem('fc_commenter_player_id', 'guest');
-      localStorage.setItem('fc_commenter_name', authorName);
-    } else {
-      const allPlayers = window.stateManager.getPlayers();
-      const player = allPlayers.find(p => p.id === selectedValue);
-      if (player) {
-        authorName = player.name;
-        avatar = player.avatar || '';
-        localStorage.setItem('fc_commenter_player_id', player.id);
-        localStorage.setItem('fc_commenter_name', player.name);
+    let authorName = 'Khách / CĐV';
+    let avatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+
+    if (currentPlayer) {
+      authorName = currentPlayer.nickname || currentPlayer.name;
+      avatar = currentPlayer.avatar || '';
+    } else if (isAdmin) {
+      authorName = 'Ban Quản Trị';
+      avatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+    }
+
+    // Khóa nút để chống double-click / spam
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Đang gửi...';
+    }
+    contentInput.disabled = true;
+
+    try {
+      const newComment = await window.stateManager.addComment(momentId, authorName, content, avatar);
+      contentInput.value = '';
+
+      // Append directly to DOM if not already present
+      const listEl = document.getElementById(`comments-list-${momentId}`);
+      if (listEl && newComment && !document.getElementById(`comment-${newComment.id}`)) {
+        const noCommentsText = listEl.querySelector('.no-comments-text');
+        if (noCommentsText) noCommentsText.remove();
+        listEl.insertAdjacentHTML('beforeend', this.renderSingleCommentHtml(momentId, newComment));
+        listEl.scrollTop = listEl.scrollHeight;
       }
-    }
 
-    const newComment = await window.stateManager.addComment(momentId, authorName, content, avatar);
-    contentInput.value = '';
+      this.updateCommentCount(momentId);
 
-    // Append directly to DOM
-    const listEl = document.getElementById(`comments-list-${momentId}`);
-    if (listEl && newComment) {
-      const noCommentsText = listEl.querySelector('.no-comments-text');
-      if (noCommentsText) noCommentsText.remove();
-      listEl.insertAdjacentHTML('beforeend', this.renderSingleCommentHtml(momentId, newComment));
-      listEl.scrollTop = listEl.scrollHeight;
-    }
-
-    this.updateCommentCount(momentId);
-
-    // Ensure comments section is active
-    const sec = document.getElementById(`comments-section-${momentId}`);
-    if (sec && !sec.classList.contains('active')) {
-      sec.classList.add('active');
+      // Ensure comments section is active
+      const sec = document.getElementById(`comments-section-${momentId}`);
+      if (sec && !sec.classList.contains('active')) {
+        sec.classList.add('active');
+      }
+    } catch (err) {
+      console.warn('[Moments] Comment submission error:', err);
+      if (window.showToast) {
+        window.showToast('Không thể gửi bình luận, vui lòng thử lại!', 'error');
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Gửi 💬';
+      }
+      contentInput.disabled = false;
+      contentInput.focus();
     }
   },
 
-  async deleteComment(momentId, commentId) {
-    if (!confirm('Bạn có chắc chắn muốn xóa bình luận này?')) return;
-    await window.stateManager.deleteComment(momentId, commentId);
-    
-    const commentEl = document.getElementById(`comment-${commentId}`);
-    if (commentEl) commentEl.remove();
-
-    const listEl = document.getElementById(`comments-list-${momentId}`);
-    if (listEl && listEl.children.length === 0) {
-      listEl.innerHTML = '<div class="no-comments-text">Chưa có bình luận nào. Hãy là người đầu tiên "chém gió"! 👇</div>';
+  promptDeleteComment(momentId, commentId) {
+    this.pendingDeleteComment = { momentId, commentId };
+    const modal = document.getElementById('comment-delete-confirm-modal');
+    if (!modal) {
+      // Fallback nếu modal không có trong DOM
+      this.executeDeleteComment(momentId, commentId);
+      return;
     }
-    this.updateCommentCount(momentId);
+
+    const moment = window.stateManager.getMomentById(momentId);
+    const comment = moment && moment.comments ? moment.comments.find(c => String(c.id) === String(commentId)) : null;
+
+    const previewBox = document.getElementById('delete-comment-preview-box');
+    const authorEl = document.getElementById('delete-comment-preview-author');
+    const textEl = document.getElementById('delete-comment-preview-text');
+
+    if (previewBox && authorEl && textEl && comment) {
+      authorEl.textContent = comment.authorName || 'Bình luận';
+      textEl.textContent = `"${comment.content}"`;
+      previewBox.style.display = 'block';
+    } else if (previewBox) {
+      previewBox.style.display = 'none';
+    }
+
+    const executeBtn = document.getElementById('delete-comment-execute-btn');
+    if (executeBtn) {
+      executeBtn.disabled = false;
+      executeBtn.innerHTML = '<span>Xóa vĩnh viễn</span>';
+    }
+
+    modal.classList.add('active');
+  },
+
+  closeDeleteCommentModal() {
+    this.pendingDeleteComment = null;
+    const modal = document.getElementById('comment-delete-confirm-modal');
+    if (modal) modal.classList.remove('active');
+  },
+
+  async confirmExecuteDeleteComment() {
+    if (!this.pendingDeleteComment) return;
+    const { momentId, commentId } = this.pendingDeleteComment;
+    const executeBtn = document.getElementById('delete-comment-execute-btn');
+    if (executeBtn) {
+      executeBtn.disabled = true;
+      executeBtn.innerHTML = '<span>Đang xóa...</span>';
+    }
+
+    await this.executeDeleteComment(momentId, commentId);
+    this.closeDeleteCommentModal();
+  },
+
+  // Giữ alias tương thích
+  async deleteComment(momentId, commentId) {
+    this.promptDeleteComment(momentId, commentId);
+  },
+
+  async executeDeleteComment(momentId, commentId) {
+    const res = await window.stateManager.deleteComment(momentId, commentId);
+    if (res && res.success) {
+      const commentEl = document.getElementById(`comment-${commentId}`);
+      if (commentEl) commentEl.remove();
+
+      const listEl = document.getElementById(`comments-list-${momentId}`);
+      if (listEl && listEl.children.length === 0) {
+        listEl.innerHTML = '<div class="no-comments-text">Chưa có bình luận nào. Hãy là người đầu tiên "chém gió"! 👇</div>';
+      }
+      this.updateCommentCount(momentId);
+      if (window.showToast) {
+        window.showToast('Đã xóa bình luận thành công.', 'success');
+      }
+    } else {
+      if (window.showToast) {
+        window.showToast((res && res.error) ? res.error : 'Không thể xóa bình luận!', 'error');
+      }
+    }
+  },
+
+  // Đồng bộ thời gian thực mượt mà qua WebSocket mà không wipe feed
+  handleRemoteCommentUpdate(extra) {
+    if (!extra || !extra.momentId) return;
+    const { momentId, action, comment, commentId } = extra;
+
+    if (action === 'add_comment' && comment) {
+      const listEl = document.getElementById(`comments-list-${momentId}`);
+      if (listEl && !document.getElementById(`comment-${comment.id}`)) {
+        const noCommentsText = listEl.querySelector('.no-comments-text');
+        if (noCommentsText) noCommentsText.remove();
+        listEl.insertAdjacentHTML('beforeend', this.renderSingleCommentHtml(momentId, comment));
+        listEl.scrollTop = listEl.scrollHeight;
+        this.updateCommentCount(momentId);
+      }
+    } else if (action === 'delete_comment' && commentId) {
+      const commentEl = document.getElementById(`comment-${commentId}`);
+      if (commentEl) commentEl.remove();
+      const listEl = document.getElementById(`comments-list-${momentId}`);
+      if (listEl && listEl.children.length === 0) {
+        listEl.innerHTML = '<div class="no-comments-text">Chưa có bình luận nào. Hãy là người đầu tiên "chém gió"! 👇</div>';
+      }
+      this.updateCommentCount(momentId);
+    }
   },
 
   // Open / Close Lightbox

@@ -80,8 +80,17 @@
       return true;
     },
 
-    async toggleReaction(momentId, reactionType, userKey = 'viewer_' + (localStorage.getItem('fc_user_guid') || Math.random().toString(36).substring(2, 9))) {
-      localStorage.setItem('fc_user_guid', userKey);
+    async toggleReaction(momentId, reactionType, customUserKey = null) {
+      let userKey = customUserKey;
+      if (!userKey) {
+        if (this.currentPlayer && this.currentPlayer.id) {
+          userKey = this.currentPlayer.id;
+        } else {
+          userKey = localStorage.getItem('fc_user_guid') || ('viewer_' + Math.random().toString(36).substring(2, 9));
+          localStorage.setItem('fc_user_guid', userKey);
+        }
+      }
+
       const moment = this.getMomentById(momentId);
       if (!moment) return null;
 
@@ -104,11 +113,15 @@
         moment.reactions[reactionType] = (moment.reactions[reactionType] || 0) + 1;
       }
 
-      this.saveData();
+      this.saveData(this.data, false);
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (this.adminToken) headers['x-admin-token'] = this.adminToken;
+      if (this.playerToken) headers['x-player-token'] = this.playerToken;
 
       this._syncToServer(`${API_BASE}/moments/${momentId}/react`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ reactionType, userKey })
       }, 'toggleReaction');
 
@@ -120,39 +133,81 @@
       if (!moment) return null;
 
       if (!moment.comments) moment.comments = [];
+
+      let resolvedAuthorId = '';
+      let resolvedAuthorName = authorName;
+      let resolvedAvatar = avatar;
+
+      if (this.currentPlayer) {
+        resolvedAuthorId = this.currentPlayer.id || '';
+        resolvedAuthorName = this.currentPlayer.nickname || this.currentPlayer.name;
+        resolvedAvatar = this.currentPlayer.avatar || '';
+      } else if (this.isAdmin) {
+        resolvedAuthorId = 'admin';
+        resolvedAuthorName = 'Ban Quản Trị';
+        resolvedAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+      }
+
       const newComment = {
-        id: 'c_' + Date.now(),
-        authorName: authorName && authorName.trim() ? authorName.trim() : 'Anh Em Phủi',
-        avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        id: 'c_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        authorId: resolvedAuthorId,
+        authorName: resolvedAuthorName && resolvedAuthorName.trim() ? resolvedAuthorName.trim() : 'Khách / CĐV FC TNT',
+        avatar: resolvedAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         content: content.trim(),
         createdAt: new Date()
       };
 
       moment.comments.push(newComment);
-      this.saveData();
+      this.saveData(this.data, false);
+
+      const headers = { 'Content-Type': 'application/json' };
+      const adminToken = typeof this.getAdminToken === 'function' ? this.getAdminToken() : (this.adminToken || '');
+      const playerToken = typeof this.getPlayerToken === 'function' ? this.getPlayerToken() : (this.playerToken || '');
+      if (adminToken) headers['x-admin-token'] = adminToken;
+      if (playerToken) headers['x-player-token'] = playerToken;
 
       this._syncToServer(`${API_BASE}/moments/${momentId}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authorName, content, avatar })
+        headers,
+        body: JSON.stringify({
+          authorId: resolvedAuthorId,
+          authorName: resolvedAuthorName,
+          content: content.trim(),
+          avatar: resolvedAvatar
+        })
       }, 'addComment');
 
       return newComment;
     },
 
     async deleteComment(momentId, commentId) {
-      const moment = this.getMomentById(momentId);
-      if (!moment || !moment.comments) return false;
+      try {
+        const headers = {};
+        const adminToken = typeof this.getAdminToken === 'function' ? this.getAdminToken() : (this.adminToken || '');
+        const playerToken = typeof this.getPlayerToken === 'function' ? this.getPlayerToken() : (this.playerToken || '');
+        if (adminToken) headers['x-admin-token'] = adminToken;
+        if (playerToken) headers['x-player-token'] = playerToken;
 
-      moment.comments = moment.comments.filter(c => c.id !== commentId);
-      this.saveData();
+        const res = await fetch(`${API_BASE}/moments/${momentId}/comments/${commentId}`, {
+          method: 'DELETE',
+          headers
+        });
+        const data = await res.json();
 
-      this._syncToServer(`${API_BASE}/moments/${momentId}/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-token': this.getAdminToken() }
-      }, 'deleteComment');
+        if (res.ok && data.success) {
+          const moment = this.getMomentById(momentId);
+          if (moment && moment.comments) {
+            moment.comments = moment.comments.filter(c => c.id !== commentId);
+            this.saveData(this.data, false);
+          }
+          return { success: true };
+        }
 
-      return true;
+        return { success: false, error: data.error || 'Không thể xóa bình luận trên máy chủ!' };
+      } catch (err) {
+        console.warn('[State] deleteComment error:', err.message);
+        return { success: false, error: 'Lỗi mạng khi xóa bình luận!' };
+      }
     },
 
     // =========================================================================

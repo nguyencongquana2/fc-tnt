@@ -90,6 +90,12 @@ class StateManager {
 
         this.socket.on('data_updated', async (payload) => {
           console.log('🔄 Tín hiệu cập nhật thời gian thực:', payload);
+
+          // Cập nhật mượt mà comment trực tiếp trên DOM mà không wipe feed / ngắt quãng video
+          if (payload && payload.type === 'moments' && payload.extra && window.momentsModule && typeof window.momentsModule.handleRemoteCommentUpdate === 'function') {
+            window.momentsModule.handleRemoteCommentUpdate(payload.extra);
+          }
+
           // Đồng bộ lại dữ liệu tức thì từ server
           await this.syncWithBackend(true);
 
@@ -153,7 +159,7 @@ class StateManager {
     return JSON.parse(JSON.stringify(DEFAULT_DATA));
   }
 
-  saveData(dataToSave = this.data) {
+  saveData(dataToSave = this.data, shouldNotify = true) {
     try {
       // Tách dữ liệu nhẹ lưu cache LocalStorage (loại bỏ media nặng của moments để không bao giờ vượt quota 5MB)
       const lightCache = {
@@ -180,7 +186,9 @@ class StateManager {
         console.warn('LocalStorage miniCache fallback failed (quota exceeded):', e2);
       }
     } finally {
-      this.notify();
+      if (shouldNotify) {
+        this.notify();
+      }
     }
   }
 
@@ -206,7 +214,6 @@ class StateManager {
           this.data = serverData;
           this.isServerSynced = true;
           this.saveData(this.data);
-          this.notify();
         }
         if (!isSilent) {
           console.log('🌿 Đã đồng bộ dữ liệu thành công từ MongoDB Server!');
