@@ -84,13 +84,20 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Middleware xử lý lỗi payload quá giới hạn an toàn (Chống DoS / Tràn RAM tiến trình Node.js)
+// Middleware xử lý lỗi payload quá giới hạn an toàn hoặc JSON không hợp lệ
 app.use((err, req, res, next) => {
   if (err.type === 'entity.too.large' || err.status === 413) {
     return res.status(413).json({
       success: false,
       error: 'Dung lượng dữ liệu gửi lên quá lớn (tối đa 10MB)! Vui lòng nén bớt ảnh hoặc dán link video ngoài.',
       code: 'PAYLOAD_TOO_LARGE'
+    });
+  }
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      success: false,
+      error: 'Dữ liệu JSON gửi lên máy chủ không đúng định dạng!',
+      code: 'INVALID_JSON'
     });
   }
   next(err);

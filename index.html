@@ -1376,9 +1376,14 @@
             style="color: var(--accent-ruby); font-size: 0.85rem; font-weight: 600; min-height: 1.25rem; margin-bottom: 0.5rem;">
           </div>
         </div>
-        <div class="modal-footer" style="justify-content: center; gap: 0.75rem; padding-bottom: 1.5rem;">
-          <button type="button" class="btn btn-secondary" onclick="window.appModule.closeAdminModal()">Hủy</button>
-          <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.5rem;">🔑 Xác Nhận Mở Khóa</button>
+        <div class="modal-footer" style="flex-direction: column; align-items: center; gap: 0.85rem; padding-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: center; gap: 0.75rem; width: 100%;">
+            <button type="button" class="btn btn-secondary" onclick="window.appModule.closeAdminModal()">Hủy</button>
+            <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.5rem;">🔑 Xác Nhận Mở Khóa</button>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--text-muted);">
+            Bạn là Cầu thủ? <button type="button" style="background: none; border: none; color: #10b981; text-decoration: underline; cursor: pointer; font-weight: 700; font-size: inherit; padding: 0;" onclick="window.appModule.closeAdminModal(); window.appModule.openPlayerLoginModal();">⚽ Đăng nhập tài khoản Cầu thủ</button>
+          </div>
         </div>
       </form>
     </div>
@@ -1430,9 +1435,14 @@
             style="color: var(--accent-ruby); font-size: 0.85rem; font-weight: 600; min-height: 1.25rem; margin-bottom: 0.5rem; text-align: center;">
           </div>
         </div>
-        <div class="modal-footer" style="justify-content: center; gap: 0.75rem; padding-bottom: 1.5rem;">
-          <button type="button" class="btn btn-secondary" onclick="window.appModule.closePlayerLoginModal()">Hủy</button>
-          <button type="submit" class="btn btn-emerald" style="padding: 0.7rem 1.6rem;">⚽ Vào Sân Ngay</button>
+        <div class="modal-footer" style="flex-direction: column; align-items: center; gap: 0.85rem; padding-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: center; gap: 0.75rem; width: 100%;">
+            <button type="button" class="btn btn-secondary" onclick="window.appModule.closePlayerLoginModal()">Hủy</button>
+            <button type="submit" class="btn btn-emerald" style="padding: 0.7rem 1.6rem;">⚽ Vào Sân Ngay</button>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--text-muted);">
+            Bạn là Ban Quản Trị? <button type="button" style="background: none; border: none; color: #f59e0b; text-decoration: underline; cursor: pointer; font-weight: 700; font-size: inherit; padding: 0;" onclick="window.appModule.closePlayerLoginModal(); window.appModule.openAdminModal();">🔑 Đăng nhập bằng mã PIN</button>
+          </div>
         </div>
       </form>
     </div>
@@ -2437,7 +2447,7 @@
   <script src="js/finance.js?v=4.3"></script>
   <script src="js/awards.js?v=4.3"></script>
   <script src="js/poster.js?v=4.3"></script>
-  <script src="js/moments.js?v=5.3"></script>
+  <script src="js/moments.js?v=5.4"></script>
   <script src="js/tactics/tactics-screen.js?v=5.4"></script>
   <script src="js/tactics/tactics-canvas.js?v=5.4"></script>
   <script src="js/tactics/tactics-pieces.js?v=5.4"></script>

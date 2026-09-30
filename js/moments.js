@@ -887,10 +887,10 @@ window.momentsModule = {
 
     if (!isAdmin && !isPlayer) {
       if (window.showToast) {
-        window.showToast('Vui lòng đăng nhập (mã PIN Quản trị viên hoặc Tài khoản Cầu thủ) để đăng bài!', 'warning');
+        window.showToast('Vui lòng đăng nhập tài khoản Cầu thủ để đăng khoảnh khắc!', 'info');
       }
-      if (window.appModule && window.appModule.openAdminModal) {
-        window.appModule.openAdminModal();
+      if (window.appModule && window.appModule.openPlayerLoginModal) {
+        window.appModule.openPlayerLoginModal();
       }
       return;
     }
@@ -1350,8 +1350,8 @@ window.momentsModule = {
       } else if (window.appModule && window.appModule.showToast) {
         window.appModule.showToast('❌ ' + errMsg, 'error');
       }
-      if (errMsg.toLowerCase().includes('đăng nhập') && window.appModule && window.appModule.openAdminModal) {
-        window.appModule.openAdminModal();
+      if (errMsg.toLowerCase().includes('đăng nhập') && window.appModule && window.appModule.openPlayerLoginModal) {
+        window.appModule.openPlayerLoginModal();
       }
     } finally {
       if (submitBtn) {
