@@ -7,6 +7,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const { verifyAdminToken, verifyPlayerToken } = require('./auth');
+const { uploadRateLimiter } = require('../utils/rateLimiter');
 
 function createUploadRouter({ isMongoConnected }) {
   const router = express.Router();
@@ -55,7 +56,7 @@ function createUploadRouter({ isMongoConnected }) {
   // POST /api/upload/signature
   // Tạo timestamp và signature bảo mật để Client tải trực tiếp lên Cloudinary CDN
   // Tránh tắc nghẽn băng thông và tràn RAM trên máy chủ Render Free
-  router.post('/signature', authenticateUploader, (req, res) => {
+  router.post('/signature', uploadRateLimiter, authenticateUploader, (req, res) => {
     try {
       const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
       const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -95,11 +96,32 @@ function createUploadRouter({ isMongoConnected }) {
 
   // POST /api/upload/direct
   // Dự phòng tải qua server (Base64 data URI)
-  router.post('/direct', authenticateUploader, async (req, res) => {
+  router.post('/direct', uploadRateLimiter, authenticateUploader, async (req, res) => {
     try {
       const { fileData, mediaType } = req.body;
       if (!fileData) {
         return res.status(400).json({ success: false, error: 'Dữ liệu file không được để trống' });
+      }
+
+      // Giới hạn độ dài chuỗi dữ liệu (Tối đa ~15MB Base64) để chống DoS tràn RAM
+      if (typeof fileData !== 'string' || fileData.length > 15 * 1024 * 1024) {
+        return res.status(400).json({ success: false, error: 'Dung lượng tệp vượt quá giới hạn tối đa 15MB!' });
+      }
+
+      // Ngăn chặn mã độc, Stored SVG XSS hoặc JavaScript URI
+      if (fileData.startsWith('data:image/svg+xml') || fileData.includes('<script') || fileData.toLowerCase().includes('javascript:')) {
+        return res.status(400).json({ success: false, error: 'Định dạng tệp chứa nguy cơ bảo mật, không được phép tải lên!' });
+      }
+
+      // Kiểm tra whitelist định dạng cho phép
+      const isDataUri = fileData.startsWith('data:');
+      if (isDataUri) {
+        const isAllowedDataUri = /^data:(image\/(jpeg|jpg|png|webp|gif)|video\/(mp4|webm|quicktime));base64,/i.test(fileData);
+        if (!isAllowedDataUri) {
+          return res.status(400).json({ success: false, error: 'Định dạng tệp không được hỗ trợ! Chỉ chấp nhận ảnh (JPG, PNG, WEBP, GIF) hoặc video (MP4, WEBM, MOV).' });
+        }
+      } else if (!/^https?:\/\//i.test(fileData)) {
+        return res.status(400).json({ success: false, error: 'Đường dẫn tệp không hợp lệ!' });
       }
 
       const cloudName = process.env.CLOUDINARY_CLOUD_NAME;

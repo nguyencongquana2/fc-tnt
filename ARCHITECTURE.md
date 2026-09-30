@@ -61,7 +61,12 @@ FC-TNT/
 │   ├── finance.js        # Chia tiền sân & tạo mã VietQR
 │   ├── awards.js         # Bảng vinh danh & danh hiệu
 │   ├── poster.js         # Xuất ảnh đồ họa chia sẻ mạng xã hội
-│   ├── moments.js        # Bảng tin khoảnh khắc & tương tác
+│   ├── moments.js        # Bộ điều phối trung tâm (Facade) module khoảnh khắc
+│   ├── moments/          # [Mô-đun hoá] Phân tách nghiệp vụ khoảnh khắc chi tiết
+│   │   ├── moments-feed.js        # Bảng tin khoảnh khắc, photo grid Facebook & thả cảm xúc
+│   │   ├── moments-comments.js    # Quản lý gửi/xóa bình luận an toàn & realtime Socket.IO
+│   │   ├── moments-lightbox.js    # Xem ảnh/video toàn màn hình (Modal Lightbox)
+│   │   └── moments-modal.js       # Form đăng khoảnh khắc, nén ảnh canvas & tải lên Cloudinary
 │   ├── weather.js        # Radar thời tiết & AI cố vấn
 │   ├── splash.js         # Màn hình chào sân & minigame tâng bóng
 │   └── effects.js        # Hiệu ứng âm thanh & pháo hoa confetti

@@ -13,15 +13,26 @@ const { isValidReaction, validateCommentInput } = require('../utils/validators')
 function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate, requireAdmin }) {
   const router = express.Router();
 
-  // GET /api/moments
+  // GET /api/moments (Hỗ trợ phân trang an toàn, chống cạn kiệt tài nguyên)
   router.get('/', async (req, res) => {
     try {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const hasLimit = req.query.limit !== undefined;
+      const limit = hasLimit ? Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20)) : 100;
+
       if (isMongoConnected()) {
-        const moments = await Moment.find().sort({ date: -1, createdAt: -1 });
+        const query = Moment.find().sort({ date: -1, createdAt: -1 });
+        if (hasLimit) {
+          query.skip((page - 1) * limit).limit(limit);
+        } else {
+          query.limit(limit);
+        }
+        const moments = await query;
         return res.json(moments);
       }
       const sorted = [...(fallbackData.moments || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
-      res.json(sorted);
+      const sliced = hasLimit ? sorted.slice((page - 1) * limit, page * limit) : sorted.slice(0, limit);
+      res.json(sliced);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -97,13 +108,21 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         });
       }
 
-      const updateData = req.body;
+      // Whitelist các trường được phép sửa (Chống Mass Assignment)
+      const allowedFields = ['title', 'date', 'location', 'category', 'description', 'media', 'images', 'videoUrl', 'taggedPlayerIds'];
+      const updateData = {};
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
 
       if (isMongoConnected()) {
         const existing = await Moment.findOne({ id });
         if (!existing) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
-        if (!isAdmin && existing.authorId && playerSession && existing.authorId !== playerSession.playerId) {
+        const isPostOwner = Boolean(existing.authorId && playerSession && existing.authorId === playerSession.playerId);
+        if (!isAdmin && !isPostOwner) {
           return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới được sửa bài này!' });
         }
 
@@ -116,7 +135,8 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       const idx = fallbackData.moments.findIndex(m => m.id === id);
       if (idx !== -1) {
         const existing = fallbackData.moments[idx];
-        if (!isAdmin && existing.authorId && playerSession && existing.authorId !== playerSession.playerId) {
+        const isPostOwner = Boolean(existing.authorId && playerSession && existing.authorId === playerSession.playerId);
+        if (!isAdmin && !isPostOwner) {
           return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới được sửa bài này!' });
         }
         fallbackData.moments[idx] = { ...existing, ...updateData };
@@ -150,7 +170,8 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         const existing = await Moment.findOne({ id });
         if (!existing) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc để xóa' });
 
-        if (!isAdmin && existing.authorId && playerSession && existing.authorId !== playerSession.playerId) {
+        const isPostOwner = Boolean(existing.authorId && playerSession && existing.authorId === playerSession.playerId);
+        if (!isAdmin && !isPostOwner) {
           return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới có quyền xóa bài này!' });
         }
 
@@ -163,7 +184,8 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       const idx = fallbackData.moments.findIndex(m => m.id === id);
       if (idx !== -1) {
         const existing = fallbackData.moments[idx];
-        if (!isAdmin && existing.authorId && playerSession && existing.authorId !== playerSession.playerId) {
+        const isPostOwner = Boolean(existing.authorId && playerSession && existing.authorId === playerSession.playerId);
+        if (!isAdmin && !isPostOwner) {
           return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới có quyền xóa bài này!' });
         }
         fallbackData.moments.splice(idx, 1);
@@ -352,18 +374,11 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
 
         const cAuthorId = comment.authorId ? String(comment.authorId) : '';
         const pId = playerSession ? String(playerSession.playerId) : '';
-        const pName = playerSession ? (playerSession.name || '').trim().toLowerCase() : '';
-        const pUsername = playerSession ? (playerSession.username || '').trim().toLowerCase() : '';
-        const cName = (comment.authorName || '').trim().toLowerCase();
 
-        const isOwner = Boolean(
-          playerSession && (
-            (cAuthorId && pId && cAuthorId === pId) ||
-            (cName && (cName === pName || cName === pUsername || cName.includes('quân kun')))
-          )
-        );
+        // Xác thực quyền sở hữu nghiêm ngặt qua authorId (chống mạo danh bằng tên hiển thị hoặc chuỗi cố định)
+        const isOwner = Boolean(playerSession && cAuthorId && pId && cAuthorId === pId);
         if (!isAdmin && !isOwner) {
-          return res.status(403).json({ error: 'Chỉ tác giả hoặc Ban Quản Trị mới có quyền xóa bình luận này!' });
+          return res.status(403).json({ error: 'Chỉ tác giả bình luận hoặc Ban Quản Trị mới có quyền xóa bình luận này!' });
         }
 
         const updated = await Moment.findOneAndUpdate(
@@ -384,18 +399,11 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
 
       const cAuthorId = comment.authorId ? String(comment.authorId) : '';
       const pId = playerSession ? String(playerSession.playerId) : '';
-      const pName = playerSession ? (playerSession.name || '').trim().toLowerCase() : '';
-      const pUsername = playerSession ? (playerSession.username || '').trim().toLowerCase() : '';
-      const cName = (comment.authorName || '').trim().toLowerCase();
 
-      const isOwner = Boolean(
-        playerSession && (
-          (cAuthorId && pId && cAuthorId === pId) ||
-          (cName && (cName === pName || cName === pUsername || cName.includes('quân kun')))
-        )
-      );
+      // Xác thực quyền sở hữu nghiêm ngặt qua authorId (chống mạo danh bằng tên hiển thị hoặc chuỗi cố định)
+      const isOwner = Boolean(playerSession && cAuthorId && pId && cAuthorId === pId);
       if (!isAdmin && !isOwner) {
-        return res.status(403).json({ error: 'Chỉ tác giả hoặc Ban Quản Trị mới có quyền xóa bình luận này!' });
+        return res.status(403).json({ error: 'Chỉ tác giả bình luận hoặc Ban Quản Trị mới có quyền xóa bình luận này!' });
       }
 
       moment.comments = (moment.comments || []).filter(c => c.id !== commentId);

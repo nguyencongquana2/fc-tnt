@@ -87,6 +87,13 @@ const tacticRateLimiter = createRateLimiter({
   message: 'Bạn đã lưu quá nhiều bài chiến thuật liên tiếp! Vui lòng chờ ít phút.'
 });
 
+// 7. Rate limiter cho upload media (Tối đa 20 lượt trong 5 phút)
+const uploadRateLimiter = createRateLimiter({
+  windowMs: 5 * 60 * 1000,
+  max: 20,
+  message: 'Bạn đã tải lên quá nhiều tệp liên tiếp! Vui lòng thử lại sau 5 phút.'
+});
+
 /**
  * Sliding Window Rate Limiter chuyên dụng cho WebSocket / Socket.IO events
  * @param {Object} options
@@ -140,5 +147,6 @@ module.exports = {
   commentRateLimiter,
   reactionRateLimiter,
   avatarRateLimiter,
-  tacticRateLimiter
+  tacticRateLimiter,
+  uploadRateLimiter
 };
