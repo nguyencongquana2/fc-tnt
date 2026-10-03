@@ -507,6 +507,8 @@ function createAuthRouter({ isMongoConnected, fallbackData, broadcastDataUpdate 
         return res.status(404).json({ success: false, error: 'Không tìm thấy cầu thủ cần cấp tài khoản!' });
       }
 
+      const isReset = Boolean(player.username && player.passwordHash && player.accountStatus !== 'unprovisioned');
+
       // Cập nhật thông tin tài khoản
       player.username = cleanUser;
       player.passwordHash = hashPassword(cleanPass);
@@ -517,26 +519,36 @@ function createAuthRouter({ isMongoConnected, fallbackData, broadcastDataUpdate 
         await player.save();
       }
 
-      // Văn bản mẫu tiện gửi qua Zalo / Messenger
-      const shareText = `⚽ TÀI KHOẢN FC TNT CỦA BẠN:
+      // Văn bản mẫu tiện gửi qua Zalo / Messenger theo ngữ cảnh
+      const shareText = isReset ? `⚽ THÔNG BÁO ĐẶT LẠI MẬT KHẨU FC TNT:
+👤 Cầu thủ: ${player.name} (#${player.number})
+🔑 Tên đăng nhập: ${cleanUser}
+🔒 Mật khẩu tạm mới: ${cleanPass}
+👉 Mật khẩu của bạn vừa được Ban Quản Trị đặt lại tạm thời. Vui lòng đăng nhập website FC TNT và đổi mật khẩu mới nhé anh em!` : `⚽ TÀI KHOẢN FC TNT CỦA BẠN:
 👤 Cầu thủ: ${player.name} (#${player.number})
 🔑 Tên đăng nhập: ${cleanUser}
 🔒 Mật khẩu khởi tạo: ${cleanPass}
 👉 Truy cập website FC TNT để đăng nhập và đổi mật khẩu cá nhân nhé anh em!`;
 
       if (typeof broadcastDataUpdate === 'function') {
-        broadcastDataUpdate('players', `🔑 Cầu thủ "${player.name}" vừa được cấp tài khoản thành viên!`);
+        const broadcastMsg = isReset
+          ? `🔑 Mật khẩu tài khoản của cầu thủ "${player.name}" vừa được Ban Quản Trị đặt lại!`
+          : `🔑 Cầu thủ "${player.name}" vừa được cấp tài khoản thành viên!`;
+        broadcastDataUpdate('players', broadcastMsg);
       }
 
       return res.json({
         success: true,
         player: sanitizePlayer(player),
         shareText,
-        message: `Đã cấp tài khoản thành công cho cầu thủ "${player.name}"!`
+        isReset,
+        message: isReset
+          ? `Đã đặt lại mật khẩu tạm thời thành công cho cầu thủ "${player.name}"!`
+          : `Đã cấp tài khoản thành công cho cầu thủ "${player.name}"!`
       });
     } catch (err) {
       console.warn('[Auth] Player provision error:', err.message);
-      return res.status(500).json({ success: false, error: 'Lỗi máy chủ khi cấp tài khoản!' });
+      return res.status(500).json({ success: false, error: 'Lỗi máy chủ khi xử lý tài khoản!' });
     }
   });
 

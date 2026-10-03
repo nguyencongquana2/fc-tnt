@@ -1642,13 +1642,13 @@
   <div class="modal-overlay" id="admin-provision-modal">
     <div class="modal-container" style="max-width: 500px;">
       <div class="modal-header">
-        <h3 class="modal-title">🔑 Cấp Tài Khoản Cho Cầu Thủ</h3>
+        <h3 class="modal-title" id="provision-modal-title">🔑 Cấp Tài Khoản Cho Cầu Thủ</h3>
         <button class="modal-close-btn" onclick="document.getElementById('admin-provision-modal').classList.remove('active')">&times;</button>
       </div>
       <form id="admin-provision-form">
         <input type="hidden" id="provision-player-id">
         <div class="modal-body" style="padding: 1.5rem;">
-          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
             <img id="provision-player-avatar" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-emerald);">
             <div>
               <div id="provision-player-name" style="font-weight: 700; font-size: 1.1rem; color: #fff;">--</div>
@@ -1656,13 +1656,16 @@
             </div>
           </div>
 
+          <!-- Banner cảnh báo khi tài khoản đã đổi mật khẩu cá nhân -->
+          <div id="provision-warning-banner" style="display: none; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.82rem; color: #fde68a; line-height: 1.45;"></div>
+
           <div class="form-group" style="margin-bottom: 1rem;">
             <label class="form-label" for="provision-username">Tên đăng nhập (Username viết liền, không dấu)</label>
             <input type="text" class="form-control" id="provision-username" placeholder="VD: quannc, hieutm..." required>
           </div>
 
           <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label" for="provision-password">Mật khẩu khởi tạo tạm thời</label>
+            <label class="form-label" for="provision-password" id="provision-password-label">Mật khẩu khởi tạo tạm thời</label>
             <div style="display: flex; gap: 0.5rem;">
               <input type="text" class="form-control" id="provision-password" placeholder="VD: TNT@8888..." required style="font-family: monospace; font-weight: 700; letter-spacing: 1px;">
               <button type="button" class="btn btn-secondary" onclick="window.playersModule.generateRandomPassword()" title="Sinh mật khẩu ngẫu nhiên">🎲 Đổi</button>
@@ -1673,7 +1676,7 @@
 
           <!-- Result Card & Quick Zalo Copy -->
           <div id="provision-result-card" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1px solid var(--accent-emerald); border-radius: var(--radius-md); padding: 1rem; margin-top: 1rem;">
-            <div style="font-weight: 700; color: var(--accent-emerald); margin-bottom: 0.4rem; font-size: 0.9rem;">
+            <div id="provision-result-title" style="font-weight: 700; color: var(--accent-emerald); margin-bottom: 0.4rem; font-size: 0.9rem;">
               ✅ Cấp tài khoản thành công!
             </div>
             <textarea id="provision-share-text" readonly style="width: 100%; height: 90px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: #fff; font-family: monospace; font-size: 0.82rem; padding: 0.5rem; border-radius: 4px; resize: none; margin-bottom: 0.6rem;"></textarea>
