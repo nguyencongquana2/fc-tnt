@@ -94,6 +94,13 @@ const uploadRateLimiter = createRateLimiter({
   message: 'Bạn đã tải lên quá nhiều tệp liên tiếp! Vui lòng thử lại sau 5 phút.'
 });
 
+// 8. Rate limiter cho Casso Webhook (Tối đa 60 lượt trong 1 phút)
+const paymentWebhookLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: 'Quá nhiều request webhook gửi tới, vui lòng thử lại sau.'
+});
+
 /**
  * Sliding Window Rate Limiter chuyên dụng cho WebSocket / Socket.IO events
  * @param {Object} options
@@ -148,5 +155,6 @@ module.exports = {
   reactionRateLimiter,
   avatarRateLimiter,
   tacticRateLimiter,
-  uploadRateLimiter
+  uploadRateLimiter,
+  paymentWebhookLimiter
 };

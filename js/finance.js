@@ -31,6 +31,12 @@ class FinanceModule {
   constructor() {
     this.currentMatchId = null;
     this.currentFinanceData = null;
+    this.selectedQrPlayerId = null;
+    this._socketInitialized = false;
+
+    if (typeof window !== 'undefined') {
+      setTimeout(() => this.initSocketListeners(), 1200);
+    }
   }
 
   getBankListHTML(selectedBankCode = 'VCB') {
@@ -44,6 +50,7 @@ class FinanceModule {
   // Mở Modal Quản Lý Tiền Sân
   openFinanceModal(matchId) {
     this.currentMatchId = matchId;
+    this.selectedQrPlayerId = null;
     const match = window.stateManager.getMatchById(matchId);
     if (!match) {
       alert('Không tìm thấy thông tin trận đấu!');
@@ -229,15 +236,28 @@ class FinanceModule {
       collectedAmountEl.innerHTML = `Đã thu: <strong style="color: var(--accent-emerald);">${collectedAmount.toLocaleString('vi-VN')}đ</strong> / ${fin.totalAmount.toLocaleString('vi-VN')}đ (Còn thiếu ${(fin.totalAmount - collectedAmount).toLocaleString('vi-VN')}đ)`;
     }
 
-    // 3. Tạo mã VietQR động
+    // 3. Tạo mã VietQR động có cú pháp định danh Casso
     const qrContainer = document.getElementById('fin-qr-code-box');
     const qrImg = document.getElementById('fin-qr-img');
     const qrHint = document.getElementById('fin-qr-hint');
+    const memoEl = document.getElementById('fin-qr-memo-content');
+    const memoDescEl = document.getElementById('fin-qr-memo-desc');
 
     if (fin.payerAccountNumber && fin.payerBankCode) {
       const match = window.stateManager.getMatchById(this.currentMatchId);
-      const matchDateStr = match ? match.date.replace(/-/g, '') : '';
-      const memo = `TNT Tien san ${matchDateStr}`;
+      const matchShortId = this.currentMatchId ? String(this.currentMatchId).replace(/^(match_|m_)/, '') : '';
+      const allPlayers = window.stateManager.getPlayers();
+      
+      let memo = `TNT M${matchShortId}`;
+      let targetPlayer = null;
+
+      if (this.selectedQrPlayerId) {
+        targetPlayer = allPlayers.find(p => p.id === this.selectedQrPlayerId);
+        if (targetPlayer) {
+          const pIdentifier = targetPlayer.number !== undefined ? targetPlayer.number : targetPlayer.id.replace('p_', '');
+          memo = `TNT M${matchShortId} P${pIdentifier}`;
+        }
+      }
       
       const qrUrl = `https://img.vietqr.io/image/${fin.payerBankCode}-${fin.payerAccountNumber}-compact2.png?amount=${fin.splitAmountPerPerson}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(fin.payerAccountName || '')}`;
       
@@ -247,6 +267,17 @@ class FinanceModule {
       }
       if (qrHint) qrHint.style.display = 'none';
       if (qrContainer) qrContainer.style.background = '#ffffff';
+
+      if (memoEl) {
+        memoEl.innerText = memo;
+      }
+      if (memoDescEl) {
+        if (targetPlayer) {
+          memoDescEl.innerHTML = `Mã riêng cho <strong>${window.escapeHtml(targetPlayer.name)}</strong> • Web tự động gạch nợ sau 2 giây!`;
+        } else {
+          memoDescEl.innerHTML = `Mã chuyển khoản chung • Ghi số áo để web tự nhận diện!`;
+        }
+      }
     } else {
       if (qrImg) qrImg.style.display = 'none';
       if (qrHint) {
@@ -293,24 +324,39 @@ class FinanceModule {
               <span class="fin-toggle-paid-btn btn-paid" style="cursor: default; opacity: 0.95; user-select: none;" title="Người ứng tiền mặc định đã hoàn tất">
                 🟢 ĐÃ ỨNG TIỀN
               </span>
-            ` : (isAdmin ? `
-              <button 
-                type="button" 
-                class="fin-toggle-paid-btn ${p.isPaid ? 'btn-paid' : 'btn-unpaid'}"
-                onclick="window.financeModule.togglePlayerPayment('${p.playerId}')"
-                title="Nhấp để đổi trạng thái nộp tiền"
-              >
-                ${p.isPaid ? '🟢 ĐÃ NỘP' : '🔴 CHƯA NỘP'}
-              </button>
             ` : `
-              <span 
-                class="fin-toggle-paid-btn ${p.isPaid ? 'btn-paid' : 'btn-unpaid'}" 
-                style="cursor: default; opacity: 0.9; user-select: none;"
-                title="Trạng thái xác nhận bởi Quản Trị Viên"
-              >
-                ${p.isPaid ? '🟢 ĐÃ NỘP' : '🔴 CHƯA NỘP'}
-              </span>
-            `)}
+              <div style="display: inline-flex; align-items: center; gap: 0.35rem; justify-content: flex-end;">
+                ${!p.isPaid ? `
+                  <button 
+                    type="button" 
+                    class="btn btn-secondary btn-sm" 
+                    onclick="window.financeModule.selectPlayerForQr('${p.playerId}')" 
+                    title="Tạo mã VietQR riêng cho cầu thủ này"
+                    style="padding: 2px 7px; font-size: 0.75rem; border-radius: 4px;"
+                  >
+                    📱 QR
+                  </button>
+                ` : ''}
+                ${isAdmin ? `
+                  <button 
+                    type="button" 
+                    class="fin-toggle-paid-btn ${p.isPaid ? 'btn-paid' : 'btn-unpaid'}"
+                    onclick="window.financeModule.togglePlayerPayment('${p.playerId}')"
+                    title="Nhấp để đổi trạng thái nộp tiền"
+                  >
+                    ${p.isPaid ? '🟢 ĐÃ NỘP' : '🔴 CHƯA NỘP'}
+                  </button>
+                ` : `
+                  <span 
+                    class="fin-toggle-paid-btn ${p.isPaid ? 'btn-paid' : 'btn-unpaid'}" 
+                    style="cursor: default; opacity: 0.9; user-select: none;"
+                    title="Trạng thái xác nhận bởi Quản Trị Viên"
+                  >
+                    ${p.isPaid ? '🟢 ĐÃ NỘP' : '🔴 CHƯA NỘP'}
+                  </span>
+                `}
+              </div>
+            `}
           </td>
         </tr>
       `;
@@ -440,7 +486,7 @@ class FinanceModule {
                   <select id="fin-payer-select" class="form-control" onchange="window.financeModule.onPayerChange(this.value)">
                     ${allPlayers.map(p => `
                       <option value="${p.id}" ${p.id === fin.payerPlayerId ? 'selected' : ''}>
-                        #${p.number} - ${p.name} ${p.bankAccountNumber ? `(${p.bankCode || 'NH'} - ${p.bankAccountNumber})` : ''}
+                        #${p.number} - ${window.escapeHtml(p.name)} ${p.bankAccountNumber ? `(${window.escapeHtml(p.bankCode || 'NH')} - ${window.escapeHtml(p.bankAccountNumber)})` : ''}
                       </option>
                     `).join('')}
                   </select>
@@ -472,7 +518,7 @@ class FinanceModule {
               <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 1rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
                   <span style="color: var(--text-dim); font-size: 0.85rem;">Người nhận tiền:</span>
-                  <strong style="color: #fff; font-size: 0.95rem;">${fin.payerAccountName || fin.payerName || 'Quân Kun'}</strong>
+                  <strong style="color: #fff; font-size: 0.95rem;">${window.escapeHtml(fin.payerAccountName || fin.payerName || 'Quân Kun')}</strong>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
@@ -482,7 +528,7 @@ class FinanceModule {
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
                   <span style="color: var(--text-dim); font-size: 0.85rem;">Số tài khoản:</span>
-                  <strong style="color: var(--accent-cyan); font-family: monospace; font-size: 1.05rem; letter-spacing: 0.5px;">${fin.payerAccountNumber || '9392139587'}</strong>
+                  <strong style="color: var(--accent-cyan); font-family: monospace; font-size: 1.05rem; letter-spacing: 0.5px;">${window.escapeHtml(fin.payerAccountNumber || '9392139587')}</strong>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.08);">
@@ -497,15 +543,43 @@ class FinanceModule {
               <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.5rem; text-transform: uppercase;">
                 📲 Quét Mã VietQR Chuyển Tiền Tự Điền Số Tiền
               </div>
+
+              <!-- Lựa chọn người quét QR -->
+              <div style="margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex-wrap: wrap;">
+                <label style="font-size: 0.8rem; color: var(--text-dim);">Chọn cầu thủ quét:</label>
+                <select id="fin-qr-target-player" class="form-control form-control-sm" style="width: auto; max-width: 170px; font-size: 0.8rem; padding: 2px 6px; background: rgba(0,0,0,0.4);" onchange="window.financeModule.onQrTargetPlayerChange(this.value)">
+                  <option value="">-- Quét chung cả đội --</option>
+                  ${fin.payments.map(p => `<option value="${p.playerId}" ${this.selectedQrPlayerId === p.playerId ? 'selected' : ''}>${window.escapeHtml(p.playerName)}</option>`).join('')}
+                </select>
+              </div>
               
               <div id="fin-qr-code-box" style="width: 220px; height: 220px; margin: 0 auto; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
                 <img id="fin-qr-img" src="" alt="Mã VietQR" style="width: 100%; height: 100%; object-fit: contain; display: none;">
                 <div id="fin-qr-hint" style="color: var(--text-dim); font-size: 0.8rem; padding: 1rem;">Đang tạo mã QR...</div>
               </div>
 
+              <!-- Cú pháp chuyển khoản định danh -->
+              <div style="margin-top: 0.65rem; background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 0.5rem;">
+                <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 2px;">Cú pháp chuyển khoản tự động:</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                  <code id="fin-qr-memo-content" style="color: var(--accent-cyan); font-weight: 800; font-size: 0.95rem; font-family: monospace; letter-spacing: 0.5px;">TNT</code>
+                  <button type="button" class="btn btn-secondary btn-xs" onclick="window.financeModule.copyMemoText()" title="Sao chép cú pháp" style="font-size: 0.72rem; padding: 1px 6px;">📋 Copy</button>
+                </div>
+                <div id="fin-qr-memo-desc" style="font-size: 0.72rem; color: var(--accent-emerald); margin-top: 3px;">
+                  ✨ Hệ thống tự động gạch nợ sau 2 giây qua Casso Webhook!
+                </div>
+              </div>
+
               <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-dim);">
                 Số tiền mỗi người: <strong id="fin-display-split" style="color: var(--accent-gold); font-size: 1.1rem;">0đ</strong>
                 <span style="font-size: 0.75rem; color: var(--accent-emerald); display: block; margin-top: 2px;">(Đã tự động làm tròn lên nghìn đồng)</span>
+              </div>
+
+              <!-- Nút hỗ trợ Casso -->
+              <div style="margin-top: 0.75rem; display: flex; gap: 0.4rem; justify-content: center;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.financeModule.showCassoGuide()" style="font-size: 0.75rem; padding: 3px 8px;">
+                  ⚡ Kết Nối Casso (0đ)
+                </button>
               </div>
             </div>
 
@@ -559,7 +633,7 @@ class FinanceModule {
                   ${allPlayers.map(p => `
                     <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; background: rgba(0,0,0,0.2); padding: 4px 6px; border-radius: 4px;">
                       <input type="checkbox" class="fin-participant-checkbox" value="${p.id}" ${activeParticipantIds.has(p.id) ? 'checked' : ''} onchange="window.financeModule.recalculateAndRefresh()">
-                      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</span>
+                      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${window.escapeHtml(p.name)}</span>
                     </label>
                   `).join('')}
                 </div>
@@ -679,6 +753,149 @@ class FinanceModule {
       // Fallback prompt
       window.prompt('Sao chép nội dung báo cáo bên dưới:', text);
     });
+  }
+
+  // Khởi tạo lắng nghe Socket.IO sự kiện nộp tiền realtime
+  initSocketListeners() {
+    if (this._socketInitialized) return;
+    const socket = window.stateManager && window.stateManager.socket;
+    if (socket && typeof socket.on === 'function') {
+      this._socketInitialized = true;
+      socket.on('payment_received', (data) => {
+        this.handlePaymentReceived(data);
+      });
+      console.log('⚡ FinanceModule: Đã kết nối lắng nghe Casso Payment Webhook');
+    }
+  }
+
+  // Phát âm thanh Ting ting chuông đôi qua Web Audio API (Zero-dependency)
+  playTingTingSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Nốt 1: E6 (1318.5 Hz)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(1318.5, now);
+      gain1.gain.setValueAtTime(0.2, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.55);
+
+      // Nốt 2: B6 (1975.5 Hz) sau 120ms
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1975.5, now + 0.12);
+      gain2.gain.setValueAtTime(0.25, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.85);
+    } catch (e) {
+      console.warn('[Finance] Audio ting ting error:', e.message);
+    }
+  }
+
+  // Xử lý khi nhận được thông báo nộp tiền từ Casso Webhook
+  handlePaymentReceived(data) {
+    if (!data) return;
+
+    this.playTingTingSound();
+
+    if (window.showToast) {
+      window.showToast(`💰 Ting ting! Cầu thủ "${data.playerName}" vừa nộp ${Number(data.amount).toLocaleString('vi-VN')}đ tiền sân! Tự động gạch nợ thành công 🎉`, 'success');
+    }
+
+    // Nếu modal tài chính đang mở và đúng trận đấu đó:
+    const modal = document.getElementById('match-finance-modal');
+    if (modal && modal.classList.contains('active') && this.currentFinanceData) {
+      const matchIdClean = String(this.currentMatchId || '').replace(/^(match_|m_)/, '');
+      const eventMatchClean = String(data.matchId || '').replace(/^(match_|m_)/, '');
+
+      if (matchIdClean === eventMatchClean || !data.matchId) {
+        const item = this.currentFinanceData.payments.find(p => p.playerId === data.playerId);
+        if (item) {
+          item.isPaid = true;
+          item.paidAt = new Date().toISOString();
+          item.note = item.note ? `${item.note} • Auto Casso` : 'Auto Casso';
+          this.updateQRAndStatsDisplay();
+          this.renderChecklistTable();
+        }
+      }
+    }
+  }
+
+  onQrTargetPlayerChange(playerId) {
+    this.selectedQrPlayerId = playerId || null;
+    this.updateQRAndStatsDisplay();
+  }
+
+  selectPlayerForQr(playerId) {
+    this.selectedQrPlayerId = playerId;
+    const select = document.getElementById('fin-qr-target-player');
+    if (select) select.value = playerId;
+    this.updateQRAndStatsDisplay();
+    const player = window.stateManager ? window.stateManager.getPlayerById(playerId) : null;
+    if (window.showToast && player) {
+      window.showToast(`📲 Đã chuyển mã VietQR sang cho "${player.name}"!`, 'info');
+    }
+  }
+
+  copyMemoText() {
+    const memoEl = document.getElementById('fin-qr-memo-content');
+    if (!memoEl) return;
+    const text = memoEl.innerText.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      if (window.showToast) {
+        window.showToast(`📋 Đã copy cú pháp: "${text}"!`, 'success');
+      }
+    }).catch(() => {
+      window.prompt('Sao chép cú pháp chuyển khoản:', text);
+    });
+  }
+
+
+  async showCassoGuide() {
+    try {
+      const headers = {};
+      const adminToken = window.stateManager && typeof window.stateManager.getAdminToken === 'function'
+        ? window.stateManager.getAdminToken()
+        : '';
+      if (adminToken) headers['x-admin-token'] = adminToken;
+
+      const res = await fetch('/api/payments/config', { headers });
+      const config = await res.json();
+      if (!res.ok) {
+        alert(config.error || config.message || 'Không thể lấy thông tin cấu hình webhook');
+        return;
+      }
+      const webhookUrl = config.webhookUrl || `${window.location.origin}/api/payments/casso-webhook`;
+      const isConfigured = config.configured;
+
+      const guideText = `⚡ HƯỚNG DẪN KẾT NỐI TỰ ĐỘNG THU TIỀN QUA CASSO.VN (MIỄN PHÍ 100%):
+
+1. Đăng ký tài khoản miễn phí tại: https://casso.vn
+2. Liên kết 1 tài khoản ngân hàng của Đội trưởng/Thủ quỹ (MBBank, Vietcombank, Techcombank, ACB...).
+3. Vào mục Cài đặt Webhook trên Casso và điền:
+   • URL Webhook: ${webhookUrl}
+   • Tạo một mã "Secure Token" (Ví dụ: tnt_casso_secret_2026)
+4. Mở file .env trên máy chủ thêm dòng:
+   CASSO_WEBHOOK_TOKEN=mã_bạn_vừa_tạo
+
+Trạng thái hiện tại: ${isConfigured ? '✅ ĐÃ CẤU HÌNH CASSO_WEBHOOK_TOKEN' : '⏳ CHƯA THIẾT LẬP CASSO_WEBHOOK_TOKEN'}`;
+
+      window.prompt('Copy thông tin Webhook bên dưới để dán vào Casso.vn:', webhookUrl);
+    } catch (e) {
+      alert('Không thể lấy thông tin cấu hình webhook: ' + e.message);
+    }
   }
 }
 

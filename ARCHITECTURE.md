@@ -81,6 +81,7 @@ FC-TNT/
 │   ├── auth.js           # Đăng nhập PIN, đổi PIN, kiểm tra quyền Admin
 │   ├── players.js        # API CRUD cầu thủ & avatar
 │   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
+│   ├── payments.js       # API Webhook Casso.vn, tự động gạch nợ tiền sân & Ting ting realtime
 │   ├── tactics.js        # API kịch bản chiến thuật & thảo luận thực chiến
 │   ├── ai.js             # API AI rate match chấm điểm trận đấu & NLP Gemini
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
@@ -114,6 +115,7 @@ Tách rời các endpoint từ `server.js` thành các module độc lập theo 
 - `auth.js`: Xác thực mã PIN quản trị (`/api/auth/login`), đổi PIN (`/api/auth/change-pin`), kiểm tra token (`/api/auth/check`) và middleware `requireAdmin`. Đồng thời quản lý hệ thống tài khoản thành viên: đăng nhập cầu thủ (`/api/auth/player/login`), đổi mật khẩu (`/api/auth/player/change-password`), Admin cấp tài khoản khởi tạo (`/api/auth/player/provision`), lấy thông tin cá nhân (`/api/auth/player/me`) và cập nhật hồ sơ (`/api/auth/player/profile`).
 - `players.js`: Quản lý danh sách cầu thủ (`/api/players`), thêm/sửa/xóa cầu thủ và cập nhật avatar tự do (tự động loại trừ `passwordHash` khi trả về danh sách công khai).
 - `matches.js`: Lịch sử trận đấu (`/api/matches`) và quản lý thu chi/quỹ trận sân bóng.
+- `payments.js`: Webhook tự động hóa thanh toán tiền sân qua Casso.vn (`/api/payments/casso-webhook`), xác thực chữ ký số an toàn, bóc tách cú pháp chuyển khoản (`TNT M... P...`), chống xử lý trùng lặp giao dịch (Idempotency), phát âm thanh Ting ting & cập nhật tiến độ thanh toán thời gian thực qua Socket.IO.
 - `tactics.js`: API lưu trữ và quản lý kịch bản sa bàn chiến thuật (`/api/tactics`), bài tập cố định (phạt góc, ném biên, thoát pressing) và bình luận thảo luận chiến thuật thực chiến.
 - `ai.js`: AI chấm điểm phong độ & viết nhận xét cá nhân hóa bằng Gemini API kết hợp NLP (`/api/ai/rate-match`).
 - `liveMatch.js`: Đồng bộ trạng thái bản nháp trận đấu Live đa thiết bị qua Socket.IO (`/api/live-match/*`).
@@ -153,7 +155,7 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `matches/matches-live-events.js`: Ma trận nút chọn cầu thủ sự kiện nhanh, ghi nhận diễn biến và hiển thị dòng thời gian (Timeline).
   - `matches/matches-live-voice.js`: Trợ lý ghi nhận sự kiện bằng giọng nói tiếng Việt tự nhiên (Web Speech API kết hợp Football NLP).
 - `players.js`: Quản lý danh sách cầu thủ, form thêm/sửa/xoá cầu thủ, upload avatar, thống kê phong độ.
-- `finance.js`: Nghiệp vụ quỹ và tài chính: tính tiền sân/tiền nước, chia đều cho người đi đá, theo dõi ai đã đóng tiền, tạo mã VietQR chuyển khoản nhanh.
+- `finance.js`: Nghiệp vụ quỹ và tài chính: tính tiền sân/tiền nước, chia đều cho người đi đá, theo dõi ai đã đóng tiền, tạo mã VietQR cá nhân hóa cú pháp nộp tiền, tự động gạch nợ khi nhận tiền qua Casso Webhook và phát âm thanh "Ting ting" 🔔 độc lập qua Web Audio API.
 - `awards.js`: Bảng vinh danh cá nhân (Top ghi bàn, Vua kiến tạo, Cầu thủ xuất sắc nhất MOTM, Găng tay vàng).
 - `poster.js`: Xuất poster đội hình và kết quả trận đấu ra định dạng ảnh để chia sẻ mạng xã hội.
 - `moments.js`: Bảng tin khoảnh khắc đội bóng: đăng bài, tải ảnh, thả cảm xúc (tim, bia, bóng, lửa) và bình luận.
@@ -246,7 +248,7 @@ Khi cần can thiệp vào một tính năng, tra cứu trực tiếp theo bản
 | **Cấu trúc trường dữ liệu MongoDB** | [models/](file:///models/) | Mở model tương ứng (`Match.js`, `Player.js`, ...) |
 | **Gọi API từ client, State chung, Socket.IO** | [js/state.js](file:///js/state.js) | Quản lý `APP_STATE`, `apiCall()`, `saveLocalState()` |
 | **Giao diện sân 7 Sofascore, Live Match** | [js/matches.js](file:///js/matches.js) | Giao diện pitch Sofascore & live match |
-| **Chia tiền trận, quỹ đội, thanh toán VietQR** | [js/finance.js](file:///js/finance.js) | Công thức chia tiền và VietQR |
+| **Chia tiền trận, quỹ đội, VietQR & Webhook tự động** | [js/finance.js](file:///js/finance.js), [routes/payments.js](file:///routes/payments.js) | Công thức chia tiền, VietQR cá nhân hóa, Casso Webhook & Ting ting |
 | **Danh sách cầu thủ phía giao diện** | [js/players.js](file:///js/players.js) | Render danh sách và modal cầu thủ |
 | **Bảng vinh danh, tính toán danh hiệu** | [js/awards.js](file:///js/awards.js) | Top Goals/Assists/MOTM |
 | **Bài đăng kỷ niệm, bình luận phía Client** | [js/moments.js](file:///js/moments.js) | Feed giao diện và tương tác |
