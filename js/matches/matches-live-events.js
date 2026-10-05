@@ -122,9 +122,9 @@ Object.assign(window.matchesModule, {
         // Bước 2: Đã chọn người kiến tạo
         const scorer = window.stateManager.getPlayerById(this.livePitchState.pendingGoalPlayerId);
         const scorerShort = this.getPlayerShortName(scorer);
-        this.recordLiveEvent('GOAL', scorer.id, p.id, `${scorerShort} ghi bàn (Kiến tạo: ${pShort})`);
+        this.recordLiveEvent('GOAL', scorer.id, p.id, `${scorerShort} ghi bàn (Người kiến tạo: ${pShort})`);
         this.adjustLiveScore('home', 1);
-        window.showToast(`⚽ +1 Bàn thắng cho ${scorerShort} (Kiến tạo: ${pShort})!`);
+        window.showToast(`⚽ +1 Bàn thắng cho ${scorerShort} (Người kiến tạo: ${pShort})!`);
         this.closeLivePlayerPicker();
         return;
       }
@@ -195,7 +195,7 @@ Object.assign(window.matchesModule, {
       const scorer = window.stateManager.getPlayerById(this.livePitchState.pendingGoalPlayerId);
       if (scorer) {
         const scorerShort = this.getPlayerShortName(scorer);
-        this.recordLiveEvent('GOAL', scorer.id, null, `${scorerShort} solo lập công (Không có kiến tạo)`);
+        this.recordLiveEvent('GOAL', scorer.id, null, `${scorerShort} solo lập công (tự dứt điểm, không kiến tạo)`);
         this.adjustLiveScore('home', 1);
         window.showToast(`⚽ +1 Bàn thắng solo cho ${scorerShort}!`);
       }

@@ -222,7 +222,13 @@ Object.assign(window.matchesModule, {
       narration += `DIỄN BIẾN THỰC TẾ TRỰC TIẾP TRÊN SÂN:\n`;
       const sortedEvents = [...liveEventsSnapshot].sort((a, b) => (a.minute || 0) - (b.minute || 0));
       sortedEvents.forEach(evt => {
-        narration += `- Phút ${evt.minute}': [${evt.typeLabel || evt.type}] ${evt.playerName || 'Đội bóng'} ${evt.assistPlayerName ? `(Kiến tạo: ${evt.assistPlayerName})` : ''}${evt.note ? ` - ${evt.note}` : ''}\n`;
+        let assistStr = '';
+        if (evt.assistPlayerName) {
+          assistStr = `(Người kiến tạo: ${evt.assistPlayerName})`;
+        } else if (evt.type === 'GOAL' || evt.type === 'WONDERGOAL') {
+          assistStr = '(Tự dứt điểm, không có kiến tạo)';
+        }
+        narration += `- Phút ${evt.minute}': [${evt.typeLabel || evt.type}] ${evt.playerName || 'Đội bóng'} ${assistStr}${evt.note ? ` - ${evt.note}` : ''}\n`;
       });
 
       narration += `\nTỔNG HỢP NỔI BẬT:\n`;

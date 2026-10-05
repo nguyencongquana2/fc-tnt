@@ -291,7 +291,8 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
 
     // Direct event map
     const playerEventsMap = {};
-    if (Array.isArray(liveEvents) && liveEvents.length > 0) {
+    const hasLiveEvents = Array.isArray(liveEvents) && liveEvents.length > 0;
+    if (hasLiveEvents) {
       liveEvents.forEach(evt => {
         if (evt.playerId) {
           if (!playerEventsMap[evt.playerId]) playerEventsMap[evt.playerId] = [];
@@ -419,7 +420,8 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       const playerCtx = isMentioned ? contextChunks.join(' ') : '';
 
       if (isMentioned) {
-        if (goals === 0) {
+        // Khi đã có sự kiện sân cỏ trực tiếp (liveEvents), số bàn thắng và kiến tạo đã được chốt chuẩn xác từ thực tế
+        if (!hasLiveEvents && goals === 0) {
           if (playerCtx.includes('poker') || playerCtx.includes('4 bàn')) {
             goals = 4;
             score += 2.6;
@@ -448,17 +450,29 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
           }
         }
 
-        if (assists === 0) {
-          if (playerCtx.includes('2 kiến tạo') || playerCtx.includes('cú đúp kiến tạo')) {
-            assists = 2;
-            score += 1.5;
-            noteItems.push('👟 2 kiến tạo dọn cỗ sắc bén');
-            if (!roleTag) roleTag = '👟 Vua Kiến Tạo';
-          } else if (playerCtx.includes('1 kiến tạo') || playerCtx.includes('kiến tạo') || playerCtx.includes('dọn cỗ') || playerCtx.includes('chọc khe') || playerCtx.includes('tạt bóng chuẩn')) {
-            assists = 1;
-            score += 0.9;
-            noteItems.push('👟 1 kiến tạo chuẩn xác');
-            if (!roleTag) roleTag = '👟 Kiến Tạo Chuẩn Xác';
+        if (!hasLiveEvents && assists === 0) {
+          const hasNoAssist = /không\s*(có\s*)?kiến\s*tạo|ko\s*(có\s*)?kiến\s*tạo|không\s*ai\s*kiến\s*tạo|chưa\s*(có\s*)?kiến\s*tạo|không\s*cần\s*kiến\s*tạo|tự\s*(?:mình\s*)?(?:ghi\s*bàn|lập\s*công|solo)|solo\s*(?:ghi\s*bàn|lập\s*công)/i.test(playerCtx);
+          const isPassiveAssist = /(?:nhận|từ|sau|hưởng)\s*(?:đường|pha)?\s*kiến\s*tạo/i.test(playerCtx);
+
+          if (!hasNoAssist && !isPassiveAssist) {
+            if (playerCtx.includes('2 kiến tạo') || playerCtx.includes('cú đúp kiến tạo')) {
+              assists = 2;
+              score += 1.5;
+              noteItems.push('👟 2 kiến tạo dọn cỗ sắc bén');
+              if (!roleTag) roleTag = '👟 Vua Kiến Tạo';
+            } else if (
+              playerCtx.includes('1 kiến tạo') ||
+              /kiến\s*tạo\s*cho/i.test(playerCtx) ||
+              /dọn\s*cỗ\s*cho/i.test(playerCtx) ||
+              /chọc\s*khe\s*(?:cho|xé\s*gió)/i.test(playerCtx) ||
+              /tạt\s*bóng\s*chuẩn/i.test(playerCtx) ||
+              /chuyền\s*cho\s*[\w\s]+\s*(?:ghi\s*bàn|lập\s*công|sút)/i.test(playerCtx)
+            ) {
+              assists = 1;
+              score += 0.9;
+              noteItems.push('👟 1 kiến tạo chuẩn xác');
+              if (!roleTag) roleTag = '👟 Kiến Tạo Chuẩn Xác';
+            }
           }
         }
 

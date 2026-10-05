@@ -94,7 +94,8 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
 
   // Thu thập sự kiện trực tiếp từ Live Companion (nếu có)
   const playerEventsMap = {};
-  if (Array.isArray(liveEvents) && liveEvents.length > 0) {
+  const hasLiveEvents = Array.isArray(liveEvents) && liveEvents.length > 0;
+  if (hasLiveEvents) {
     liveEvents.forEach(evt => {
       if (evt.playerId) {
         if (!playerEventsMap[evt.playerId]) playerEventsMap[evt.playerId] = [];
@@ -222,7 +223,8 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
     const playerCtx = isMentioned ? contextChunks.join(' ') : '';
 
     if (isMentioned) {
-      if (goals === 0) {
+      // Khi đã có sự kiện sân cỏ trực tiếp (liveEvents), số bàn thắng và kiến tạo đã được chốt chuẩn xác từ thực tế
+      if (!hasLiveEvents && goals === 0) {
         if (playerCtx.includes('poker') || playerCtx.includes('4 bàn')) {
           goals = 4;
           score += 2.6;
@@ -251,17 +253,29 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
         }
       }
 
-      if (assists === 0) {
-        if (playerCtx.includes('2 kiến tạo') || playerCtx.includes('cú đúp kiến tạo')) {
-          assists = 2;
-          score += 1.5;
-          noteItems.push('👟 2 kiến tạo dọn cỗ sắc bén');
-          if (!roleTag) roleTag = '👟 Vua Kiến Tạo';
-        } else if (playerCtx.includes('1 kiến tạo') || playerCtx.includes('kiến tạo') || playerCtx.includes('dọn cỗ') || playerCtx.includes('chọc khe') || playerCtx.includes('tạt bóng chuẩn')) {
-          assists = 1;
-          score += 0.9;
-          noteItems.push('👟 1 kiến tạo chuẩn xác');
-          if (!roleTag) roleTag = '👟 Kiến Tạo Chuẩn Xác';
+      if (!hasLiveEvents && assists === 0) {
+        const hasNoAssist = /không\s*(có\s*)?kiến\s*tạo|ko\s*(có\s*)?kiến\s*tạo|không\s*ai\s*kiến\s*tạo|chưa\s*(có\s*)?kiến\s*tạo|không\s*cần\s*kiến\s*tạo|tự\s*(?:mình\s*)?(?:ghi\s*bàn|lập\s*công|solo)|solo\s*(?:ghi\s*bàn|lập\s*công)/i.test(playerCtx);
+        const isPassiveAssist = /(?:nhận|từ|sau|hưởng)\s*(?:đường|pha)?\s*kiến\s*tạo/i.test(playerCtx);
+
+        if (!hasNoAssist && !isPassiveAssist) {
+          if (playerCtx.includes('2 kiến tạo') || playerCtx.includes('cú đúp kiến tạo')) {
+            assists = 2;
+            score += 1.5;
+            noteItems.push('👟 2 kiến tạo dọn cỗ sắc bén');
+            if (!roleTag) roleTag = '👟 Vua Kiến Tạo';
+          } else if (
+            playerCtx.includes('1 kiến tạo') ||
+            /kiến\s*tạo\s*cho/i.test(playerCtx) ||
+            /dọn\s*cỗ\s*cho/i.test(playerCtx) ||
+            /chọc\s*khe\s*(?:cho|xé\s*gió)/i.test(playerCtx) ||
+            /tạt\s*bóng\s*chuẩn/i.test(playerCtx) ||
+            /chuyền\s*cho\s*[\w\s]+\s*(?:ghi\s*bàn|lập\s*công|sút)/i.test(playerCtx)
+          ) {
+            assists = 1;
+            score += 0.9;
+            noteItems.push('👟 1 kiến tạo chuẩn xác');
+            if (!roleTag) roleTag = '👟 Kiến Tạo Chuẩn Xác';
+          }
         }
       }
 
@@ -419,9 +433,15 @@ function createAiRouter() {
 
           let eventsText = 'Không có sự kiện thô riêng biệt.';
           if (Array.isArray(liveEvents) && liveEvents.length > 0) {
-            eventsText = liveEvents.map(e =>
-              `- Phút ${e.minute || 0}': [${e.typeLabel || e.type}] ${e.playerName || 'Đội bóng'} ${e.assistPlayerName ? `(Kiến tạo: ${e.assistPlayerName})` : ''} - ${e.note || ''}`
-            ).join('\n');
+            eventsText = liveEvents.map(e => {
+              let assistText = '';
+              if (e.type === 'GOAL' || e.type === 'WONDERGOAL') {
+                assistText = e.assistPlayerName ? `(Người kiến tạo: ${e.assistPlayerName})` : '(Tự ghi bàn solo, KHÔNG CÓ kiến tạo)';
+              } else if (e.assistPlayerName) {
+                assistText = `(Người kiến tạo: ${e.assistPlayerName})`;
+              }
+              return `- Phút ${e.minute || 0}': [${e.typeLabel || e.type}] ${e.playerName || 'Đội bóng'} ${assistText}${e.note ? ` - ${e.note}` : ''}`;
+            }).join('\n');
           }
 
           const systemInstruction = `Bạn là Chuyên gia phân tích bóng đá và Bình luận viên bóng đá phủi Việt Nam (Sân 7 người) của FC TNT.
@@ -460,7 +480,10 @@ QUY TẮC CHẤM ĐIỂM CHUYÊN MÔN THEO VỊ TRÍ & TỈ SỐ (TUÂN THỦ TU
    - CHỈ chấm điểm cho các cầu thủ có trong "DANH SÁCH CẦU THỦ RA SÂN" được cung cấp. Tuyệt đối không tự bịa thêm cầu thủ ngoài danh sách.
    - Giữ nguyên chính xác "playerId" của từng cầu thủ từ input.
    - BẮT BUỘC chọn đúng 1 "motmPlayerId" (Cầu thủ xuất sắc nhất trận) xứng đáng nhất.
-   - Tuyệt đối không tự bịa bàn thắng/kiến tạo nếu không có trong sự kiện hoặc bài mô tả!
+   - QUY TẮC BÀN THẮNG & KIẾN TẠO (TUÂN THỦ CHÍNH XÁC TUYỆT ĐỐI):
+     + Người ghi bàn KHÔNG BAO GIỜ được tính kiến tạo cho chính mình trong cùng bàn thắng!
+     + Nếu sự kiện ghi "solo lập công", "tự ghi bàn", "không có kiến tạo" hoặc không có tên người kiến tạo cụ thể, thì số kiến tạo (assists) của tình huống đó BẮT BUỘC bằng 0.
+     + Khi có "SỰ KIỆN GHI NHẬN TRỰC TIẾP TRÊN SÂN" (liveEvents), BẮT BUỘC lấy chính xác số bàn thắng (goals) và kiến tạo (assists) theo đúng danh sách sự kiện đó. Tuyệt đối không tự ý cộng thêm hoặc bịa thêm kiến tạo!
 
 4. BẢNG BIỆT DANH FC TNT (Đối soát chuẩn xác từ danh sách ra sân theo SSOT):
 ${generateAliasesPromptSection(playerList)}
@@ -536,7 +559,33 @@ Hãy chấm điểm toàn bộ cầu thủ trong danh sách đúng theo mô tả
             }
           }
 
-          if (geminiData) {
+          if (geminiData && geminiData.parsed) {
+            // Đảm bảo tính nhất quán tuyệt đối giữa sự kiện sân cỏ thực tế và kết quả AI trả về
+            if (Array.isArray(liveEvents) && liveEvents.length > 0 && Array.isArray(geminiData.parsed.ratings)) {
+              const liveStatsMap = {};
+              playerList.forEach(p => { liveStatsMap[p.id] = { goals: 0, assists: 0 }; });
+              liveEvents.forEach(e => {
+                if (e.playerId && liveStatsMap[e.playerId]) {
+                  if (e.type === 'GOAL' || e.type === 'WONDERGOAL') liveStatsMap[e.playerId].goals += 1;
+                  if (e.type === 'ASSIST') liveStatsMap[e.playerId].assists += 1;
+                }
+                if (e.assistPlayerId && liveStatsMap[e.assistPlayerId]) {
+                  liveStatsMap[e.assistPlayerId].assists += 1;
+                }
+              });
+
+              geminiData.parsed.ratings.forEach(r => {
+                const liveP = liveStatsMap[r.playerId];
+                if (liveP) {
+                  r.goals = liveP.goals;
+                  r.assists = liveP.assists;
+                  if (r.assists === 0 && r.tag && r.tag.includes('Kiến Tạo')) {
+                    r.tag = r.goals > 0 ? '⚽ Ghi Bàn' : '⚖️ Tròn Vai';
+                  }
+                }
+              });
+            }
+
             return res.json({
               success: true,
               ...geminiData.parsed,
