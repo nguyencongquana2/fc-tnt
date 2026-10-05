@@ -204,6 +204,7 @@ Object.assign(window.matchesModule, {
       window.showToast('⚠️ Không thể khởi tạo trận đấu để chấm điểm AI', 'error');
       return;
     }
+    this.pendingLiveMatchId = savedMatch.id;
 
     // Tổng hợp narration phong phú từ toàn bộ sự kiện trên sân
     const teamInfo = window.stateManager?.data?.teamInfo;

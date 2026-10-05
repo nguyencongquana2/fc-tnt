@@ -19,6 +19,12 @@ Object.assign(window.matchesModule, {
     if (!m) return;
     this.currentMatchId = m.id;
 
+    // Tránh rò rỉ sự kiện sân cỏ live sang trận đấu khác nếu người dùng mở chấm điểm trận khác
+    if (this.pendingLiveMatchId && this.pendingLiveMatchId !== m.id) {
+      this.pendingLiveEvents = null;
+      this.pendingLiveMatchId = null;
+    }
+
     const modal = document.getElementById('ai-match-rating-modal');
     if (!modal) return;
 
@@ -69,6 +75,8 @@ Object.assign(window.matchesModule, {
     const modal = document.getElementById('ai-match-rating-modal');
     if (modal) modal.classList.remove('active');
     this.currentAiRatingData = null;
+    this.pendingLiveEvents = null;
+    this.pendingLiveMatchId = null;
   },
 
   saveGeminiKey() {
@@ -142,7 +150,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       return;
     }
 
-    const liveEvents = liveEventsParam || this.pendingLiveEvents || null;
+    const liveEvents = liveEventsParam || (this.pendingLiveMatchId === this.currentMatchId ? this.pendingLiveEvents : null) || null;
 
     // Prepare player list with details
     const playerList = playerStats.map(ps => {
@@ -466,7 +474,7 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
               /dọn\s*cỗ\s*cho/i.test(playerCtx) ||
               /chọc\s*khe\s*(?:cho|xé\s*gió)/i.test(playerCtx) ||
               /tạt\s*bóng\s*chuẩn/i.test(playerCtx) ||
-              /chuyền\s*cho\s*[\w\s]+\s*(?:ghi\s*bàn|lập\s*công|sút)/i.test(playerCtx)
+              /chuyền\s*cho\s*[^,.;!\n]{1,30}\s*(?:ghi\s*bàn|lập\s*công|sút)/i.test(playerCtx)
             ) {
               assists = 1;
               score += 0.9;
@@ -683,10 +691,10 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         return {
           ...ps,
           rating: Number(aiStat.rating) || ps.rating || 7.0,
-          goals: aiStat.goals !== undefined ? aiStat.goals : ps.goals,
-          assists: aiStat.assists !== undefined ? aiStat.assists : ps.assists,
-          yellowCards: aiStat.yellowCards !== undefined ? aiStat.yellowCards : ps.yellowCards,
-          redCards: aiStat.redCards !== undefined ? aiStat.redCards : ps.redCards,
+          goals: aiStat.goals !== undefined ? (Number(aiStat.goals) || 0) : (ps.goals || 0),
+          assists: aiStat.assists !== undefined ? (Number(aiStat.assists) || 0) : (ps.assists || 0),
+          yellowCards: aiStat.yellowCards !== undefined ? (Number(aiStat.yellowCards) || 0) : (ps.yellowCards || 0),
+          redCards: aiStat.redCards !== undefined ? (Number(aiStat.redCards) || 0) : (ps.redCards || 0),
           note: aiStat.note || ps.note || ''
         };
       }

@@ -269,7 +269,7 @@ function analyzeMatchWithNLP({ matchInfo, playerList, matchNarration, liveEvents
             /dọn\s*cỗ\s*cho/i.test(playerCtx) ||
             /chọc\s*khe\s*(?:cho|xé\s*gió)/i.test(playerCtx) ||
             /tạt\s*bóng\s*chuẩn/i.test(playerCtx) ||
-            /chuyền\s*cho\s*[\w\s]+\s*(?:ghi\s*bàn|lập\s*công|sút)/i.test(playerCtx)
+            /chuyền\s*cho\s*[^,.;!\n]{1,30}\s*(?:ghi\s*bàn|lập\s*công|sút)/i.test(playerCtx)
           ) {
             assists = 1;
             score += 0.9;
