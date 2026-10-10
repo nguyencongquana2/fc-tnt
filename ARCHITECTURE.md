@@ -52,7 +52,11 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── matches-live-events.js # Bộ chọn cầu thủ sự kiện nhanh & Timeline trực tiếp
 │   │   └── matches-live-voice.js  # Nhận diện giọng nói (Voice-to-Event) & phân tích Smart NLP
 │   ├── players.js        # Danh sách cầu thủ & form thông tin
-│   ├── finance.js        # Chia tiền sân, tạo mã VietQR & nút trừ ví quỹ sau trận
+│   ├── finance.js        # [Facade] Bộ điều phối trung tâm chia tiền sân (~45 dòng)
+│   ├── finance/          # [Mô-đun hoá] Phân tách nghiệp vụ chia tiền sân & VietQR
+│   │   ├── finance-modal.js      # Giao diện Modal (#match-finance-modal), form chi phí & tính toán
+│   │   ├── finance-checklist.js  # Bảng checklist nộp tiền, trừ ví số dư quỹ & xuất báo cáo Zalo
+│   │   └── finance-qr.js         # Tạo mã VietQR động, định danh chuyển khoản & Socket.IO realtime
 │   ├── finance-funds.js  # Bộ điều phối trung tâm (Facade) phân hệ Sổ Quỹ Đội & Ví Thành Viên
 │   ├── funds/            # [Mô-đun hoá] Phân tách nghiệp vụ sổ quỹ chi tiết
 │   │   ├── funds-core.js     # Trạng thái số dư, render bảng chính, điều chỉnh quỹ & báo cáo Zalo
@@ -179,7 +183,10 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `matches/matches-live-events.js`: Ma trận nút chọn cầu thủ sự kiện nhanh, ghi nhận diễn biến và hiển thị dòng thời gian (Timeline).
   - `matches/matches-live-voice.js`: Trợ lý ghi nhận sự kiện bằng giọng nói tiếng Việt tự nhiên (Web Speech API kết hợp Football NLP).
 - `players.js`: Quản lý danh sách cầu thủ, form thêm/sửa/xoá cầu thủ, upload avatar, thống kê phong độ.
-- `finance.js`: Nghiệp vụ quỹ và tài chính: tính tiền sân/tiền nước, chia đều cho người đi đá, theo dõi ai đã đóng tiền, tạo mã VietQR cá nhân hóa cú pháp nộp tiền, tự động gạch nợ khi nhận tiền qua Casso Webhook và phát âm thanh "Ting ting" 🔔 độc lập qua Web Audio API.
+- `finance.js` & `finance/`: [Mô-đun hoá] Nghiệp vụ tính tiền sân & chia bill, điều phối qua Facade trung tâm (~45 dòng) và phân tách thành 3 submodule chuyên biệt:
+  - `finance/finance-modal.js`: Giao diện Modal (#match-finance-modal), nhập liệu chi phí, tự động tính chia đầu người & làm tròn.
+  - `finance/finance-checklist.js`: Bảng checklist nộp tiền, 1-chạm xác nhận đã nộp, trừ thẳng vào ví số dư quỹ & xuất báo cáo Messenger/Zalo.
+  - `finance/finance-qr.js`: Sinh mã VietQR động theo từng cầu thủ, phát âm thanh "Ting ting" 🔔 độc lập qua Web Audio API & tự động gạch nợ realtime qua Casso Webhook Socket.IO.
 - `awards.js`: Bảng vinh danh cá nhân (Top ghi bàn, Vua kiến tạo, Cầu thủ xuất sắc nhất MOTM, Găng tay vàng).
 - `poster.js`: Xuất poster đội hình và kết quả trận đấu ra định dạng ảnh để chia sẻ mạng xã hội.
 - `moments.js`: Bảng tin khoảnh khắc đội bóng: đăng bài, tải ảnh, thả cảm xúc (tim, bia, bóng, lửa) và bình luận.
