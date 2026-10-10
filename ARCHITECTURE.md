@@ -73,9 +73,10 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   └── finance-qr.js         # Tạo mã VietQR động, định danh chuyển khoản & Socket.IO realtime
 │   ├── finance-funds.js  # Bộ điều phối trung tâm (Facade) phân hệ Sổ Quỹ Đội & Ví Thành Viên
 │   ├── funds/            # [Mô-đun hoá] Phân tách nghiệp vụ sổ quỹ chi tiết
-│   │   ├── funds-core.js     # Trạng thái số dư, render bảng chính, điều chỉnh quỹ & báo cáo Zalo
+│   │   ├── funds-core.js     # Trạng thái số dư, render bảng chính & thanh chỉ số an toàn
 │   │   ├── funds-topup.js    # Modal nạp quỹ (#modal-funds-topup), bulk inputs & tính tổng tức thì
-│   │   └── funds-history.js  # Modal lịch sử (#modal-funds-history), bộ lọc Filter Pills & bảng giao dịch
+│   │   ├── funds-history.js  # Modal lịch sử (#modal-funds-history), bộ lọc Filter Pills & bảng giao dịch
+│   │   └── funds-adjust.js   # Quyền Thủ Quỹ (PIN), điều chỉnh số dư thủ công & xuất báo cáo Zalo
 │   ├── awards.js         # Bảng vinh danh & danh hiệu
 │   ├── poster.js         # [Facade] Bộ điều phối trung tâm tạo poster ảnh (~45 dòng)
 │   ├── poster/           # [Mô-đun hoá] Phân tách nghiệp vụ kết xuất đồ họa Canvas & xuất file
@@ -214,6 +215,11 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `finance/finance-modal.js`: Giao diện Modal (#match-finance-modal), nhập liệu chi phí, tự động tính chia đầu người & làm tròn.
   - `finance/finance-checklist.js`: Bảng checklist nộp tiền, 1-chạm xác nhận đã nộp, trừ thẳng vào ví số dư quỹ & xuất báo cáo Messenger/Zalo.
   - `finance/finance-qr.js`: Sinh mã VietQR động theo từng cầu thủ, phát âm thanh "Ting ting" 🔔 độc lập qua Web Audio API & tự động gạch nợ realtime qua Casso Webhook Socket.IO.
+- `finance-funds.js` & `funds/`: [Mô-đun hoá] Phân hệ Sổ Quỹ Đội & Ví Thành Viên, điều phối qua Facade trung tâm và phân tách thành 4 submodule chuyên biệt:
+  - `funds/funds-core.js`: Quản lý trạng thái số dư, render bảng danh sách ví, thanh chỉ số an toàn quỹ đội (Coverage Bar) và bộ lọc Filter Pills.
+  - `funds/funds-topup.js`: Quản lý Modal Nạp Quỹ / Thu Tiền (#modal-funds-topup), nhập số tiền hàng loạt (bulk inputs) và tính tổng tức thì.
+  - `funds/funds-history.js`: Quản lý Modal Lịch Sử Biến Động (#modal-funds-history), lọc loại giao dịch (nạp quỹ, trừ tiền sân, điều chỉnh) và bảng nhật ký chi tiết.
+  - `funds/funds-adjust.js`: Xác thực mã PIN Thủ Quỹ, điều chỉnh số dư ví cá nhân thủ công kèm lý do và chức năng sao chép báo cáo chi tiết gửi Zalo 1 chạm.
 - `awards.js`: Bảng vinh danh cá nhân (Top ghi bàn, Vua kiến tạo, Cầu thủ xuất sắc nhất MOTM, Găng tay vàng).
 - `poster.js` & `poster/`: [Mô-đun hoá] Bộ tạo poster ảnh thi đấu Full HD, điều phối qua Facade trung tâm (~45 dòng) và phân tách thành 4 submodule chuyên biệt:
   - `poster/poster-core.js`: Quản lý trạng thái poster, mở/đóng Modal (#poster-generator-modal), tiền tải avatar và điều phối luồng vẽ theo 2 tỉ lệ (1:1 / 9:16).
