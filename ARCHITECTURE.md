@@ -121,7 +121,10 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc reactions & bình luận
 │   ├── upload.js         # API chữ ký số & tải đa phương tiện Cloudinary (Ảnh/Video)
-│   └── weather.js        # API dự báo thời tiết Open-Meteo & AI thẩm định mặt sân
+│   ├── weather.js        # Bộ điều phối trung tâm (Facade) API dự báo thời tiết & AI cố vấn
+│   └── weather/          # [Mô-đun hoá] Phân tách dịch vụ thời tiết & AI cố vấn
+│       ├── weather-service.js # Dữ liệu Open-Meteo, cache 10 phút, mã WMO & điểm Playability
+│       └── weather-ai.js      # Cố vấn AI sân bóng, nhận diện kèo đấu, chọn giày & dông sét
 ├── sockets/              # [Mô-đun hoá] Socket.IO event controllers
 │   └── tacticsSocket.js  # Phòng họp sa bàn trực tiếp, sync kéo thả & vẽ vector
 ├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung giữa Backend & Frontend (UMD)
@@ -156,7 +159,9 @@ Tách rời các endpoint từ `server.js` thành các module độc lập theo 
   - `ai/ai-gemini.js`: Kết nối Google Gemini API (2.0-flash / 1.5-flash), prompt engineering theo chuẩn sân 7 FC TNT và đồng bộ hóa số liệu sự kiện trực tiếp.
 - `liveMatch.js`: Đồng bộ trạng thái bản nháp trận đấu Live đa thiết bị qua Socket.IO (`/api/live-match/*`).
 - `moments.js`: Bảng tin khoảnh khắc (`/api/moments`), đăng bài, thả cảm xúc (react) và bình luận (comments).
-- `weather.js`: Lấy dự báo thời tiết thực tế từ Open-Meteo (`/api/weather/forecast`) và AI cố vấn chiến thuật/mặt sân (`/api/weather/ai-consultant`).
+- `weather.js` & `weather/`: [Mô-đun hoá] Hệ thống dự báo thời tiết Open-Meteo & Cố vấn sân AKKA Chu Văn An, điều phối qua Facade trung tâm (`routes/weather.js`) và phân tách thành các submodule chuyên biệt:
+  - `weather/weather-service.js`: Tọa độ sân AKKA, kết nối Open-Meteo, cache in-memory 10 phút, bảng mã WMO tiếng Việt và thuật toán tính chỉ số thi đấu Match Playability (0 - 100%).
+  - `weather/weather-ai.js`: Bộ não Cố vấn AI thời tiết sân bóng (kết nối Gemini API / Football NLP), nhận diện thứ trong tuần, tư vấn chọn giày đinh TF, cảnh báo dông sét và xếp hạng ngày đẹp nhất tuần để lên kèo.
 
 ### `models/` (Dữ liệu & Mongoose Schemas)
 Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
