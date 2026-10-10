@@ -112,27 +112,12 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   ├── funds.js          # API sổ quỹ, nạp tiền linh hoạt, trừ tiền sân (requireTreasurer)
 │   ├── players.js        # API CRUD cầu thủ & avatar
 │   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
-│   ├── payments.js       # API Webhook Casso.vn, tự động gạch nợ tiền sân & Ting ting realtimeuỹ, nạp tiền linh hoạt, trừ tiền sân (requireTreasurer)
-│   ├── players.js        # API CRUD cầu thủ & avatar
-│   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
-│   ├── payments.js       # API Webhook Casso.vn, tự động gạch nợ tiền sân & Ting ting realtime moments-modal.js       # Form đăng khoảnh khắc, nén ảnh canvas & tải lên Cloudinary
-│   ├── weather.js        # Radar thời tiết & AI cố vấn
-│   ├── splash.js         # Màn hình chào sân & minigame tâng bóng
-│   └── effects.js        # Hiệu ứng âm thanh & pháo hoa confetti
-├── models/               # Mongoose Schemas (MongoDB)
-│   ├── Player.js         # Hồ sơ cầu thủ
-│   ├── Match.js          # Lịch sử trận đấu & đội hình
-│   ├── LiveMatchDraft.js # Bản nháp trận đấu Live đồng bộ realtime
-│   ├── Moment.js         # Bài đăng khoảnh khắc & bình luận
-│   ├── Tactic.js         # Kịch bản sa bàn chiến thuật & bình luận trao đổi
-│   └── Team.js           # Thông tin đội bóng & mã PIN Admin
-├── routes/               # [Mô-đun hoá] Tách API từ server.js theo miền nghiệp vụ
-│   ├── auth.js           # Đăng nhập PIN, đổi PIN, kiểm tra quyền Admin
-│   ├── players.js        # API CRUD cầu thủ & avatar
-│   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
 │   ├── payments.js       # API Webhook Casso.vn, tự động gạch nợ tiền sân & Ting ting realtime
 │   ├── tactics.js        # API kịch bản chiến thuật & thảo luận thực chiến
-│   ├── ai.js             # API AI rate match chấm điểm trận đấu & NLP Gemini
+│   ├── ai.js             # Bộ điều phối trung tâm (Facade) API AI chấm điểm trận đấu
+│   ├── ai/               # [Mô-đun hoá] Phân tách lõi AI & Cloud LLM
+│   │   ├── ai-engine.js      # Bộ não phân tích Smart Football Rules Engine & NLP nội bộ
+│   │   └── ai-gemini.js      # Tích hợp Google Gemini Cloud LLM & prompt engineering
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc reactions & bình luận
 │   ├── upload.js         # API chữ ký số & tải đa phương tiện Cloudinary (Ảnh/Video)
@@ -166,7 +151,9 @@ Tách rời các endpoint từ `server.js` thành các module độc lập theo 
 - `matches.js`: Lịch sử trận đấu (`/api/matches`) và quản lý thu chi/quỹ trận sân bóng.
 - `payments.js`: Webhook tự động hóa thanh toán tiền sân qua Casso.vn (`/api/payments/casso-webhook`), xác thực chữ ký số an toàn, bóc tách cú pháp chuyển khoản (`TNT M... P...`), chống xử lý trùng lặp giao dịch (Idempotency), phát âm thanh Ting ting & cập nhật tiến độ thanh toán thời gian thực qua Socket.IO.
 - `tactics.js`: API lưu trữ và quản lý kịch bản sa bàn chiến thuật (`/api/tactics`), bài tập cố định (phạt góc, ném biên, thoát pressing) và bình luận thảo luận chiến thuật thực chiến.
-- `ai.js`: AI chấm điểm phong độ & viết nhận xét cá nhân hóa bằng Gemini API kết hợp NLP (`/api/ai/rate-match`).
+- `ai.js` & `ai/`: [Mô-đun hoá] Hệ thống AI chấm điểm phong độ & viết nhận xét cá nhân hóa (`/api/ai/rate-match`), điều phối qua Facade trung tâm (`routes/ai.js`) và phân tách thành các submodule chuyên biệt:
+  - `ai/ai-engine.js`: Bộ não phân tích Smart Football Rules Engine & NLP nội bộ phía backend, chấm điểm ngoại tuyến khi mất mạng hoặc hết quota Google API.
+  - `ai/ai-gemini.js`: Kết nối Google Gemini API (2.0-flash / 1.5-flash), prompt engineering theo chuẩn sân 7 FC TNT và đồng bộ hóa số liệu sự kiện trực tiếp.
 - `liveMatch.js`: Đồng bộ trạng thái bản nháp trận đấu Live đa thiết bị qua Socket.IO (`/api/live-match/*`).
 - `moments.js`: Bảng tin khoảnh khắc (`/api/moments`), đăng bài, thả cảm xúc (react) và bình luận (comments).
 - `weather.js`: Lấy dự báo thời tiết thực tế từ Open-Meteo (`/api/weather/forecast`) và AI cố vấn chiến thuật/mặt sân (`/api/weather/ai-consultant`).
