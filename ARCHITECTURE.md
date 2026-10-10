@@ -50,7 +50,8 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── matches-list.js        # Render thẻ danh sách trận & banner Live Match
 │   │   ├── matches-detail.js      # Modal chi tiết trận (#match-detail-modal), đội hình sân 7 & reviews
 │   │   ├── matches-form.js        # Modal tạo/sửa trận (#match-form-modal), chọn đội hình & PIN bảo mật
-│   │   ├── matches-pitch-dnd.js   # Kéo-thả (Drag & Drop) hoán đổi vị trí, thay người dự bị & Quick Edit điểm số
+│   │   ├── matches-pitch-dnd.js   # Kéo-thả (Drag & Drop) hoán đổi vị trí & thay người ghế dự bị
+│   │   ├── matches-pitch-edit.js  # Thẻ chấm điểm nhanh (Quick Edit Card), thanh trượt & steppers
 │   │   ├── matches-pitch.js       # Render sa bàn sân 7 Sofascore (3-1-2), huy hiệu sự kiện & MOTM
 │   │   ├── matches-ai-client.js   # Bộ não phân tích đánh giá AI cục bộ (Football NLP & Rules Engine)
 │   │   ├── matches-ai-review.js   # Bảng nhận xét phong độ, cuộn mượt, mở rộng/thu gọn & Filter Pills
@@ -194,7 +195,8 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `matches/matches-list.js`: Render thẻ danh sách trận đấu trực quan và thẻ banner Live Match đang diễn ra.
   - `matches/matches-detail.js`: Quản lý Modal chi tiết trận (#match-detail-modal), dựng sa bàn sân 7 (3-1-2), danh sách dự bị & bộ lọc nhận xét phong độ cá nhân.
   - `matches/matches-form.js`: Quản lý Form tạo/sửa trận đấu (#match-form-modal), chọn danh sách tham gia, lưu trận & modal xác thực mã PIN an toàn khi sửa/xóa trận.
-  - `matches/matches-pitch-dnd.js`: Engine kéo-thả (Drag & Drop) vị trí cầu thủ trên sân, thay người vào/ra ghế dự bị và thẻ Quick Edit chấm điểm/bàn thắng/kiến tạo/thẻ phạt.
+  - `matches/matches-pitch-dnd.js`: Engine kéo-thả (Drag & Drop) vị trí cầu thủ trên sân và cơ chế thay người vào/ra băng ghế dự bị.
+  - `matches/matches-pitch-edit.js`: Thẻ Quick Edit chấm điểm cá nhân (1 - 10), bộ đếm bàn thắng/kiến tạo/thẻ phạt và lưu điểm toàn đội.
   - `matches/matches-pitch.js`: Render các vị trí trên sa bàn sân 7 Sofascore (3-1-2), huy hiệu sự kiện (⚽, 👟, 🟨, 🟥) và phân lớp màu điểm số chuẩn Sofascore.
   - `matches/matches-ai-client.js`: Bộ não phân tích đánh giá AI cục bộ phía client (Football NLP & Rules Engine), tính điểm tức thì khi mất mạng.
   - `matches/matches-ai-review.js`: Điều khiển UI bảng nhận xét phong độ từng cầu thủ, hỗ trợ cuộn mượt, thu gọn/mở rộng và bộ lọc Filter Pills.
