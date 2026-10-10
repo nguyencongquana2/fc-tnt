@@ -540,7 +540,10 @@ window.appModule = {
     }
 
     if (fundBalEl) {
-      fundBalEl.innerText = (curFundBal >= 0 ? '+' : '') + curFundBal.toLocaleString('vi-VN') + 'đ';
+      const formatted = (typeof window.formatMoney === 'function')
+        ? window.formatMoney(curFundBal)
+        : (curFundBal.toLocaleString('vi-VN') + 'đ');
+      fundBalEl.innerText = (curFundBal >= 0 ? '+' : '') + formatted;
       fundBalEl.style.color = curFundBal >= 0 ? 'var(--accent-emerald)' : '#ef4444';
     }
 
@@ -945,21 +948,31 @@ window.appModule = {
   }
 };
 
-// Global Toast Notification System
+// Global Toast Notification System (Ủy thác qua TNT.ui)
 window.showToast = function (msg, type = 'success') {
+  if (window.TNT && window.TNT.ui && typeof window.TNT.ui.showToast === 'function') {
+    return window.TNT.ui.showToast(msg, type);
+  }
   const container = document.getElementById('toast-container');
   if (!container) return;
 
   const toast = document.createElement('div');
   toast.className = 'toast';
+  const cleanMsg = (window.TNT && window.TNT.utils && typeof window.TNT.utils.escapeHtml === 'function')
+    ? window.TNT.utils.escapeHtml(msg)
+    : String(msg);
+
   if (type === 'error') {
     toast.style.borderColor = '#ef4444';
-    toast.innerHTML = `⚠️ <span>${msg}</span>`;
+    toast.innerHTML = `⚠️ <span>${cleanMsg}</span>`;
   } else if (type === 'info') {
     toast.style.borderColor = '#06b6d4';
-    toast.innerHTML = `ℹ️ <span>${msg}</span>`;
+    toast.innerHTML = `ℹ️ <span>${cleanMsg}</span>`;
+  } else if (type === 'warning') {
+    toast.style.borderColor = '#f59e0b';
+    toast.innerHTML = `🔔 <span>${cleanMsg}</span>`;
   } else {
-    toast.innerHTML = `✨ <span>${msg}</span>`;
+    toast.innerHTML = `✨ <span>${cleanMsg}</span>`;
   }
 
   container.appendChild(toast);
@@ -976,10 +989,6 @@ window.showToast = function (msg, type = 'success') {
 document.addEventListener('DOMContentLoaded', () => {
   if (window.TNT) {
     window.TNT.register('app', window.appModule);
-    window.TNT.register('ui', {
-      showToast: window.showToast,
-      escapeHtml: window.escapeHtml
-    });
   }
   window.appModule.init();
 });

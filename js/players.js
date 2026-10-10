@@ -273,7 +273,7 @@ window.playersModule = {
             <div class="player-card-header-badge">
               <span class="player-card-club-tag">FC TNT</span>
               ${(p.fundBalance !== undefined) ? `
-                <span class="fund-status-badge ${p.fundBalance < 0 ? 'badge-red' : (p.fundBalance <= 50000 ? 'badge-yellow' : 'badge-green')}" style="font-size: 0.65rem; padding: 1px 6px; margin-top: 3px; display: inline-block; font-weight: 800;" title="Số dư ví quỹ: ${(Number(p.fundBalance) || 0).toLocaleString('vi-VN')}đ">
+                <span class="fund-status-badge ${p.fundBalance < 0 ? 'badge-red' : (p.fundBalance <= 50000 ? 'badge-yellow' : 'badge-green')}" style="font-size: 0.65rem; padding: 1px 6px; margin-top: 3px; display: inline-block; font-weight: 800;" title="Số dư ví quỹ: ${typeof window.formatMoney === 'function' ? window.formatMoney(p.fundBalance) : (Number(p.fundBalance) || 0).toLocaleString('vi-VN') + 'đ'}">
                   ${p.fundBalance >= 0 ? '+' : ''}${((Number(p.fundBalance) || 0) / 1000).toFixed(0)}k
                 </span>
               ` : ''}
@@ -656,7 +656,7 @@ window.playersModule = {
           ` : ''}
           ${(player.fundBalance !== undefined) ? `
             <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 6px; padding: 3px 10px; margin-top: 0.4rem; font-size: 0.82rem; width: fit-content;">
-              <span>💰 Ví: <strong style="color: ${player.fundBalance >= 0 ? 'var(--accent-emerald)' : '#ef4444'};">${player.fundBalance >= 0 ? '+' : ''}${Number(player.fundBalance).toLocaleString('vi-VN')}đ</strong></span>
+              <span>💰 Ví: <strong style="color: ${player.fundBalance >= 0 ? 'var(--accent-emerald)' : '#ef4444'};">${player.fundBalance >= 0 ? '+' : ''}${typeof window.formatMoney === 'function' ? window.formatMoney(player.fundBalance) : Number(player.fundBalance).toLocaleString('vi-VN') + 'đ'}</strong></span>
               <button class="btn btn-secondary btn-xs" onclick="window.TNT.funds.openHistoryModal('${player.id}')" title="Xem lịch sử biến động số dư">📜 Lịch sử</button>
             </div>
           ` : ''}

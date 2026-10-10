@@ -12,15 +12,17 @@ const STORAGE_KEY = 'fc_tnt_data_v4';
 const API_BASE = '/api';
 
 // Global HTML Escaper to prevent Cross-Site Scripting (XSS)
-window.escapeHtml = function (str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
+window.escapeHtml = (typeof window.TNT !== 'undefined' && window.TNT.utils && window.TNT.utils.escapeHtml)
+  ? window.TNT.utils.escapeHtml
+  : function (str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
 
 // Single Source of Truth from utils/officialPlayers.js (loaded in index.html)
 const OFFICIAL_PLAYERS = (typeof window !== 'undefined' && window.OFFICIAL_PLAYERS) || [];
@@ -313,10 +315,9 @@ if (typeof window !== 'undefined' && window.TNTStateMixins) {
 const stateManager = new StateManager();
 if (window.TNT) {
   window.TNT.register('state', stateManager);
-  window.TNT.register('utils', {
-    escapeHtml: window.escapeHtml,
-    getPlayerAliases: (typeof window.getPlayerAliases === 'function' ? window.getPlayerAliases : null)
-  });
+  if (window.TNT.utils) {
+    window.TNT.utils.getPlayerAliases = (typeof window.getPlayerAliases === 'function' ? window.getPlayerAliases : null);
+  }
   window.TNT.state = stateManager;
 }
 window.stateManager = stateManager;

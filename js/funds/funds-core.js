@@ -508,16 +508,23 @@
       report += `💳 STK Quỹ: VCB 9392139587 - NGUYEN CONG QUAN\n`;
       report += `📝 Cú pháp: TNT [Tên bạn] nop quy`;
 
-      navigator.clipboard.writeText(report).then(() => {
-        if (root.showToast) root.showToast('📋 Đã sao chép báo cáo Zalo vào Clipboard!', 'success');
-        else alert('Đã sao chép báo cáo Zalo!');
-      }).catch(err => {
-        console.warn('Lỗi copy clipboard:', err.message);
-        alert('Không thể tự động copy. Vui lòng thử lại!');
-      });
+      if (root.TNT && root.TNT.utils && typeof root.TNT.utils.copyToClipboard === 'function') {
+        root.TNT.utils.copyToClipboard(report, '📋 Đã sao chép báo cáo Zalo vào Clipboard!');
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(report).then(() => {
+          if (root.showToast) root.showToast('📋 Đã sao chép báo cáo Zalo vào Clipboard!', 'success');
+          else alert('Đã sao chép báo cáo Zalo!');
+        }).catch(err => {
+          console.warn('Lỗi copy clipboard:', err.message);
+          alert('Không thể tự động copy. Vui lòng thử lại!');
+        });
+      }
     }
 
     formatMoney(amount) {
+      if (root.TNT && root.TNT.utils && typeof root.TNT.utils.formatMoney === 'function') {
+        return root.TNT.utils.formatMoney(amount);
+      }
       const num = Number(amount) || 0;
       return num.toLocaleString('vi-VN') + 'đ';
     }

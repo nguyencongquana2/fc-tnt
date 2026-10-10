@@ -157,7 +157,7 @@ Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
 
 ### `js/` (Logic Xử Lý Phía Client)
 Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
-- `core.js`: [Decoupling & Clean Architecture] Cung cấp không gian tên tập trung `window.TNT` cùng Event Bus nội bộ (`TNT.events`), áp dụng mẫu Service Locator & Mediator Pattern. Giải quyết triệt để vấn đề Tight Coupling (liên kết chặt chẽ) giữa các module qua biến toàn cục tự do, đồng thời duy trì khả năng tương thích ngược hoàn hảo.
+- `core.js`: [Decoupling & Clean Architecture] Cung cấp không gian tên tập trung `window.TNT` cùng Event Bus nội bộ (`TNT.bus` / `TNT.events`), áp dụng mẫu Service Locator & Mediator Pattern. Chuẩn hóa toàn bộ tiện ích dùng chung (`TNT.utils.escapeHtml`, `TNT.utils.formatMoney`, `TNT.utils.formatDate`, `TNT.utils.copyToClipboard`) và Hệ thống UI Toast tập trung (`TNT.ui.showToast`, tự động lắng nghe sự kiện `toast:show`, `toast:error`, `toast:success`, `toast:info`). Giải quyết triệt để phản mẫu Tight Coupling và ô nhiễm biến toàn cục, đồng thời tương thích ngược 100% (`window.escapeHtml`, `window.formatMoney`, `window.showToast`).
 - `state.js` & `state/`: [Mô-đun hoá] Quản lý state tập trung (`APP_STATE`), điều phối qua Facade trung tâm (~280 dòng) và phân tách thành 4 submodule chuyên biệt:
   - `state/state-auth.js`: Quản lý mã PIN Quản trị viên, xác thực tài khoản thành viên PBKDF2 Token, đổi mật khẩu và cấp tài khoản.
   - `state/state-players.js`: Quản lý danh sách cầu thủ, avatar, tính toán thống kê phong độ & bảng vinh danh (Top Goals/Assists/MOTM).

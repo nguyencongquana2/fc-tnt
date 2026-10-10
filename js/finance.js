@@ -24,8 +24,19 @@ const VIET_BANKS = [
   { code: 'NAB', name: 'Nam A Bank' },
   { code: 'BAB', name: 'Bac A Bank' },
   { code: 'PVB', name: 'PVcomBank' },
-  { code: 'VCCB', name: 'BVBank (Bản Việt)' }
 ];
+
+// Tiện ích format tiền tệ chuẩn hóa từ TNT.utils
+function formatMoney(amount) {
+  if (typeof window !== 'undefined' && window.TNT && window.TNT.utils && typeof window.TNT.utils.formatMoney === 'function') {
+    return window.TNT.utils.formatMoney(amount);
+  }
+  if (typeof window !== 'undefined' && typeof window.formatMoney === 'function') {
+    return window.formatMoney(amount);
+  }
+  const num = Number(amount) || 0;
+  return num.toLocaleString('vi-VN') + 'đ';
+}
 
 class FinanceModule {
   constructor() {
@@ -214,8 +225,8 @@ class FinanceModule {
     const totalEl = document.getElementById('fin-display-total');
     const splitEl = document.getElementById('fin-display-split');
     const countEl = document.getElementById('fin-display-count');
-    if (totalEl) totalEl.innerText = fin.totalAmount.toLocaleString('vi-VN') + 'đ';
-    if (splitEl) splitEl.innerText = fin.splitAmountPerPerson.toLocaleString('vi-VN') + 'đ';
+    if (totalEl) totalEl.innerText = formatMoney(fin.totalAmount);
+    if (splitEl) splitEl.innerText = formatMoney(fin.splitAmountPerPerson);
     if (countEl) countEl.innerText = `${fin.payments.length} người`;
 
     // 2. Tính tiến độ đã thu
@@ -233,7 +244,7 @@ class FinanceModule {
     if (progressFill) progressFill.style.width = `${pct}%`;
     if (progressPercentText) progressPercentText.innerText = `${pct}%`;
     if (collectedAmountEl) {
-      collectedAmountEl.innerHTML = `Đã thu: <strong style="color: var(--accent-emerald);">${collectedAmount.toLocaleString('vi-VN')}đ</strong> / ${fin.totalAmount.toLocaleString('vi-VN')}đ (Còn thiếu ${(fin.totalAmount - collectedAmount).toLocaleString('vi-VN')}đ)`;
+      collectedAmountEl.innerHTML = `Đã thu: <strong style="color: var(--accent-emerald);">${formatMoney(collectedAmount)}</strong> / ${formatMoney(fin.totalAmount)} (Còn thiếu ${formatMoney(fin.totalAmount - collectedAmount)})`;
     }
 
     // 3. Tạo mã VietQR động có cú pháp định danh Casso
@@ -318,7 +329,7 @@ class FinanceModule {
               </div>
             </div>
           </td>
-          <td style="font-weight: 700; color: var(--accent-gold);">${p.amount.toLocaleString('vi-VN')}đ</td>
+          <td style="font-weight: 700; color: var(--accent-gold);">${formatMoney(p.amount)}</td>
           <td style="text-align: right;">
             ${isPayer ? `
               <span class="fin-toggle-paid-btn btn-paid" style="cursor: default; opacity: 0.95; user-select: none;" title="Người ứng tiền mặc định đã hoàn tất">
@@ -468,7 +479,7 @@ class FinanceModule {
     const opponent = match ? match.opponent : 'Đối thủ';
 
     const confirmMsg = `Xác nhận TRỪ TIỀN SÂN VÀO VÍ SỐ DƯ QUỸ:\n` +
-      `- Số tiền trừ mỗi người: ${splitAmount.toLocaleString('vi-VN')}đ\n` +
+      `- Số tiền trừ mỗi người: ${formatMoney(splitAmount)}\n` +
       `- Số cầu thủ áp dụng: ${count} người\n` +
       `- Trận đấu: FC TNT vs ${opponent}\n\n` +
       `Hệ thống sẽ trừ thẳng vào ví của ${count} cầu thủ và tự động đánh dấu ĐÃ NỘP. Bạn có chắc chắn không?`;
@@ -641,7 +652,7 @@ class FinanceModule {
 
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.08);">
                   <span style="color: var(--text-dim); font-size: 0.85rem;">Tổng chi phí trận:</span>
-                  <strong style="color: #fff;">${fin.totalAmount.toLocaleString('vi-VN')}đ</strong>
+                  <strong style="color: #fff;">${formatMoney(fin.totalAmount)}</strong>
                 </div>
               </div>
             `}
@@ -833,8 +844,8 @@ class FinanceModule {
     const text = [
       `⚽ TỔNG KẾT TIỀN SÂN FC TNT - [${match ? match.date : 'Hôm nay'}]`,
       `🏟️ Trận: FC TNT vs ${match ? match.opponent : 'Đối thủ'}`,
-      `💰 Tổng chi: ${fin.totalAmount.toLocaleString('vi-VN')}đ (Sân: ${fin.pitchFee.toLocaleString('vi-VN')}đ, Nước: ${fin.waterFee.toLocaleString('vi-VN')}đ)`,
-      `👉 Chia đầu người: ${fin.splitAmountPerPerson.toLocaleString('vi-VN')}đ / người (${fin.payments.length} người)`,
+      `💰 Tổng chi: ${formatMoney(fin.totalAmount)} (Sân: ${formatMoney(fin.pitchFee)}, Nước: ${formatMoney(fin.waterFee)})`,
+      `👉 Chia đầu người: ${formatMoney(fin.splitAmountPerPerson)} / người (${fin.payments.length} người)`,
       `─────────────────────────`,
       `💳 THÔNG TIN NHẬN TIỀN:`,
       `• Người nhận: ${fin.payerAccountName || fin.payerName}`,
@@ -922,7 +933,7 @@ class FinanceModule {
     this.playTingTingSound();
 
     if (window.showToast) {
-      window.showToast(`💰 Ting ting! Cầu thủ "${data.playerName}" vừa nộp ${Number(data.amount).toLocaleString('vi-VN')}đ tiền sân! Tự động gạch nợ thành công 🎉`, 'success');
+      window.showToast(`💰 Ting ting! Cầu thủ "${data.playerName}" vừa nộp ${formatMoney(data.amount)} tiền sân! Tự động gạch nợ thành công 🎉`, 'success');
     }
 
     // Nếu modal tài chính đang mở và đúng trận đấu đó:
