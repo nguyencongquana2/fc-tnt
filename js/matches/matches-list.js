@@ -87,18 +87,9 @@ Object.assign(window.matchesModule, {
 
     container.innerHTML = matches.map(m => {
       try {
-        let resultBadge = '';
-        let scoreClass = '';
-        if (m.result === 'WIN') {
-          resultBadge = '<span class="match-badge badge-win">THẮNG</span>';
-          scoreClass = 'score-win';
-        } else if (m.result === 'LOSS') {
-          resultBadge = '<span class="match-badge badge-loss">THUA</span>';
-          scoreClass = 'score-loss';
-        } else {
-          resultBadge = '<span class="match-badge badge-draw">HÒA</span>';
-          scoreClass = 'score-draw';
-        }
+        const resultClass = m.result === 'WIN' ? 'result-win' : m.result === 'DRAW' ? 'result-draw' : 'result-loss';
+        const resultText = m.result === 'WIN' ? 'THẮNG' : m.result === 'DRAW' ? 'HÒA' : 'THUA';
+        const cardResultClass = m.result === 'WIN' ? 'match-win' : m.result === 'DRAW' ? 'match-draw' : 'match-loss';
 
         // Tìm MOTM (Cầu thủ có điểm cao nhất >= 7.0)
         let motm = null;
@@ -113,6 +104,7 @@ Object.assign(window.matchesModule, {
           });
         }
         const motmPlayer = (motm && highestRating >= 7.0 && window.stateManager) ? window.stateManager.getPlayerById(motm.playerId) : null;
+        const motmName = motmPlayer ? ((motmPlayer.nickname && motmPlayer.nickname.trim()) ? motmPlayer.nickname.trim() : motmPlayer.name) : '';
 
         const totalGoals = (m.playerStats || []).reduce((sum, ps) => sum + (ps.goals || 0), 0);
         const totalAssists = (m.playerStats || []).reduce((sum, ps) => sum + (ps.assists || 0), 0);
@@ -121,45 +113,65 @@ Object.assign(window.matchesModule, {
         const escapedVenue = window.escapeHtml(m.venue || 'Sân bóng');
         const escapedNote = m.note ? window.escapeHtml(m.note) : '';
 
+        const financePaidCount = (m.finance && m.finance.payments) ? m.finance.payments.filter(p => p.isPaid).length : 0;
+        const financeTotalCount = (m.finance && m.finance.payments) ? m.finance.payments.length : 0;
+
         return `
-          <div class="match-card" onclick="window.matchesModule.openMatchDetailModal('${m.id}')">
-            <div class="match-card-header">
-              <span class="match-date">📅 ${m.date} ${m.time ? `• ${m.time}` : ''}</span>
-              ${resultBadge}
+          <div class="match-card ${cardResultClass}" onclick="window.matchesModule.openMatchDetailModal('${m.id}')">
+            <div class="match-card-top-bar">
+              <div class="match-meta-left">
+                <span class="match-date-badge">📅 ${m.date} ${m.time ? `• ${m.time}` : ''}</span>
+                <span class="match-venue">📍 ${escapedVenue} (Sân 7 • 3-1-2)</span>
+              </div>
+              
+              <div class="match-meta-right" onclick="event.stopPropagation()">
+                <button class="btn btn-secondary btn-sm match-finance-btn" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.55rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); font-size: 0.78rem;">
+                  💰 Tiền Sân ${financeTotalCount > 0 ? `(${financePaidCount}/${financeTotalCount})` : ''}
+                </button>
+                <span class="match-result-badge ${resultClass}">${resultText}</span>
+              </div>
             </div>
 
-            <div class="match-score-row">
-              <div class="team-name text-left">${window.escapeHtml(teamInfo?.name || 'FC TNT')}</div>
-              <div class="score-box ${scoreClass}">
-                <span>${m.homeScore}</span>
-                <span style="font-size: 1.25rem; opacity: 0.6; margin: 0 4px;">-</span>
-                <span>${m.awayScore}</span>
+            <div class="match-scoreboard">
+              <div class="team-box home">
+                <span class="team-title">${window.escapeHtml(teamInfo?.name || 'FC TNT')}</span>
+                <div class="brand-icon-box">⚽</div>
               </div>
-              <div class="team-name text-right">${escapedOpponent}</div>
+
+              <div class="score-display">
+                <span class="score-num ${m.homeScore > m.awayScore ? 'win' : ''}">${m.homeScore}</span>
+                <span class="score-divider">-</span>
+                <span class="score-num ${m.awayScore > m.homeScore ? 'win' : ''}">${m.awayScore}</span>
+              </div>
+
+              <div class="team-box away">
+                <div class="brand-icon-box away-brand">🛡️</div>
+                <span class="team-title">${escapedOpponent}</span>
+              </div>
             </div>
 
-            <div class="match-venue-row">
-              📍 ${escapedVenue} • Sân 7 (3-1-2)
-            </div>
-
-            ${escapedNote ? `
-              <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.5rem; background: rgba(255,255,255,0.03); padding: 0.4rem 0.6rem; border-radius: var(--radius-sm); border-left: 2px solid var(--accent-gold);">
-                💬 ${escapedNote}
+            <div class="match-card-bottom">
+              <div class="match-note-text">
+                ${escapedNote ? `💬 "${escapedNote}"` : `⚽ ${totalGoals} bàn • 👟 ${totalAssists} kiến tạo • Sơ đồ sân 7 (3-1-2)`}
               </div>
-            ` : ''}
 
-            <div class="match-footer">
-              <div style="font-size: 0.75rem; color: var(--text-dim); display: flex; gap: 0.6rem;">
-                <span>⚽ ${totalGoals} bàn</span>
-                <span>👟 ${totalAssists} kiến tạo</span>
-              </div>
-              ${motmPlayer ? `
-                <div class="motm-badge" title="Cầu thủ xuất sắc nhất trận">
-                  👑 MOTM: <strong>${window.escapeHtml(motmPlayer.name)}</strong> (${highestRating.toFixed(1)})
+              <div class="match-bottom-details">
+                ${motmPlayer ? `
+                  <div class="motm-badge-preview">
+                    ${motmPlayer.avatar ? `<img class="motm-avatar-small" src="${window.escapeHtml(motmPlayer.avatar)}" alt="${window.escapeHtml(motmName)}">` : ''}
+                    <span>👑 MOTM: <strong>${window.escapeHtml(motmName)}</strong> (${highestRating.toFixed(1)}⭐)</span>
+                  </div>
+                ` : `
+                  <div style="font-size: 0.78rem; color: var(--text-dim); display: flex; gap: 0.6rem;">
+                    <span>⚽ ${totalGoals} bàn</span>
+                    <span>👟 ${totalAssists} kiến tạo</span>
+                  </div>
+                `}
+                
+                <div class="match-view-detail-btn">
+                  🏟️ Xem Sơ Đồ 3-1-2 & Chấm Điểm →
                 </div>
-              ` : `
-                <span style="font-size: 0.75rem; color: var(--accent-emerald);">Xem sa bàn Sofascore →</span>
-              `}
+              </div>
             </div>
           </div>
         `;
