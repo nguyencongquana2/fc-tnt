@@ -47,7 +47,9 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   └── tactics-realtime.js    # Điều phối phòng họp Socket.IO trực tiếp
 │   ├── matches.js        # Bộ điều phối trung tâm (Facade) module trận đấu
 │   ├── matches/          # [Mô-đun hoá] Phân tách nghiệp vụ trận đấu chi tiết
-│   │   ├── matches-list.js        # Danh sách trận đấu, modal chi tiết & CRUD
+│   │   ├── matches-list.js        # Render thẻ danh sách trận & banner Live Match
+│   │   ├── matches-detail.js      # Modal chi tiết trận (#match-detail-modal), đội hình sân 7 & reviews
+│   │   ├── matches-form.js        # Modal tạo/sửa trận (#match-form-modal), chọn đội hình & PIN bảo mật
 │   │   ├── matches-pitch.js       # Sa bàn sân 7 Sofascore (3-1-2) & kéo thả vị trí
 │   │   ├── matches-ai.js          # Đánh giá trận đấu & chấm điểm bằng AI Gemini
 │   │   ├── matches-live.js        # Trợ lý sân cỏ Live Companion (Orchestrator & Sync)
@@ -180,7 +182,9 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `tactics/tactics-playbook.js`: Kho kịch bản bài tập mẫu, bộ lọc danh mục, thảo luận góp ý, thả tim và modal lưu bài tập mới.
   - `tactics/tactics-realtime.js`: Điều phối phòng họp chiến thuật trực tiếp qua Socket.IO, tự động vào/rời phòng theo tab để tiết kiệm tài nguyên.
 - `matches.js` & `matches/`: [Mô-đun hoá] Quản lý toàn bộ nghiệp vụ trận đấu, được điều phối qua facade `matches.js` và phân tách thành các submodule:
-  - `matches/matches-list.js`: Quản lý danh sách trận, hiển thị chi tiết, tạo/sửa trận và xác thực PIN an toàn khi xóa.
+  - `matches/matches-list.js`: Render thẻ danh sách trận đấu trực quan và thẻ banner Live Match đang diễn ra.
+  - `matches/matches-detail.js`: Quản lý Modal chi tiết trận (#match-detail-modal), dựng sa bàn sân 7 (3-1-2), danh sách dự bị & bộ lọc nhận xét phong độ cá nhân.
+  - `matches/matches-form.js`: Quản lý Form tạo/sửa trận đấu (#match-form-modal), chọn danh sách tham gia, lưu trận & modal xác thực mã PIN an toàn khi sửa/xóa trận.
   - `matches/matches-pitch.js`: Sa bàn chiến thuật sân 7 Sofascore (3-1-2), engine kéo-thả (Drag & Drop) và Quick Edit điểm số.
   - `matches/matches-ai.js`: AI Match Rating & Review Engine kết nối Gemini API chấm điểm và sinh nhận xét chi tiết.
   - `matches/matches-live.js`: Bộ điều phối trung tâm Trợ lý sân cỏ Live Match, đồng bộ đám mây realtime qua Socket.IO và xuất báo cáo Zalo.
