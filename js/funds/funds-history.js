@@ -116,6 +116,7 @@
                     <th style="text-align: right;">Biến Động</th>
                     <th style="text-align: right;">Số Dư Sau</th>
                     <th>Nội Dung</th>
+                    ${this.isTreasurer() ? '<th style="text-align: center; width: 60px;">Thao Tác</th>' : ''}
                   </tr>
                 </thead>
                 <tbody id="history-table-tbody">
@@ -170,7 +171,7 @@
       if (list.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-dim, #94a3b8); font-size: 0.88rem;">
+            <td colspan="${this.isTreasurer() ? 7 : 6}" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-dim, #94a3b8); font-size: 0.88rem;">
               🔍 Không tìm thấy giao dịch nào phù hợp với bộ lọc hiện tại.
             </td>
           </tr>
@@ -212,9 +213,90 @@
             <td style="font-size: 0.82rem; color: var(--text-main, #e2e8f0); max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
               ${esc(t.note || '-')}
             </td>
+            ${this.isTreasurer() ? `
+              <td style="text-align: center; white-space: nowrap;">
+                <button type="button" class="btn-history-delete" onclick="window.TNT.funds.deleteTransaction('${esc(t.id)}')" title="Hoàn tác & Xóa giao dịch này (Chỉ Thủ Quỹ)">
+                  🗑️
+                </button>
+              </td>
+            ` : ''}
           </tr>
         `;
       }).join('');
+    },
+
+    async deleteTransaction(txId) {
+      if (!this.isTreasurer()) {
+        alert('🔒 Chỉ có Thủ Quỹ mới có quyền hoàn tác và xóa giao dịch!');
+        return;
+      }
+
+      const tx = (this.rawTransactions || []).find(t => t.id === txId);
+      if (!tx) {
+        alert('Không tìm thấy thông tin giao dịch!');
+        return;
+      }
+
+      const typeLabel = tx.type === 'TOPUP' ? 'Nạp quỹ' : (tx.type === 'MATCH_DEDUCT' ? 'Trừ tiền sân' : 'Điều chỉnh');
+      const amountStr = this.formatMoney(Math.abs(tx.amount));
+      const reverseEffect = tx.type === 'TOPUP'
+        ? `Số dư của ${tx.playerName || 'cầu thủ'} sẽ bị TRỪ LẠI -${amountStr}`
+        : (tx.type === 'MATCH_DEDUCT'
+          ? `Số dư của ${tx.playerName || 'cầu thủ'} sẽ được HOÀN TRẢ LẠI +${amountStr} (và chuyển lại trạng thái Chưa Nộp trong trận đấu)`
+          : `Số dư sẽ được khôi phục về ${this.formatMoney(tx.balanceBefore)}`);
+
+      const confirmMsg = `⚠️ XÁC NHẬN HOÀN TÁC & XÓA GIAO DỊCH (QUYỀN THỦ QUỸ):\n\n` +
+        `- Cầu thủ: ${tx.playerName || 'Thành viên'}\n` +
+        `- Loại: ${typeLabel} (${tx.amount > 0 ? '+' : ''}${this.formatMoney(tx.amount)})\n` +
+        `- Nội dung: ${tx.note || '-'}\n\n` +
+        `👉 TÁC ĐỘNG HOÀN TÁC:\n${reverseEffect}\n\n` +
+        `Giao dịch này sẽ bị XÓA HOÀN TOÀN khỏi sổ quỹ. Bạn có chắc chắn muốn xóa không?`;
+
+      if (!confirm(confirmMsg)) return;
+
+      const treasurerToken = this.getTreasurerToken();
+      if (!treasurerToken) {
+        this.promptTreasurerLogin(() => this.deleteTransaction(txId));
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/funds/transaction/${encodeURIComponent(txId)}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-treasurer-token': treasurerToken
+          }
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          if (window.showToast) {
+            window.showToast(`🗑️ ${data.message}`, 'success');
+          } else {
+            alert(data.message);
+          }
+
+          this.rawTransactions = (this.rawTransactions || []).filter(t => t.id !== txId);
+          this._renderHistoryRows();
+
+          if (typeof this.loadBalances === 'function') {
+            await this.loadBalances();
+          }
+
+          if (window.stateManager && typeof window.stateManager.loadAllData === 'function') {
+            window.stateManager.loadAllData();
+          }
+          if (window.TNT && window.TNT.bus) {
+            window.TNT.bus.emit('funds:updated', { deletedId: txId });
+          }
+        } else {
+          alert('Không thể xóa giao dịch: ' + (data.error || 'Lỗi không xác định'));
+        }
+      } catch (err) {
+        console.warn('[Funds] Lỗi xóa giao dịch:', err);
+        alert('Lỗi kết nối khi xóa giao dịch: ' + err.message);
+      }
     }
   };
 

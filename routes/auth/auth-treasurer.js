@@ -96,7 +96,7 @@ async function verifyTreasurerToken(token, isMongoConnected) {
   return false;
 }
 
-// Middleware xác thực quyền Thủ Quỹ (Bắt buộc Token có chữ ký số HMAC-SHA256, triệt tiêu brute-force)
+// Middleware xác thực ĐỘC QUYỀN quyền Thủ Quỹ (Chỉ chấp nhận Token Thủ Quỹ, cấm tuyệt đối Admin PIN bypass)
 const requireTreasurer = async (req, res, next) => {
   const token = req.headers['x-treasurer-token'];
 
@@ -110,7 +110,7 @@ const requireTreasurer = async (req, res, next) => {
 
   return res.status(401).json({
     success: false,
-    error: 'Yêu cầu quyền Thủ Quỹ! Vui lòng đăng nhập mã PIN Thủ Quỹ để thực hiện thao tác này.',
+    error: 'Yêu cầu quyền Thủ Quỹ độc quyền! Quản trị viên thông thường không có quyền can thiệp quỹ.',
     requireTreasurerAuth: true
   });
 };

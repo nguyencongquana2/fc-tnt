@@ -113,7 +113,7 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── auth-admin.js     # Mã PIN Admin, sinh token HMAC, middleware requireAdmin
 │   │   ├── auth-treasurer.js # Mã PIN Thủ Quỹ, sinh token HMAC, middleware requireTreasurer
 │   │   └── auth-player.js    # PBKDF2 hash mật khẩu cầu thủ, token thành viên & hồ sơ
-│   ├── funds.js          # API sổ quỹ, nạp tiền linh hoạt, trừ tiền sân (requireTreasurer)
+│   ├── funds.js          # API sổ quỹ, nạp tiền, trừ tiền sân & hoàn tác/xóa giao dịch (requireTreasurer độc quyền)
 │   ├── players.js        # API CRUD cầu thủ & avatar
 │   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
 │   ├── payments.js       # API Webhook Casso.vn, tự động gạch nợ tiền sân & Ting ting realtime
@@ -219,7 +219,7 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
 - `finance-funds.js` & `funds/`: [Mô-đun hoá] Phân hệ Sổ Quỹ Đội & Ví Thành Viên, điều phối qua Facade trung tâm và phân tách thành 4 submodule chuyên biệt:
   - `funds/funds-core.js`: Quản lý trạng thái số dư, render bảng danh sách ví, thanh chỉ số an toàn quỹ đội (Coverage Bar) và bộ lọc Filter Pills.
   - `funds/funds-topup.js`: Quản lý Modal Nạp Quỹ / Thu Tiền (#modal-funds-topup), nhập số tiền hàng loạt (bulk inputs) và tính tổng tức thì.
-  - `funds/funds-history.js`: Quản lý Modal Lịch Sử Biến Động (#modal-funds-history), lọc loại giao dịch (nạp quỹ, trừ tiền sân, điều chỉnh) và bảng nhật ký chi tiết.
+  - `funds/funds-history.js`: Quản lý Modal Lịch Sử Biến Động (#modal-funds-history), lọc loại giao dịch (nạp quỹ, trừ tiền sân, điều chỉnh), nhật ký chi tiết và tính năng độc quyền cho Thủ Quỹ: hoàn tác & xóa giao dịch khôi phục số dư ví ban đầu.
   - `funds/funds-adjust.js`: Xác thực mã PIN Thủ Quỹ, điều chỉnh số dư ví cá nhân thủ công kèm lý do và chức năng sao chép báo cáo chi tiết gửi Zalo 1 chạm.
 - `awards.js`: Bảng vinh danh cá nhân (Top ghi bàn, Vua kiến tạo, Cầu thủ xuất sắc nhất MOTM, Găng tay vàng).
 - `poster.js` & `poster/`: [Mô-đun hoá] Bộ tạo poster ảnh thi đấu Full HD, điều phối qua Facade trung tâm (~45 dòng) và phân tách thành 4 submodule chuyên biệt:

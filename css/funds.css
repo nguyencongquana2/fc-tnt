@@ -1145,3 +1145,25 @@
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   flex-shrink: 0;
 }
+
+.btn-history-delete {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-history-delete:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+  color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+}

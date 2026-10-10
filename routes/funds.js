@@ -31,38 +31,20 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
         players = await Player.find().select('id name nickname number position avatar fundBalance').sort({ number: 1 });
       } else if (fallbackData && Array.isArray(fallbackData.players)) {
         players = fallbackData.players.map(p => ({
-          id: p.id,
-          name: p.name,
-          nickname: p.nickname,
-          number: p.number,
-          position: p.position,
-          avatar: p.avatar,
-          fundBalance: p.fundBalance || 0
+          id: p.id, name: p.name, nickname: p.nickname, number: p.number, position: p.position, avatar: p.avatar, fundBalance: p.fundBalance || 0
         }));
       }
 
-      let totalFund = 0;
-      let positiveFund = 0;
-      let negativeFund = 0;
-
+      let totalFund = 0, positiveFund = 0, negativeFund = 0;
       players.forEach(p => {
         const bal = Number(p.fundBalance) || 0;
-        if (bal >= 0) {
-          positiveFund += bal;
-        } else {
-          negativeFund += Math.abs(bal);
-        }
+        if (bal >= 0) positiveFund += bal; else negativeFund += Math.abs(bal);
         totalFund += bal;
       });
 
       return res.json({
         success: true,
-        summary: {
-          totalFund,
-          positiveFund,
-          negativeFund,
-          playerCount: players.length
-        },
+        summary: { totalFund, positiveFund, negativeFund, playerCount: players.length },
         players
       });
     } catch (err) {
@@ -172,31 +154,12 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
 
         const txDoc = {
           id: `ft_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
-          playerId: pId,
-          playerName: playerName,
-          amount: amount,
-          balanceBefore,
-          balanceAfter,
-          type: 'TOPUP',
-          note: noteText,
-          createdBy: 'Thủ quỹ',
-          createdAt: new Date()
+          playerId: pId, playerName, amount, balanceBefore, balanceAfter,
+          type: 'TOPUP', note: noteText, createdBy: 'Thủ quỹ', createdAt: new Date()
         };
-
-        if (connected) {
-          const savedTx = await FundTransaction.create(txDoc);
-          createdTransactions.push(savedTx);
-        } else {
-          fallbackData.fundTransactions.unshift(txDoc);
-          createdTransactions.push(txDoc);
-        }
-
-        updatedPlayers.push({
-          playerId: pId,
-          name: playerName,
-          amount,
-          balanceAfter
-        });
+        const savedTx = connected ? await FundTransaction.create(txDoc) : (fallbackData.fundTransactions.unshift(txDoc), txDoc);
+        createdTransactions.push(savedTx);
+        updatedPlayers.push({ playerId: pId, name: playerName, amount, balanceAfter });
       }
 
       if (updatedPlayers.length === 0) {
@@ -279,33 +242,14 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
         const noteText = String(note || `Tiền sân trận vs ${matchOpponent || 'đối thủ'}`).trim().slice(0, 200);
         const txDoc = {
           id: `ft_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
-          playerId: cleanPId,
-          playerName: playerName,
-          amount: -amountToDeduct,
-          balanceBefore,
-          balanceAfter,
-          type: 'MATCH_DEDUCT',
-          matchId: (typeof matchId === 'string' ? matchId.trim() : ''),
+          playerId: cleanPId, playerName, amount: -amountToDeduct, balanceBefore, balanceAfter,
+          type: 'MATCH_DEDUCT', matchId: (typeof matchId === 'string' ? matchId.trim() : ''),
           matchOpponent: (typeof matchOpponent === 'string' ? matchOpponent.trim().slice(0, 100) : ''),
-          note: noteText,
-          createdBy: 'Thủ quỹ',
-          createdAt: new Date()
+          note: noteText, createdBy: 'Thủ quỹ', createdAt: new Date()
         };
-
-        if (connected) {
-          const savedTx = await FundTransaction.create(txDoc);
-          createdTransactions.push(savedTx);
-        } else {
-          fallbackData.fundTransactions.unshift(txDoc);
-          createdTransactions.push(txDoc);
-        }
-
-        updatedPlayers.push({
-          playerId: cleanPId,
-          name: playerName,
-          deducted: amountToDeduct,
-          balanceAfter
-        });
+        const savedTx = connected ? await FundTransaction.create(txDoc) : (fallbackData.fundTransactions.unshift(txDoc), txDoc);
+        createdTransactions.push(savedTx);
+        updatedPlayers.push({ playerId: cleanPId, name: playerName, deducted: amountToDeduct, balanceAfter });
       }
 
       // Tự động cập nhật trạng thái đã nộp tiền trong trận đấu nếu có matchId (kiểm tra kiểu string an toàn)
@@ -435,6 +379,95 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
     } catch (err) {
       console.warn('[Funds] Lỗi điều chỉnh số dư:', err.message);
       return res.status(500).json({ success: false, error: 'Lỗi máy chủ khi điều chỉnh: ' + err.message });
+    }
+  });
+
+  // =========================================================================
+  // DELETE /api/funds/transaction/:id (Xóa & Hoàn tác giao dịch - Yêu cầu Thủ Quỹ)
+  // =========================================================================
+  router.delete('/transaction/:id', requireTreasurer, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : false);
+      let tx = null;
+
+      if (connected) {
+        tx = await FundTransaction.findOne({ id });
+      } else {
+        const idx = (fallbackData.fundTransactions || []).findIndex(t => t.id === id);
+        if (idx !== -1) tx = fallbackData.fundTransactions[idx];
+      }
+
+      if (!tx) {
+        return res.status(404).json({ success: false, error: 'Không tìm thấy giao dịch!' });
+      }
+
+      const pId = tx.playerId;
+      const txAmount = Number(tx.amount) || 0;
+      let newBalance = 0;
+
+      // 1. Hoàn tác số dư của cầu thủ
+      if (connected) {
+        const updateQuery = (tx.type === 'ADJUSTMENT')
+          ? { $set: { fundBalance: tx.balanceBefore } }
+          : { $inc: { fundBalance: -txAmount } };
+        const updated = await Player.findOneAndUpdate({ id: pId }, updateQuery, { new: true });
+        newBalance = updated ? updated.fundBalance : 0;
+      } else if (fallbackData && Array.isArray(fallbackData.players)) {
+        const player = fallbackData.players.find(p => p.id === pId);
+        if (player) {
+          player.fundBalance = (tx.type === 'ADJUSTMENT') ? tx.balanceBefore : (Number(player.fundBalance) || 0) - txAmount;
+          newBalance = player.fundBalance;
+        }
+      }
+
+      // 2. Nếu là MATCH_DEDUCT, hoàn tác trạng thái đã nộp trong trận đấu
+      if (tx.type === 'MATCH_DEDUCT' && tx.matchId) {
+        if (connected) {
+          const match = await Match.findOne({ id: tx.matchId });
+          if (match && match.finance && Array.isArray(match.finance.payments)) {
+            const p = match.finance.payments.find(pay => pay.playerId === pId);
+            if (p) {
+              p.isPaid = false;
+              p.paidAt = null;
+              p.note = '';
+              match.markModified('finance');
+              await match.save();
+            }
+          }
+        } else if (fallbackData && Array.isArray(fallbackData.matches)) {
+          const match = fallbackData.matches.find(m => m.id === tx.matchId);
+          if (match && match.finance && Array.isArray(match.finance.payments)) {
+            const p = match.finance.payments.find(pay => pay.playerId === pId);
+            if (p) {
+              p.isPaid = false;
+              p.paidAt = null;
+              p.note = '';
+            }
+          }
+        }
+      }
+
+      // 3. Xóa giao dịch khỏi cơ sở dữ liệu
+      if (connected) {
+        await FundTransaction.deleteOne({ id });
+      } else {
+        fallbackData.fundTransactions = fallbackData.fundTransactions.filter(t => t.id !== id);
+      }
+
+      if (typeof broadcastDataUpdate === 'function') {
+        broadcastDataUpdate('funds', `🗑️ Đã hoàn tác & xóa giao dịch của ${tx.playerName || 'thành viên'}!`);
+      }
+
+      return res.json({
+        success: true,
+        message: `Đã hoàn tác và xóa giao dịch thành công! Số dư hiện tại của ${tx.playerName || 'cầu thủ'}: ${newBalance.toLocaleString('vi-VN')}đ`,
+        newBalance,
+        deletedTransactionId: id
+      });
+    } catch (err) {
+      console.warn('[Funds] Lỗi xóa giao dịch:', err.message);
+      return res.status(500).json({ success: false, error: 'Lỗi máy chủ khi xóa: ' + err.message });
     }
   });
 
