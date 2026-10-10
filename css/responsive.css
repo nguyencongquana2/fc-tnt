@@ -413,9 +413,30 @@
     border-radius: var(--radius-lg);
   }
 
+  .player-card-top {
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+    align-items: center;
+  }
+
+  .player-card-header-badge {
+    padding: 0;
+    min-width: 0;
+  }
+
+  .player-fund-pill {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.68rem;
+    gap: 0.2rem;
+  }
+
+  .player-fund-pill .fund-pill-icon {
+    font-size: 0.68rem;
+  }
+
   .player-avatar-large {
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
   }
 
   .player-overall-num {
@@ -426,6 +447,31 @@
     font-size: 5rem;
     right: -5px;
     bottom: -15px;
+  }
+
+  .player-card-footer {
+    margin-top: 0.75rem;
+    gap: 0.35rem;
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .player-card-footer .player-footer-btn-photo {
+    display: none !important;
+  }
+
+  .player-card-footer .btn {
+    flex: 1;
+    min-width: 0;
+    padding: 0.35rem 0.25rem;
+    font-size: 0.72rem;
+    min-height: 34px;
+    white-space: nowrap;
+  }
+
+  .player-card-footer .player-footer-btn-del {
+    flex: 0 0 32px !important;
+    padding: 0.35rem 0;
   }
 
   /* Modals on Mobile */
@@ -664,6 +710,37 @@
     padding: 0.75rem 0.5rem;
   }
 
+  .player-card-top {
+    gap: 0.2rem;
+    margin-bottom: 0.55rem;
+  }
+
+  .player-avatar-large {
+    width: 44px;
+    height: 44px;
+  }
+
+  .player-fund-pill {
+    padding: 0.16rem 0.38rem;
+    font-size: 0.65rem;
+    gap: 0.15rem;
+  }
+
+  .player-card-footer {
+    margin-top: 0.65rem;
+    gap: 0.25rem;
+  }
+
+  .player-card-footer .btn {
+    padding: 0.32rem 0.15rem;
+    font-size: 0.7rem;
+    min-height: 32px;
+  }
+
+  .player-card-footer .player-footer-btn-del {
+    flex: 0 0 28px !important;
+  }
+
   .stat-card-value {
     font-size: 1.3rem;
   }
@@ -726,6 +803,17 @@
   .match-view-detail-btn {
     padding: 0.28rem 0.5rem;
     font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 370px) {
+  .player-card-footer .btn-label {
+    display: none;
+  }
+
+  .player-card-footer .btn {
+    flex: 1;
+    justify-content: center;
   }
 }
 

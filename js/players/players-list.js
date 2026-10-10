@@ -66,6 +66,12 @@
         const primaryDisplayName = escapeHtml((p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name);
         const secondaryRealName = escapeHtml((p.name && p.name.trim() && p.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? p.name.trim() : '');
         
+        const hasFund = (p.fundBalance !== undefined && p.fundBalance !== null);
+        const bal = Number(p.fundBalance) || 0;
+        const fundBadgeClass = bal < 0 ? 'fund-neg' : (bal <= 50000 ? 'fund-warn' : 'fund-pos');
+        const fundIcon = bal < 0 ? '⚠️' : '💳';
+        const fundValText = (bal > 0 ? '+' : '') + (bal / 1000).toFixed(0) + 'k';
+        
         return `
           <div class="player-fifa-card" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
             <div class="player-card-bg-number">${p.number || ''}</div>
@@ -79,10 +85,10 @@
               </div>
               
               <div class="player-card-header-badge">
-                <span class="player-card-club-tag">FC TNT</span>
-                ${(p.fundBalance !== undefined) ? `
-                  <span class="fund-status-badge ${p.fundBalance < 0 ? 'badge-red' : (p.fundBalance <= 50000 ? 'badge-yellow' : 'badge-green')}" style="font-size: 0.65rem; padding: 1px 6px; margin-top: 3px; display: inline-block; font-weight: 800;" title="Số dư ví quỹ: ${formatMoney(p.fundBalance)}">
-                    ${p.fundBalance >= 0 ? '+' : ''}${((Number(p.fundBalance) || 0) / 1000).toFixed(0)}k
+                ${hasFund ? `
+                  <span class="player-fund-pill ${fundBadgeClass}" title="Số dư ví quỹ: ${formatMoney(p.fundBalance)}">
+                    <span class="fund-pill-icon">${fundIcon}</span>
+                    <span class="fund-pill-val">${fundValText}</span>
                   </span>
                 ` : ''}
               </div>
@@ -124,31 +130,31 @@
 
             ${isAdmin ? `
               <div class="player-card-footer" onclick="event.stopPropagation()">
-                <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới từ máy" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
-                  📷 Đổi Ảnh
+                <button class="btn btn-secondary btn-sm player-footer-btn-photo" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới từ máy">
+                  📷 <span class="btn-label">Đổi Ảnh</span>
                 </button>
-                <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openProvisionModal('${p.id}')" title="${p.username ? 'Đổi mật khẩu / tài khoản' : 'Cấp tài khoản thành viên'}" style="padding: 0.25rem 0.5rem; font-size: 0.78rem; color: var(--accent-gold);">
-                  🔑 ${p.username ? 'Đổi MK' : 'Cấp TK'}
+                <button class="btn btn-secondary btn-sm player-footer-btn-key" onclick="window.playersModule.openProvisionModal('${p.id}')" title="${p.username ? 'Đổi mật khẩu / tài khoản' : 'Cấp tài khoản thành viên'}">
+                  🔑 <span class="btn-label">${p.username ? 'Đổi MK' : 'Cấp TK'}</span>
                 </button>
-                <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openPlayerModal('${p.id}')" title="Chỉnh sửa thông tin" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
-                  ✏️ Sửa
+                <button class="btn btn-secondary btn-sm player-footer-btn-edit" onclick="window.playersModule.openPlayerModal('${p.id}')" title="Chỉnh sửa thông tin">
+                  ✏️ <span class="btn-label">Sửa</span>
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="window.playersModule.deletePlayer('${p.id}')" title="Xóa" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
+                <button class="btn btn-danger btn-sm player-footer-btn-del" onclick="window.playersModule.deletePlayer('${p.id}')" title="Xóa">
                   🗑️
                 </button>
               </div>
             ` : (canEditAvatar ? `
               <div class="player-card-footer" onclick="event.stopPropagation()">
-                <button class="btn btn-secondary btn-sm" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới của bạn" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; flex: 1; color: var(--accent-emerald);">
-                  📷 Đổi Ảnh Của Tôi
+                <button class="btn btn-secondary btn-sm player-footer-btn-photo" onclick="window.playersModule.quickUploadAvatar('${p.id}', event)" title="Tải ảnh đại diện mới của bạn" style="color: var(--accent-emerald);">
+                  📷 <span class="btn-label">Đổi Ảnh</span>
                 </button>
-                <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; flex: 1;" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
+                <button class="btn btn-secondary btn-sm player-footer-btn-view" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
                   👁️ Chi Tiết
                 </button>
               </div>
             ` : `
               <div class="player-card-footer" onclick="event.stopPropagation()">
-                <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; width: 100%;" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
+                <button class="btn btn-secondary btn-sm player-footer-btn-view" style="width: 100%;" onclick="window.playersModule.viewPlayerProfile('${p.id}')">
                   👁️ Xem Chi Tiết
                 </button>
               </div>
