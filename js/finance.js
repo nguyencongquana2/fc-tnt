@@ -411,7 +411,115 @@ class FinanceModule {
 
     this.updateQRAndStatsDisplay();
     this.renderChecklistTable();
-    if (this.currentMatchId) this.saveCurrentFinance(false);
+
+    // Tự động lưu ngầm lên server
+    if (this.currentMatchId) {
+      this.saveCurrentFinance(false);
+    }
+  }
+
+  // Trừ trực tiếp tiền sân vào ví số dư quỹ của các cầu thủ tham gia
+  async deductFromMemberFunds() {
+    if (!this.currentFinanceData || !this.currentFinanceData.payments || this.currentFinanceData.payments.length === 0) {
+      alert('Không có danh sách cầu thủ để trừ tiền quỹ!');
+      return;
+    }
+
+    const fin = this.currentFinanceData;
+    const splitAmount = fin.splitAmountPerPerson;
+    if (!splitAmount || splitAmount <= 0) {
+      alert('Số tiền chia mỗi người phải lớn hơn 0đ!');
+      return;
+    }
+
+    const participantIds = fin.payments.map(p => p.playerId);
+    const count = participantIds.length;
+
+    let treasurerToken = window.TNT && window.TNT.funds && typeof window.TNT.funds.getTreasurerToken === 'function'
+      ? window.TNT.funds.getTreasurerToken()
+      : (sessionStorage.getItem('fc_tnt_treasurer_token') || localStorage.getItem('fc_tnt_treasurer_token') || '');
+
+    if (!treasurerToken) {
+      const pin = prompt('🔐 Thao tác này yêu cầu quyền Thủ Quỹ!\nVui lòng nhập Mã PIN Thủ Quỹ để thực hiện trừ tiền vào ví:');
+      if (!pin) return;
+
+      try {
+        const authRes = await fetch('/api/auth/treasurer/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin })
+        });
+        const authData = await authRes.json();
+        if (authRes.ok && authData.success) {
+          treasurerToken = authData.token;
+          localStorage.setItem('fc_tnt_treasurer_token', treasurerToken);
+          if (window.TNT && window.TNT.state) window.TNT.state.isTreasurer = true;
+        } else {
+          alert(authData.error || 'Mã PIN Thủ Quỹ không chính xác!');
+          return;
+        }
+      } catch (err) {
+        alert('Lỗi kết nối xác thực Thủ Quỹ: ' + err.message);
+        return;
+      }
+    }
+
+    const match = window.stateManager ? window.stateManager.getMatchById(this.currentMatchId) : null;
+    const opponent = match ? match.opponent : 'Đối thủ';
+
+    const confirmMsg = `Xác nhận TRỪ TIỀN SÂN VÀO VÍ SỐ DƯ QUỸ:\n` +
+      `- Số tiền trừ mỗi người: ${splitAmount.toLocaleString('vi-VN')}đ\n` +
+      `- Số cầu thủ áp dụng: ${count} người\n` +
+      `- Trận đấu: FC TNT vs ${opponent}\n\n` +
+      `Hệ thống sẽ trừ thẳng vào ví của ${count} cầu thủ và tự động đánh dấu ĐÃ NỘP. Bạn có chắc chắn không?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch('/api/funds/deduct-match', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-treasurer-token': treasurerToken
+        },
+        body: JSON.stringify({
+          matchId: this.currentMatchId,
+          splitAmount,
+          participantIds,
+          matchOpponent: opponent,
+          note: `Tiền sân trận vs ${opponent}`
+        })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        fin.payments.forEach(p => {
+          if (participantIds.includes(p.playerId)) {
+            p.isPaid = true;
+            p.paidAt = new Date().toISOString();
+            p.note = 'Trừ vào ví quỹ đội';
+          }
+        });
+
+        this.updateQRAndStatsDisplay();
+        this.renderChecklistTable();
+        this.playTingTingSound();
+
+        if (window.showToast) {
+          window.showToast(`🎉 ${data.message}`, 'success');
+        } else {
+          alert(data.message);
+        }
+
+        if (this.currentMatchId) {
+          this.saveCurrentFinance(false);
+        }
+      } else {
+        alert(data.error || 'Trừ tiền quỹ thất bại!');
+      }
+    } catch (err) {
+      alert('Lỗi kết nối máy chủ: ' + err.message);
+    }
   }
 
   // Render toàn bộ nội dung trong modal
@@ -612,7 +720,10 @@ class FinanceModule {
               <h4 class="fin-section-title" style="margin: 0;">👥 3. Danh Sách Đóng Tiền (<span id="fin-display-count">${fin.payments.length}</span>)</h4>
               
               ${isAdmin ? `
-                <div style="display: flex; gap: 0.4rem;">
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-gold btn-sm" onclick="window.financeModule.deductFromMemberFunds()" id="btn-deduct-fund" title="Trừ trực tiếp tiền sân vào ví số dư quỹ của các cầu thủ tham gia" style="font-weight: 700; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+                    ⚡ Trừ Ví Số Dư Quỹ
+                  </button>
                   <button type="button" class="btn btn-secondary btn-sm" onclick="window.financeModule.setAllPayments(true)" title="Tất cả đã chuyển">
                     ✅ Tất Cả Đã Nộp
                   </button>

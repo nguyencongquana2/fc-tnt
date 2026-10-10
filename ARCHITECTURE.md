@@ -15,19 +15,13 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 
 ---
 
-## 2. Cấu Trúc Tổng Thể & Vai Trò Từng Thư Mục
-
-```
-FC-TNT/
-├── assets/
-│   ├── icons/            # Toàn bộ favicon, apple-touch-icon, pwa icons
-│   └── images/           # Logo đội bóng, logo.svg, hình ảnh nền
-├── css/                  # [Mô-đun hoá] Hệ thống giao diện phân tầng
+## 2. Cấu Tr�├── css/                  # [Mô-đun hoá] Hệ thống giao diện phân tầng
 │   ├── base.css          # Design system, CSS variables, typography, navbar, modal base
 │   ├── matches.css       # Sơ đồ sân 7 Sofascore, thẻ cầu thủ & AI rating modal
 │   ├── live.css          # Trợ lý sân cỏ Live Companion & Voice Logger
 │   ├── moments.css       # Bảng tin khoảnh khắc, photo grid Facebook & lightbox
 │   ├── finance.css       # Thu chi quỹ trận, VietQR container & laser scanner
+│   ├── funds.css         # Sổ quỹ đội bóng, modal nạp quỹ linh hoạt & bảng số dư ví
 │   ├── weather.css       # Radar thời tiết Canvas & dynamic weather particles
 │   ├── tactics.css       # Bảng sa bàn sân 7, quân cờ kéo thả, thanh công cụ vẽ & playbook
 │   ├── effects.css       # Hiệu ứng splash screen, 3D tilt, crown shine & neon lasers
@@ -38,7 +32,7 @@ FC-TNT/
 │   ├── app.js            # Điều hướng tab, modal, toast
 │   ├── state.js          # [Facade] Bộ điều phối trung tâm quản lý State & Realtime (~280 dòng)
 │   ├── state/            # [Mô-đun hoá] Phân tách nghiệp vụ State & LocalStorage
-│   │   ├── state-auth.js      # Quản lý PIN Admin, Token PBKDF2 của Cầu thủ & Session
+│   │   ├── state-auth.js      # Quản lý PIN Admin, Token Thủ Quỹ, Token PBKDF2 Cầu thủ & Session
 │   │   ├── state-players.js   # Quản lý danh sách cầu thủ, avatar, thống kê phong độ & Leaderboards
 │   │   ├── state-matches.js   # Lịch sử trận đấu, kết quả, chi phí quỹ và tổng quan phong độ đội
 │   │   └── state-social.js    # Khoảnh khắc (Moments), cảm xúc, bình luận & kịch bản sa bàn (Tactics)
@@ -58,7 +52,8 @@ FC-TNT/
 │   │   ├── matches-live-events.js # Bộ chọn cầu thủ sự kiện nhanh & Timeline trực tiếp
 │   │   └── matches-live-voice.js  # Nhận diện giọng nói (Voice-to-Event) & phân tích Smart NLP
 │   ├── players.js        # Danh sách cầu thủ & form thông tin
-│   ├── finance.js        # Chia tiền sân & tạo mã VietQR
+│   ├── finance.js        # Chia tiền sân, tạo mã VietQR & nút trừ ví quỹ sau trận
+│   ├── finance-funds.js  # Sổ quỹ đội, nạp quỹ linh hoạt, bảo mật Thủ Quỹ & copy báo cáo Zalo
 │   ├── awards.js         # Bảng vinh danh & danh hiệu
 │   ├── poster.js         # Xuất ảnh đồ họa chia sẻ mạng xã hội
 │   ├── moments.js        # Bộ điều phối trung tâm (Facade) module khoảnh khắc
@@ -67,6 +62,26 @@ FC-TNT/
 │   │   ├── moments-comments.js    # Quản lý gửi/xóa bình luận an toàn & realtime Socket.IO
 │   │   ├── moments-lightbox.js    # Xem ảnh/video toàn màn hình (Modal Lightbox)
 │   │   └── moments-modal.js       # Form đăng khoảnh khắc, nén ảnh canvas & tải lên Cloudinary
+│   ├── weather.js        # Radar thời tiết & AI cố vấn
+│   ├── splash.js         # Màn hình chào sân & minigame tâng bóng
+│   ├── effects.js        # Hiệu ứng âm thanh & pháo hoa confetti
+├── models/               # Mongoose Schemas (MongoDB)
+│   ├── Player.js         # Hồ sơ cầu thủ & số dư quỹ (fundBalance)
+│   ├── FundTransaction.js # Lịch sử biến động số dư ví thành viên (Top-up, Match deduct, Adjust)
+│   ├── Match.js          # Lịch sử trận đấu & đội hình
+│   ├── LiveMatchDraft.js # Bản nháp trận đấu Live đồng bộ realtime
+│   ├── Moment.js         # Bài đăng khoảnh khắc & bình luận
+│   ├── Tactic.js         # Kịch bản sa bàn chiến thuật & bình luận trao đổi
+│   └── Team.js           # Thông tin đội bóng, mã PIN Admin & mã PIN Thủ Quỹ
+├── routes/               # [Mô-đun hoá] Tách API từ server.js theo miền nghiệp vụ
+│   ├── auth.js           # Đăng nhập PIN Admin, PIN Thủ Quỹ, xác thực Token
+│   ├── funds.js          # API sổ quỹ, nạp tiền linh hoạt, trừ tiền sân (requireTreasurer)
+│   ├── players.js        # API CRUD cầu thủ & avatar
+│   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
+│   ├── payments.js       # API Webhook Casso.vn, tự động gạch nợ tiền sân & Ting ting realtimeuỹ, nạp tiền linh hoạt, trừ tiền sân (requireTreasurer)
+│   ├── players.js        # API CRUD cầu thủ & avatar
+│   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
+│   ├── payments.js       # API Webhook Casso.vn, tự động gạch nợ tiền sân & Ting ting realtime moments-modal.js       # Form đăng khoảnh khắc, nén ảnh canvas & tải lên Cloudinary
 │   ├── weather.js        # Radar thời tiết & AI cố vấn
 │   ├── splash.js         # Màn hình chào sân & minigame tâng bóng
 │   └── effects.js        # Hiệu ứng âm thanh & pháo hoa confetti

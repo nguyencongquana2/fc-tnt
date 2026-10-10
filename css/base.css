@@ -183,17 +183,24 @@ body {
 .tab-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 1.15rem;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
   border-radius: var(--radius-full);
   font-family: var(--font-display);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-muted);
   background: transparent;
   border: none;
   cursor: pointer;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
   transition: all var(--transition-fast);
+}
+
+.tab-btn span {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
 }
 
 .tab-btn:hover {
@@ -207,10 +214,36 @@ body {
   box-shadow: 0 2px 12px var(--accent-emerald-glow);
 }
 
+@media (max-width: 1366px) and (min-width: 769px) {
+  .nav-container {
+    gap: 0.5rem;
+  }
+  .brand-title {
+    font-size: 1.15rem;
+  }
+  .brand-subtitle {
+    display: none;
+  }
+  .nav-tabs {
+    padding: 0.25rem 0.35rem;
+    gap: 0.15rem;
+  }
+  .tab-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    gap: 0.35rem;
+  }
+  .nav-actions {
+    gap: 0.35rem;
+  }
+}
+
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
 }
 
 /* Buttons */
@@ -227,6 +260,8 @@ body {
   border: none;
   cursor: pointer;
   transition: all var(--transition-fast);
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 
 .btn-primary {
@@ -243,13 +278,16 @@ body {
 
 .btn-gold {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #fff;
-  box-shadow: 0 4px 14px var(--accent-gold-glow);
+  color: #0b0f19;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
 }
 
 .btn-gold:hover {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
   transform: translateY(-1px);
-  filter: brightness(1.1);
+  filter: brightness(1.05);
 }
 
 .btn-secondary {
@@ -274,9 +312,22 @@ body {
 }
 
 .btn-sm {
-  padding: 0.4rem 0.8rem;
+  padding: 0.45rem 0.85rem;
   font-size: 0.8rem;
-  border-radius: var(--radius-sm);
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  flex-shrink: 0 !important;
+  height: 35px;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+.btn-sm span,
+.btn-sm i {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
 }
 
 /* Main Layout */
@@ -477,13 +528,24 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.85rem;
   border-radius: var(--radius-full);
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  flex-shrink: 0 !important;
+  height: 35px;
+  box-sizing: border-box;
+  line-height: 1;
   transition: all var(--transition-fast);
+}
+
+.auth-role-badge span {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
 }
 
 .auth-role-badge.viewer {
@@ -511,6 +573,20 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.4);
   box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
   animation: pulseGold 2s infinite ease-in-out;
+}
+
+.auth-role-badge.treasurer {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.25));
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+  cursor: pointer;
+}
+
+.auth-role-badge.treasurer:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000;
+  transform: translateY(-1px);
 }
 
 @keyframes pulseGold {

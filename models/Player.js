@@ -69,6 +69,10 @@ const playerSchema = new mongoose.Schema({
     enum: ['player', 'admin', 'treasurer'],
     default: 'player'
   },
+  fundBalance: {
+    type: Number,
+    default: 0
+  },
   accountStatus: {
     type: String,
     enum: ['unprovisioned', 'active', 'locked'],

@@ -39,6 +39,7 @@ const DEFAULT_DATA = {
 };
 
 const ADMIN_AUTH_KEY = 'fc_tnt_admin_token';
+const TREASURER_AUTH_KEY = 'fc_tnt_treasurer_token';
 const PLAYER_AUTH_KEY = 'fc_tnt_player_token_v1';
 const PLAYER_PROFILE_KEY = 'fc_tnt_player_profile_v1';
 
@@ -46,6 +47,7 @@ class StateManager {
   constructor() {
     this.apiBase = API_BASE;
     this.isAdmin = !!sessionStorage.getItem(ADMIN_AUTH_KEY) || !!localStorage.getItem(ADMIN_AUTH_KEY);
+    this.isTreasurer = !!sessionStorage.getItem(TREASURER_AUTH_KEY) || !!localStorage.getItem(TREASURER_AUTH_KEY);
     this.playerToken = localStorage.getItem(PLAYER_AUTH_KEY) || sessionStorage.getItem(PLAYER_AUTH_KEY) || '';
     this.currentPlayer = null;
     try {

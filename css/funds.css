@@ -1,0 +1,875 @@
+/**
+ * FC TNT - Funds & Member Wallet Styles (css/funds.css)
+ * Giao diện sổ quỹ đội bóng, ví số dư thành viên, modal nạp quỹ linh hoạt & trạng thái bảo mật
+ * Chuẩn thiết kế Sofascore & Dark Glassmorphism FinTech
+ */
+
+/* =========================================================================
+   MODAL OVERLAY TOÀN MÀN HÌNH (INSET 0, Z-INDEX 10001, KHÔNG BỊ CẮT XÉN)
+   ========================================================================= */
+.modal-backdrop,
+.modal-funds-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(5, 8, 14, 0.88) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  z-index: 10001 !important;
+  display: none;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.modal-backdrop.active,
+.modal-funds-overlay.active {
+  display: flex !important;
+}
+
+.modal-backdrop .modal-card,
+.modal-funds-card {
+  position: relative !important;
+  background: linear-gradient(145deg, rgba(13, 20, 36, 0.98), rgba(20, 30, 50, 0.98)) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.15) !important;
+  border-radius: 18px !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  margin: auto !important;
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-sizing: border-box !important;
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 1. Header Cố Định Ở Trên */
+.funds-modal-header {
+  flex-shrink: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.75);
+}
+
+/* 2. Body Cuộn Độc Lập Bên Trong */
+.funds-modal-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 1.15rem !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-sizing: border-box;
+}
+
+.funds-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.funds-modal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.funds-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+}
+.funds-modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.5);
+}
+
+/* 3. Sticky Footer Luôn Dính Chặt Ở Đáy Modal */
+.funds-modal-footer {
+  flex-shrink: 0 !important;
+  background: rgba(10, 16, 28, 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  box-sizing: border-box;
+}
+
+/* =========================================================================
+   GIAO DIỆN TRANG CHÍNH SỔ QUỸ ĐỘI (PAGE TAB VIEW)
+   ========================================================================= */
+.funds-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: 100%;
+  box-sizing: border-box;
+  animation: fadeInFunds 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInFunds {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.funds-page-card {
+  background: rgba(13, 20, 36, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  padding: 1.15rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-sizing: border-box;
+}
+
+/* =========================================================================
+   TOP SUMMARY CARDS (3 CARD THỐNG KÊ TỔNG QUAN)
+   ========================================================================= */
+.funds-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.funds-summary-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.funds-summary-box:hover {
+  transform: translateY(-2px);
+}
+
+.funds-summary-box.box-total {
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(15, 23, 42, 0.85));
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.1);
+}
+
+.funds-summary-box.box-positive {
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.85));
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.1);
+}
+
+.funds-summary-box.box-negative {
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(15, 23, 42, 0.85));
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.1);
+}
+
+.funds-summary-box .box-watermark {
+  position: absolute;
+  right: 12px;
+  bottom: -4px;
+  font-size: 2.8rem;
+  opacity: 0.15;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.funds-summary-box .box-label {
+  font-size: 0.75rem;
+  color: var(--text-dim, #94a3b8);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.funds-summary-box .box-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  font-family: var(--font-display, inherit);
+}
+
+.text-positive {
+  color: var(--accent-emerald, #10b981) !important;
+}
+
+.text-danger {
+  color: #f87171 !important;
+}
+
+.text-neutral {
+  color: #94a3b8 !important;
+}
+
+/* =========================================================================
+   THANH TIẾN ĐỘ ĐỘ PHỦ QUỸ (FUND COVERAGE PROGRESS)
+   ========================================================================= */
+.funds-coverage-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+  padding: 0.65rem 0.95rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.coverage-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-dim, #94a3b8);
+}
+
+.coverage-info strong {
+  color: #fff;
+}
+
+.coverage-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.coverage-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #10b981, #f59e0b);
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =========================================================================
+   THANH CÔNG CỤ THỦ QUỸ (TREASURER TOOLBAR)
+   ========================================================================= */
+.funds-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 0.95rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.treasurer-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.treasurer-status-badge.unlocked {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald, #10b981);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.treasurer-status-badge.locked {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.35);
+}
+
+.funds-actions-group {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* =========================================================================
+   THANH TÌM KIẾM & BỘ LỌC THÀNH VIÊN (SEARCH & FILTER TOOLBAR)
+   ========================================================================= */
+.funds-filter-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.funds-search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.funds-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  color: var(--text-dim, #94a3b8);
+  pointer-events: none;
+}
+
+.funds-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45rem 0.85rem 0.45rem 2.2rem;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.82rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.funds-search-input:focus {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.funds-filter-pills {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fund-filter-pill {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim, #94a3b8);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.fund-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.fund-filter-pill.active {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+}
+
+/* =========================================================================
+   BẢNG THÀNH VIÊN VÀ SỐ DƯ (FUNDS TABLE & ROWS)
+   ========================================================================= */
+.funds-table-container {
+  max-height: 580px;
+  overflow-x: auto;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(10, 16, 30, 0.65);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom Scrollbar */
+.funds-table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.funds-table-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.funds-table-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+}
+
+.funds-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.5);
+}
+
+.funds-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.funds-table th {
+  position: sticky;
+  top: 0;
+  background: #0d1527;
+  z-index: 3;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap !important;
+}
+
+.funds-table td {
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+  white-space: nowrap !important;
+  height: 52px;
+  box-sizing: border-box;
+}
+
+.funds-table tr:hover td {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* Avatar chuẩn hình tròn 38x38 */
+.fin-table-avatar {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+/* Badge số áo cầu thủ */
+.fund-player-number-badge {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+/* Badge trạng thái quỹ */
+.fund-status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.fund-status-badge.badge-green {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald, #10b981);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.fund-status-badge.badge-yellow {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-gold, #f59e0b);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.fund-status-badge.badge-red {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+/* Action Buttons trên từng dòng */
+.funds-action-cell {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.btn-fund-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-fund-action.btn-topup {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0b0f19;
+  font-weight: 800;
+}
+
+.btn-fund-action.btn-topup:hover {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-fund-action.btn-history {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.btn-fund-action.btn-history:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn-fund-action.btn-adjust {
+  background: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.btn-fund-action.btn-adjust:hover {
+  background: rgba(100, 116, 139, 0.3);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* =========================================================================
+   TOP-UP MODAL ENHANCED STYLES
+   ========================================================================= */
+.topup-config-box {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.95rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.topup-config-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.topup-config-label {
+  font-size: 0.82rem;
+  color: var(--text-dim, #94a3b8);
+  font-weight: 600;
+  min-width: 120px;
+}
+
+.topup-amount-chips {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.topup-chip-btn {
+  padding: 0.28rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.topup-chip-btn:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  transform: translateY(-1px);
+}
+
+.topup-select-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.topup-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.topup-search-box input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.75rem 0.4rem 2rem;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.topup-search-box input:focus {
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.topup-search-icon {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: var(--text-dim, #94a3b8);
+  pointer-events: none;
+}
+
+.topup-players-list {
+  max-height: 290px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-right: 4px;
+}
+
+.topup-players-list::-webkit-scrollbar {
+  width: 6px;
+}
+.topup-players-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.topup-player-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  transition: all 0.2s ease;
+  gap: 0.5rem;
+}
+
+.topup-player-row:hover {
+  background: rgba(30, 41, 59, 0.65);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.topup-player-row.active {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.1);
+}
+
+.topup-player-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+.topup-player-info input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent-gold, #f59e0b);
+  flex-shrink: 0;
+}
+
+.topup-player-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  flex-shrink: 0;
+}
+
+.topup-footer-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.86rem;
+}
+
+.topup-footer-summary .summary-label {
+  color: var(--text-dim, #94a3b8);
+}
+
+.topup-footer-summary .summary-count {
+  color: var(--accent-cyan, #06b6d4);
+  font-size: 1rem;
+}
+
+.topup-footer-summary .summary-sep {
+  color: rgba(255, 255, 255, 0.2);
+  margin: 0 0.2rem;
+}
+
+.topup-footer-summary .summary-total {
+  color: var(--accent-gold, #f59e0b);
+  font-size: 1.15rem;
+  font-family: var(--font-display, inherit);
+  font-weight: 800;
+}
+
+.btn-submit-topup {
+  padding: 0.55rem 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+/* =========================================================================
+   HISTORY MODAL ENHANCED STYLES
+   ========================================================================= */
+.history-filter-pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.history-filter-pill {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim, #94a3b8);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.history-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.history-filter-pill.active {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+}
+
+.history-table-container {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(10, 16, 30, 0.65);
+  -webkit-overflow-scrolling: touch;
+}
+
+.history-table-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.history-table-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #0d1527;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap !important;
+}
+
+.history-table td {
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+  white-space: nowrap !important;
+  font-size: 0.84rem;
+}
+
+.history-table tr:hover td {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.history-player-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-player-avatar {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  flex-shrink: 0;
+}

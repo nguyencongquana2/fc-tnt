@@ -2,12 +2,15 @@
 trigger: always_on
 ---
 
-# Core Rules for Agent
-- Architecture Reference: Always refer to ARCHITECTURE.md before exploring or modifying the codebase.
-- Scope Limitation: Only read or edit files explicitly mentioned in the user prompt or strictly necessary for the request.
-- Ignore Non-Code Assets: Never search or read files inside node_modules, assets, or icons unless explicitly instructed.
-- Performance:
-  - For conversational greetings or simple questions, answer directly without executing terminal tools or file scans.
-  - Follow the existing project structure defined in ARCHITECTURE.md.
-  - Adhere to all coding and security standards defined in coding-standards.md.
-  - Update FEATURE_ROADMAP.md only when a major feature is completed and requested by user.
+# General Agent Rules
+
+## 1. Scope & Execution
+- Chỉ đọc/sửa các file liên quan trực tiếp đến prompt của người dùng.
+- Bỏ qua hoàn toàn: `node_modules`, `assets`, `icons` (trừ khi có yêu cầu cụ thể).
+- Trả lời trực tiếp các câu chào hỏi hoặc câu hỏi lý thuyết; không quét file hay chạy lệnh terminal khi không cần thiết.
+
+## 2. Workflow & Synchronization
+- Tham khảo `ARCHITECTURE.md` trước khi sửa cấu trúc mã nguồn.
+- Bắt buộc cập nhật lại `ARCHITECTURE.md` ngay khi tạo mới hoặc chuyển vị trí module/route/helper.
+- Chỉ cập nhật `FEATURE_ROADMAP.md` khi hoàn thành tính năng lớn và có yêu cầu từ người dùng.
+- Tuân thủ toàn bộ quy chuẩn tại `coding-standards.md`.

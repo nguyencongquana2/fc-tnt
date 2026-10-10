@@ -15,6 +15,9 @@ const teamSchema = new mongoose.Schema({
   },
   adminPin: {
     type: String
+  },
+  treasurerPin: {
+    type: String
   }
 }, {
   timestamps: true

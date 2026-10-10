@@ -43,22 +43,102 @@ window.appModule = {
     const togglePinBtn = document.getElementById('toggle-pin-visibility-btn');
     const pinInput = document.getElementById('admin-pin-input');
 
-    // Admin Login Modal
+    // Nút Đăng Nhập mở Modal Đăng Nhập Hợp Nhất (Cầu thủ ở trên + Mã PIN ở dưới)
     if (loginBtn) {
-      loginBtn.addEventListener('click', () => this.openAdminModal());
+      loginBtn.addEventListener('click', () => this.openPlayerLoginModal());
     }
 
-    // Player Member Login Modal
     if (playerLoginBtn) {
       playerLoginBtn.addEventListener('click', () => this.openPlayerLoginModal());
     }
 
-    // Logout Button (quản lý cả Admin lẫn Thành viên)
+    // Nút Sổ Quỹ Đội chuyển sang Tab Sổ Quỹ Đội
+    const fundsBtn = document.getElementById('btn-open-funds');
+    if (fundsBtn) {
+      fundsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.switchTab('funds');
+      });
+    }
+
+    // Xử lý mã PIN Quản trị & Quỹ Đội trong Modal Đăng Nhập Hợp Nhất
+    const mgmtPinInput = document.getElementById('management-pin-input');
+    const toggleMgmtPinBtn = document.getElementById('toggle-management-pin-btn');
+    const submitMgmtPinBtn = document.getElementById('submit-management-pin-btn');
+    const mgmtPinError = document.getElementById('management-pin-error');
+
+    if (toggleMgmtPinBtn && mgmtPinInput) {
+      toggleMgmtPinBtn.addEventListener('click', () => {
+        if (mgmtPinInput.type === 'password') {
+          mgmtPinInput.type = 'text';
+          toggleMgmtPinBtn.innerText = '🙈';
+        } else {
+          mgmtPinInput.type = 'password';
+          toggleMgmtPinBtn.innerText = '👁️';
+        }
+      });
+    }
+
+    const handleMgmtPinSubmit = async () => {
+      if (!mgmtPinInput) return;
+      const pin = mgmtPinInput.value.trim();
+      if (mgmtPinError) mgmtPinError.innerText = '';
+      if (!pin) {
+        if (mgmtPinError) mgmtPinError.innerText = 'Vui lòng nhập mã PIN!';
+        mgmtPinInput.focus();
+        return;
+      }
+
+      if (submitMgmtPinBtn) {
+        submitMgmtPinBtn.disabled = true;
+        submitMgmtPinBtn.innerText = '⏳ Đang kiểm tra...';
+      }
+
+      const res = await window.stateManager.loginManagementPin(pin);
+
+      if (submitMgmtPinBtn) {
+        submitMgmtPinBtn.disabled = false;
+        submitMgmtPinBtn.innerText = '🔓 Mở Khóa';
+      }
+
+      if (res.success) {
+        this.closePlayerLoginModal();
+        this.updateAuthUI();
+        if (res.role === 'admin') {
+          window.showToast('👑 Đăng nhập Quản trị viên thành công! Bạn có toàn quyền quản lý đội bóng.');
+        } else if (res.role === 'treasurer') {
+          window.showToast('💰 Đăng nhập Thủ Quỹ thành công! Đã mở quyền quản lý quỹ đội.');
+          this.switchTab('funds');
+        }
+        if (window.matchesModule) window.matchesModule.renderMatches();
+        if (window.playersModule) window.playersModule.renderPlayers();
+      } else {
+        if (mgmtPinError) mgmtPinError.innerText = res.error || 'Mã PIN không đúng!';
+        mgmtPinInput.focus();
+      }
+    };
+
+    if (submitMgmtPinBtn) {
+      submitMgmtPinBtn.addEventListener('click', handleMgmtPinSubmit);
+    }
+    if (mgmtPinInput) {
+      mgmtPinInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleMgmtPinSubmit();
+        }
+      });
+    }
+
+    // Logout Button (quản lý cả Admin, Thủ Quỹ lẫn Cầu thủ)
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
         if (window.stateManager.isAdmin) {
           window.stateManager.logoutAdmin();
           window.showToast('🚪 Đã đăng xuất quyền Quản trị viên.', 'info');
+        } else if (window.stateManager.isTreasurer) {
+          window.stateManager.logoutTreasurer();
+          window.showToast('🚪 Đã đăng xuất quyền Thủ Quỹ.', 'info');
         } else if (window.stateManager.isPlayerLoggedIn()) {
           this.handlePlayerLogout();
         }
@@ -445,6 +525,46 @@ window.appModule = {
     const bName = document.getElementById('my-profile-bank-acc-name');
     if (bName) bName.value = player.bankAccountName || '';
 
+    // Cập nhật số dư Ví Quỹ Thành Viên & Lịch Sử Giao Dịch
+    const fundBalEl = document.getElementById('my-profile-fund-balance');
+    const fundStatusEl = document.getElementById('my-profile-fund-status');
+    const fundHistBtn = document.getElementById('my-profile-view-fund-history-btn');
+    
+    // Lấy số dư mới nhất từ players trong state hoặc currentPlayer
+    let curFundBal = Number(player.fundBalance) || 0;
+    if (window.stateManager && window.stateManager.data && Array.isArray(window.stateManager.data.players)) {
+      const liveP = window.stateManager.data.players.find(p => p.id === player.id);
+      if (liveP && liveP.fundBalance !== undefined) {
+        curFundBal = Number(liveP.fundBalance) || 0;
+      }
+    }
+
+    if (fundBalEl) {
+      fundBalEl.innerText = (curFundBal >= 0 ? '+' : '') + curFundBal.toLocaleString('vi-VN') + 'đ';
+      fundBalEl.style.color = curFundBal >= 0 ? 'var(--accent-emerald)' : '#ef4444';
+    }
+
+    if (fundStatusEl) {
+      if (curFundBal < 0) {
+        fundStatusEl.className = 'fund-status-badge badge-red';
+        fundStatusEl.innerText = '🔴 Đang nợ quỹ';
+      } else if (curFundBal <= 50000) {
+        fundStatusEl.className = 'fund-status-badge badge-yellow';
+        fundStatusEl.innerText = '🟡 Sắp hết (< 50k)';
+      } else {
+        fundStatusEl.className = 'fund-status-badge badge-green';
+        fundStatusEl.innerText = '🟢 Dồi dào';
+      }
+    }
+
+    if (fundHistBtn) {
+      fundHistBtn.onclick = () => {
+        if (window.TNT && window.TNT.funds && typeof window.TNT.funds.openHistoryModal === 'function') {
+          window.TNT.funds.openHistoryModal(player.id);
+        }
+      };
+    }
+
     const err = document.getElementById('my-profile-error');
     if (err) err.innerText = '';
 
@@ -494,47 +614,72 @@ window.appModule = {
 
   updateAuthUI() {
     const isAdmin = window.stateManager.isAdmin;
+    const isTreasurer = window.stateManager.isTreasurer;
     const isPlayer = window.stateManager.isPlayerLoggedIn();
     const currentPlayer = window.stateManager.currentPlayer;
 
     const badge = document.getElementById('auth-role-badge');
+    const loginBtn = document.getElementById('auth-login-btn');
     const playerLoginBtn = document.getElementById('auth-player-login-btn');
-    const adminLoginBtn = document.getElementById('auth-login-btn');
+    const fundsBtn = document.getElementById('btn-open-funds');
     const logoutBtn = document.getElementById('auth-logout-btn');
+
+    const isLoggedIn = isAdmin || isTreasurer || isPlayer;
 
     if (badge) {
       if (isAdmin) {
+        badge.style.display = 'inline-flex';
         badge.className = 'auth-role-badge admin';
+        badge.style.background = '';
+        badge.style.color = '';
+        badge.style.fontWeight = '';
         badge.innerHTML = '👑 <span>Quản Trị</span>';
         badge.onclick = null;
         badge.title = 'Bạn đang đăng nhập với quyền Quản trị viên FC TNT';
+      } else if (isTreasurer) {
+        // Thủ Quỹ: Ẩn role badge để hiển thị trực tiếp nút chức năng "Sổ Quỹ Đội", tránh bị lặp lại 2 nút cam cùng lúc
+        badge.style.display = 'none';
+        badge.onclick = null;
       } else if (isPlayer && currentPlayer) {
+        badge.style.display = 'inline-flex';
         badge.className = 'auth-role-badge player';
+        badge.style.background = '';
+        badge.style.color = '';
+        badge.style.fontWeight = '';
         const name = window.escapeHtml(currentPlayer.nickname || currentPlayer.name);
         badge.innerHTML = '<img src="' + (currentPlayer.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80') + '" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid #10b981;"> <span>' + name + '</span>';
         badge.onclick = () => this.openMyProfileModal();
         badge.title = 'Bấm để xem & chỉnh sửa hồ sơ của bạn';
       } else {
+        badge.style.display = 'inline-flex';
         badge.className = 'auth-role-badge viewer';
+        badge.style.background = '';
+        badge.style.color = '';
+        badge.style.fontWeight = '';
         badge.innerHTML = '👁️ <span>Khách</span>';
         badge.onclick = null;
         badge.title = 'Chế độ chỉ xem cho khách';
       }
     }
 
-    if (playerLoginBtn) {
-      playerLoginBtn.style.display = (!isAdmin && !isPlayer) ? 'inline-flex' : 'none';
+    if (loginBtn) {
+      loginBtn.style.display = isLoggedIn ? 'none' : 'inline-flex';
     }
 
-    if (adminLoginBtn) {
-      adminLoginBtn.style.display = isAdmin ? 'none' : 'inline-flex';
+    if (playerLoginBtn) {
+      playerLoginBtn.style.display = 'none';
+    }
+
+    // Nút Sổ Quỹ Đội: CHỈ hiển thị riêng cho Thủ Quỹ để thực hiện nghiệp vụ Quỹ Đội
+    if (fundsBtn) {
+      fundsBtn.style.display = isTreasurer ? 'inline-flex' : 'none';
     }
 
     if (logoutBtn) {
-      logoutBtn.style.display = (isAdmin || isPlayer) ? 'inline-flex' : 'none';
+      logoutBtn.style.display = isLoggedIn ? 'inline-flex' : 'none';
     }
 
-    // Show or hide admin-only elements
+    // Show or hide admin-only elements (Xuất / Nhập file dự phòng)
     document.querySelectorAll('.admin-only').forEach(el => {
       el.style.display = isAdmin ? '' : 'none';
     });
@@ -561,6 +706,18 @@ window.appModule = {
       }
     });
 
+    // Cập nhật trạng thái active cho nút Sổ Quỹ Đội trên thanh điều hướng
+    const fundsNavBtn = document.getElementById('btn-open-funds');
+    if (fundsNavBtn) {
+      if (tabName === 'funds') {
+        fundsNavBtn.classList.add('active');
+        fundsNavBtn.style.boxShadow = '0 0 16px rgba(245, 158, 11, 0.6)';
+      } else {
+        fundsNavBtn.classList.remove('active');
+        fundsNavBtn.style.boxShadow = '';
+      }
+    }
+
     // Update Tab Content Panels
     document.querySelectorAll('.tab-content').forEach(panel => {
       if (panel.id === `tab-${tabName}`) {
@@ -584,6 +741,9 @@ window.appModule = {
       window.weatherModule.render7DayCards();
       window.weatherModule.renderDayDetail();
       window.weatherModule.renderAiChat();
+    }
+    if (tabName === 'funds' && window.TNT && window.TNT.funds && typeof window.TNT.funds.renderFundsPage === 'function') {
+      window.TNT.funds.renderFundsPage();
     }
 
     // Bắn sự kiện chuyển tab cho hệ thống hiệu ứng & animation
