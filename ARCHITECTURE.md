@@ -15,7 +15,7 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 
 ---
 
-## 2. Cấu Tr�├── css/                  # [Mô-đun hoá] Hệ thống giao diện phân tầng
+## 2. Cấu Tr�├── css/                  # [Mô-đun hoá] Hệ thống giao diện phân tầng
 │   ├── base.css          # Design system, CSS variables, typography, navbar, modal base
 │   ├── matches.css       # Sơ đồ sân 7 Sofascore, thẻ cầu thủ & AI rating modal
 │   ├── live.css          # Trợ lý sân cỏ Live Companion & Voice Logger
@@ -53,7 +53,11 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   └── matches-live-voice.js  # Nhận diện giọng nói (Voice-to-Event) & phân tích Smart NLP
 │   ├── players.js        # Danh sách cầu thủ & form thông tin
 │   ├── finance.js        # Chia tiền sân, tạo mã VietQR & nút trừ ví quỹ sau trận
-│   ├── finance-funds.js  # Sổ quỹ đội, nạp quỹ linh hoạt, bảo mật Thủ Quỹ & copy báo cáo Zalo
+│   ├── finance-funds.js  # Bộ điều phối trung tâm (Facade) phân hệ Sổ Quỹ Đội & Ví Thành Viên
+│   ├── funds/            # [Mô-đun hoá] Phân tách nghiệp vụ sổ quỹ chi tiết
+│   │   ├── funds-core.js     # Trạng thái số dư, render bảng chính, điều chỉnh quỹ & báo cáo Zalo
+│   │   ├── funds-topup.js    # Modal nạp quỹ (#modal-funds-topup), bulk inputs & tính tổng tức thì
+│   │   └── funds-history.js  # Modal lịch sử (#modal-funds-history), bộ lọc Filter Pills & bảng giao dịch
 │   ├── awards.js         # Bảng vinh danh & danh hiệu
 │   ├── poster.js         # Xuất ảnh đồ họa chia sẻ mạng xã hội
 │   ├── moments.js        # Bộ điều phối trung tâm (Facade) module khoảnh khắc
@@ -74,7 +78,12 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   ├── Tactic.js         # Kịch bản sa bàn chiến thuật & bình luận trao đổi
 │   └── Team.js           # Thông tin đội bóng, mã PIN Admin & mã PIN Thủ Quỹ
 ├── routes/               # [Mô-đun hoá] Tách API từ server.js theo miền nghiệp vụ
-│   ├── auth.js           # Đăng nhập PIN Admin, PIN Thủ Quỹ, xác thực Token
+│   ├── auth.js           # Bộ điều phối trung tâm (Facade) phân hệ xác thực & bảo mật
+│   ├── auth/             # [Mô-đun hoá] Phân tách nghiệp vụ xác thực chi tiết
+│   │   ├── auth-common.js    # Khóa bí mật Runtime secret & cấu hình chung
+│   │   ├── auth-admin.js     # Mã PIN Admin, sinh token HMAC, middleware requireAdmin
+│   │   ├── auth-treasurer.js # Mã PIN Thủ Quỹ, sinh token HMAC, middleware requireTreasurer
+│   │   └── auth-player.js    # PBKDF2 hash mật khẩu cầu thủ, token thành viên & hồ sơ
 │   ├── funds.js          # API sổ quỹ, nạp tiền linh hoạt, trừ tiền sân (requireTreasurer)
 │   ├── players.js        # API CRUD cầu thủ & avatar
 │   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
