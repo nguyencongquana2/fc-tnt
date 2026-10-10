@@ -84,12 +84,13 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── poster-draw.js     # Engine vẽ Canvas layout (nền gradient 4 theme, header, footer, bo góc)
 │   │   ├── poster-elements.js # Engine vẽ nội dung (scoreboard hoàng gia, thẻ MOTM, bàn thắng, đội hình)
 │   │   └── poster-export.js   # Xuất ảnh PNG HD, sao chép ảnh vào Clipboard & Web Share API
-│   ├── moments.js        # Bộ điều phối trung tâm (Facade) module khoảnh khắc
+│   ├── moments.js        # [Facade] Bộ điều phối trung tâm module khoảnh khắc (~90 dòng)
 │   ├── moments/          # [Mô-đun hoá] Phân tách nghiệp vụ khoảnh khắc chi tiết
 │   │   ├── moments-feed.js        # Bảng tin khoảnh khắc, photo grid Facebook & thả cảm xúc
 │   │   ├── moments-comments.js    # Quản lý gửi/xóa bình luận an toàn & realtime Socket.IO
 │   │   ├── moments-lightbox.js    # Xem ảnh/video toàn màn hình (Modal Lightbox)
-│   │   └── moments-modal.js       # Form đăng khoảnh khắc, nén ảnh canvas & tải lên Cloudinary
+│   │   ├── moments-upload.js      # Trích xuất metadata video, nén ảnh canvas & upload Cloudinary CDN
+│   │   └── moments-modal.js       # Form đăng bài (#moment-form-modal), quản lý hàng đợi media & submit
 │   ├── weather.js        # [Facade] Bộ điều phối trung tâm module thời tiết (~45 dòng)
 │   ├── weather/          # [Mô-đun hoá] Phân tách nghiệp vụ thời tiết & AI cố vấn
 │   │   ├── weather-core.js   # Dữ liệu Open-Meteo, fallback, thẻ 7 ngày & Dashboard widget
@@ -226,7 +227,12 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `poster/poster-draw.js`: Engine vẽ Canvas layout gồm nền gradient đa theme, ánh sáng Neon Stadium, header, footer và khối bo góc.
   - `poster/poster-elements.js`: Engine vẽ các khối nội dung: bảng điểm scoreboard hoàng gia, thẻ MVP MOTM, danh sách ghi bàn/kiến tạo và đội hình ra sân.
   - `poster/poster-export.js`: Chức năng xuất ảnh PNG HD, 1-chạm sao chép ảnh vào Clipboard để dán trực tiếp vào Zalo/Facebook và gọi Web Share API trên di động.
-- `moments.js`: Bảng tin khoảnh khắc đội bóng: đăng bài, tải ảnh, thả cảm xúc (tim, bia, bóng, lửa) và bình luận.
+- `moments.js` & `moments/`: [Mô-đun hoá] Bảng tin khoảnh khắc & kỷ niệm đội bóng, điều phối qua Facade trung tâm (~90 dòng) và phân tách thành 5 submodule chuyên biệt:
+  - `moments/moments-feed.js`: Hiển thị bảng tin, thư viện ảnh/video Facebook grid đa ảnh & thả cảm xúc reactions (❤️, 🍺, ⚽, 🔥).
+  - `moments/moments-comments.js`: Quản lý gửi/xóa bình luận an toàn chống XSS & đồng bộ realtime qua Socket.IO.
+  - `moments/moments-lightbox.js`: Xem ảnh/video toàn màn hình (Modal Lightbox), chuyển ảnh trước/sau và hỗ trợ phím mũi tên.
+  - `moments/moments-upload.js`: Lõi xử lý đa phương tiện: trích xuất metadata thời lượng video, tạo thumbnail, nén ảnh client-side qua HTML5 Canvas & tải lên Cloudinary CDN có chữ ký số.
+  - `moments/moments-modal.js`: Điều khiển Modal tạo/sửa bài (#moment-form-modal), gắn thẻ cầu thủ tham gia, quản lý hàng đợi sắp xếp media và gửi bài viết.
 - `weather.js` & `weather/`: [Mô-đun hoá] Radar thời tiết & AI cố vấn sân AKKA, điều phối qua Facade trung tâm (~45 dòng) và phân tách thành 3 submodule chuyên biệt:
   - `weather/weather-core.js`: Quản lý kết nối Open-Meteo & API vệ tinh, fallback phía client, lưới thẻ dự báo 7 ngày và widget tổng quan trên Dashboard.
   - `weather/weather-radar.js`: Hiển thị chi tiết ngày thi đấu, thẩm định 2 khung giờ 20h45 & 22h15, độ ẩm/thoát nước mặt cỏ nhân tạo và Radar diễn biến theo giờ (17:00 – 23:00).

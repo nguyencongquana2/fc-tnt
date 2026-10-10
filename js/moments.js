@@ -4,7 +4,8 @@
  * - moments-feed.js: Hiển thị bảng tin, thư viện ảnh/video Facebook grid & thả cảm xúc
  * - moments-comments.js: Quản lý gửi/xóa bình luận an toàn & realtime Socket.IO
  * - moments-lightbox.js: Xem ảnh/video toàn màn hình (Modal Lightbox)
- * - moments-modal.js: Form đăng khoảnh khắc, nén ảnh canvas & tải lên Cloudinary
+ * - moments-upload.js: Trích xuất metadata video, nén ảnh canvas & tải lên Cloudinary CDN
+ * - moments-modal.js: Form đăng khoảnh khắc, quản lý danh sách media & submit bài viết
  */
 
 window.momentsModule = window.momentsModule || {};
