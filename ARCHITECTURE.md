@@ -75,7 +75,11 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── moments-comments.js    # Quản lý gửi/xóa bình luận an toàn & realtime Socket.IO
 │   │   ├── moments-lightbox.js    # Xem ảnh/video toàn màn hình (Modal Lightbox)
 │   │   └── moments-modal.js       # Form đăng khoảnh khắc, nén ảnh canvas & tải lên Cloudinary
-│   ├── weather.js        # Radar thời tiết & AI cố vấn
+│   ├── weather.js        # [Facade] Bộ điều phối trung tâm module thời tiết (~45 dòng)
+│   ├── weather/          # [Mô-đun hoá] Phân tách nghiệp vụ thời tiết & AI cố vấn
+│   │   ├── weather-core.js   # Dữ liệu Open-Meteo, fallback, thẻ 7 ngày & Dashboard widget
+│   │   ├── weather-radar.js  # Chi tiết ngày, phân tích 2 slot thi đấu & Radar diễn biến 17h-23h
+│   │   └── weather-ai.js     # Cố vấn AI thời tiết & Bộ não Football NLP tiếng Việt thẩm định sân
 │   ├── splash.js         # Màn hình chào sân & minigame tâng bóng
 │   ├── effects.js        # Hiệu ứng âm thanh & pháo hoa confetti
 ├── models/               # Mongoose Schemas (MongoDB)
@@ -199,7 +203,10 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
 - `awards.js`: Bảng vinh danh cá nhân (Top ghi bàn, Vua kiến tạo, Cầu thủ xuất sắc nhất MOTM, Găng tay vàng).
 - `poster.js`: Xuất poster đội hình và kết quả trận đấu ra định dạng ảnh để chia sẻ mạng xã hội.
 - `moments.js`: Bảng tin khoảnh khắc đội bóng: đăng bài, tải ảnh, thả cảm xúc (tim, bia, bóng, lửa) và bình luận.
-- `weather.js`: Lấy dự báo thời tiết tại sân thi đấu và hiển thị tư vấn chiến thuật/trang phục từ AI.
+- `weather.js` & `weather/`: [Mô-đun hoá] Radar thời tiết & AI cố vấn sân AKKA, điều phối qua Facade trung tâm (~45 dòng) và phân tách thành 3 submodule chuyên biệt:
+  - `weather/weather-core.js`: Quản lý kết nối Open-Meteo & API vệ tinh, fallback phía client, lưới thẻ dự báo 7 ngày và widget tổng quan trên Dashboard.
+  - `weather/weather-radar.js`: Hiển thị chi tiết ngày thi đấu, thẩm định 2 khung giờ 20h45 & 22h15, độ ẩm/thoát nước mặt cỏ nhân tạo và Radar diễn biến theo giờ (17:00 – 23:00).
+  - `weather/weather-ai.js`: Cố vấn AI thời tiết sân bóng & chat trực tiếp, tích hợp bộ não Football NLP tiếng Việt nhận diện ca đấu, thứ trong tuần, sân đọng nước, giày đinh TF và cảnh báo dông sét.
 - `splash.js` & `effects.js`: Hiệu ứng màn hình chào (splash screen), hiệu ứng âm thanh và pháo hoa ăn mừng (confetti).
 
 ### `css/` (Giao Diện & Hệ Thống Định Kiểu Phân Tầng)
