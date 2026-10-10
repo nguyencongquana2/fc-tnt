@@ -51,7 +51,9 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── matches-detail.js      # Modal chi tiết trận (#match-detail-modal), đội hình sân 7 & reviews
 │   │   ├── matches-form.js        # Modal tạo/sửa trận (#match-form-modal), chọn đội hình & PIN bảo mật
 │   │   ├── matches-pitch.js       # Sa bàn sân 7 Sofascore (3-1-2) & kéo thả vị trí
-│   │   ├── matches-ai.js          # Đánh giá trận đấu & chấm điểm bằng AI Gemini
+│   │   ├── matches-ai-client.js   # Bộ não phân tích đánh giá AI cục bộ (Football NLP & Rules Engine)
+│   │   ├── matches-ai-review.js   # Bảng nhận xét phong độ, cuộn mượt, mở rộng/thu gọn & Filter Pills
+│   │   ├── matches-ai.js          # Modal chấm điểm AI (#ai-match-rating-modal), API Gemini & áp dụng rating
 │   │   ├── matches-live.js        # Trợ lý sân cỏ Live Companion (Orchestrator & Sync)
 │   │   ├── matches-live-timer.js  # Đồng hồ thi đấu, Screen Wake Lock & điểm danh Roster
 │   │   ├── matches-live-events.js # Bộ chọn cầu thủ sự kiện nhanh & Timeline trực tiếp
@@ -200,7 +202,9 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `matches/matches-detail.js`: Quản lý Modal chi tiết trận (#match-detail-modal), dựng sa bàn sân 7 (3-1-2), danh sách dự bị & bộ lọc nhận xét phong độ cá nhân.
   - `matches/matches-form.js`: Quản lý Form tạo/sửa trận đấu (#match-form-modal), chọn danh sách tham gia, lưu trận & modal xác thực mã PIN an toàn khi sửa/xóa trận.
   - `matches/matches-pitch.js`: Sa bàn chiến thuật sân 7 Sofascore (3-1-2), engine kéo-thả (Drag & Drop) và Quick Edit điểm số.
-  - `matches/matches-ai.js`: AI Match Rating & Review Engine kết nối Gemini API chấm điểm và sinh nhận xét chi tiết.
+  - `matches/matches-ai-client.js`: Bộ não phân tích đánh giá AI cục bộ phía client (Football NLP & Rules Engine), tính điểm tức thì khi mất mạng.
+  - `matches/matches-ai-review.js`: Điều khiển UI bảng nhận xét phong độ từng cầu thủ, hỗ trợ cuộn mượt, thu gọn/mở rộng và bộ lọc Filter Pills.
+  - `matches/matches-ai.js`: Quản lý Modal chấm điểm AI (#ai-match-rating-modal), gọi endpoint Gemini API, xem trước kết quả và áp dụng điểm số vào sơ đồ trận đấu.
   - `matches/matches-live.js`: Bộ điều phối trung tâm Trợ lý sân cỏ Live Match, đồng bộ đám mây realtime qua Socket.IO và xuất báo cáo Zalo.
   - `matches/matches-live-timer.js`: Quản lý đồng hồ thi đấu sân phủi, giữ sáng màn hình ngoài trời (Screen Wake Lock) và điểm danh đội hình.
   - `matches/matches-live-events.js`: Ma trận nút chọn cầu thủ sự kiện nhanh, ghi nhận diễn biến và hiển thị dòng thời gian (Timeline).
