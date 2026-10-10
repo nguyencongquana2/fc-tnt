@@ -14,11 +14,13 @@ const express = require('express');
 const { aiRateLimiter } = require('../utils/rateLimiter');
 const { analyzeMatchWithNLP, getPlayerAliases } = require('./ai/ai-engine');
 const { evaluateWithGemini } = require('./ai/ai-gemini');
+const { requireAdmin: defaultRequireAdmin } = require('./auth');
 
-function createAiRouter() {
+function createAiRouter({ requireAdmin } = {}) {
   const router = express.Router();
+  const adminGuard = requireAdmin || defaultRequireAdmin;
 
-  router.post('/rate-match', aiRateLimiter, async (req, res) => {
+  router.post('/rate-match', adminGuard, aiRateLimiter, async (req, res) => {
     try {
       const { matchInfo, playerList, matchNarration, liveEvents, apiKey } = req.body;
 

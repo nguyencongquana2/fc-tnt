@@ -53,9 +53,9 @@ async function getValidAdminPins(isMongoConnected) {
     }
   }
 
-  // 3. Fallback mặc định an toàn nếu chưa từng cấu hình PIN
+  // 3. Cảnh báo bảo mật nếu chưa cấu hình PIN (Không hardcode PIN mặc định 123456)
   if (pins.size === 0) {
-    pins.add('123456');
+    console.error('[Security] CẢNH BÁO NGUY HIỂM: Chưa cấu hình ADMIN_PIN trong biến môi trường .env hoặc MongoDB!');
   }
 
   return Array.from(pins);
@@ -65,7 +65,7 @@ async function getValidAdminPins(isMongoConnected) {
 async function verifyAdminToken(token, isMongoConnected) {
   if (!token || typeof token !== 'string') return false;
 
-  // 1. Kiểm tra Token HMAC v2
+  // Kiểm tra Token HMAC v2 có chữ ký số bảo mật
   if (token.startsWith('fc_tnt_v2.')) {
     const parts = token.split('.');
     if (parts.length !== 3) return false;
@@ -99,22 +99,6 @@ async function verifyAdminToken(token, isMongoConnected) {
       return false;
     } catch (err) {
       console.warn('[Auth] Lỗi xác thực token HMAC v2:', err.message);
-      return false;
-    }
-  }
-
-  // 2. Fallback tương thích ngược an toàn cho token v1 (trong giai đoạn chuyển đổi)
-  if (token.startsWith('fc_tnt_admin_')) {
-    try {
-      const base64Part = token.slice('fc_tnt_admin_'.length);
-      if (!base64Part) return false;
-      const decodedPin = Buffer.from(base64Part, 'base64').toString('utf8').trim();
-      if (!decodedPin) return false;
-
-      const validPins = await getValidAdminPins(isMongoConnected);
-      return validPins.includes(decodedPin);
-    } catch (err) {
-      console.warn('[Auth] Lỗi giải mã token v1:', err.message);
       return false;
     }
   }
@@ -187,7 +171,7 @@ function registerAdminRoutes(router, { isMongoConnected }) {
       return res.json({
         success: true,
         token: newToken,
-        message: `Đã đổi mã PIN Quản trị thành công sang: ${cleanPin}`
+        message: 'Đã đổi mã PIN Quản trị thành công! Vui lòng lưu trữ cẩn thận mã PIN mới.'
       });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });

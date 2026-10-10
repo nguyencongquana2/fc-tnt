@@ -324,7 +324,11 @@ app.put('/api/team', requireAdmin, async (req, res) => {
         await team.save();
       }
       broadcastDataUpdate('team', `🛡️ Thông tin đội bóng "${team.name}" vừa được cập nhật!`);
-      return res.json(team);
+      return res.json({
+        name: team.name,
+        slogan: team.slogan,
+        logo: team.logo
+      });
     }
 
     if (name) fallbackData.teamInfo.name = name;
@@ -393,7 +397,7 @@ app.post('/api/backup/restore', requireAdmin, async (req, res) => {
 app.use('/api/auth', createAuthRouter(routeContext));
 app.use('/api/players', createPlayersRouter(routeContext));
 app.use('/api/matches', createMatchesRouter(routeContext));
-app.use('/api/ai', createAiRouter());
+app.use('/api/ai', createAiRouter(routeContext));
 app.use('/api/live-match', createLiveMatchRouter(routeContext));
 app.use('/api/moments', createMomentsRouter(routeContext));
 app.use('/api/weather', createWeatherRouter());

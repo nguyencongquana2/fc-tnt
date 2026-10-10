@@ -216,7 +216,7 @@ function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPi
       return res.json({
         success: true,
         token: newToken,
-        message: `Đã đổi mã PIN Thủ Quỹ thành công sang: ${cleanPin}`
+        message: 'Đã đổi mã PIN Thủ Quỹ thành công! Vui lòng lưu trữ cẩn thận mã PIN mới.'
       });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });

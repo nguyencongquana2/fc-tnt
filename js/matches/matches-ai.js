@@ -228,9 +228,16 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
       if (btnApply) btnApply.style.display = 'none';
 
       try {
+        const adminToken = (window.stateManager && typeof window.stateManager.getAdminToken === 'function' ? window.stateManager.getAdminToken() : null)
+          || (window.TNT?.state && typeof window.TNT.state.getAdminToken === 'function' ? window.TNT.state.getAdminToken() : null)
+          || localStorage.getItem('fc_tnt_admin_token') || '';
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers['x-admin-token'] = adminToken;
+
         const response = await fetch('/api/ai/rate-match', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             matchInfo: {
               opponent: m.opponent,
@@ -251,7 +258,8 @@ Cuối trận đối thủ ép sân và gỡ hòa đáng tiếc, hai đội chia
         if (response.ok) {
           data = await response.json();
         } else {
-          throw new Error('API server returned error');
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'API server returned error');
         }
 
         this.currentAiRatingData = data;

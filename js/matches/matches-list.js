@@ -109,6 +109,9 @@ Object.assign(window.matchesModule, {
         const totalGoals = (m.playerStats || []).reduce((sum, ps) => sum + (ps.goals || 0), 0);
         const totalAssists = (m.playerStats || []).reduce((sum, ps) => sum + (ps.assists || 0), 0);
 
+        const escapedDate = window.escapeHtml(m.date || '');
+        const escapedTime = m.time ? window.escapeHtml(m.time) : '';
+        const escapedId = window.escapeHtml(m.id || '');
         const escapedOpponent = window.escapeHtml(m.opponent || 'Đối thủ');
         const escapedVenue = window.escapeHtml(m.venue || 'Sân bóng');
         const escapedNote = m.note ? window.escapeHtml(m.note) : '';
@@ -117,15 +120,15 @@ Object.assign(window.matchesModule, {
         const financeTotalCount = (m.finance && m.finance.payments) ? m.finance.payments.length : 0;
 
         return `
-          <div class="match-card ${cardResultClass}" onclick="window.matchesModule.openMatchDetailModal('${m.id}')">
+          <div class="match-card ${cardResultClass}" onclick="window.matchesModule.openMatchDetailModal('${escapedId}')">
             <div class="match-card-top-bar">
               <div class="match-meta-left">
-                <span class="match-date-badge">📅 ${m.date} ${m.time ? `• ${m.time}` : ''}</span>
+                <span class="match-date-badge">📅 ${escapedDate} ${escapedTime ? `• ${escapedTime}` : ''}</span>
                 <span class="match-venue">📍 ${escapedVenue} (Sân 7 • 3-1-2)</span>
               </div>
               
               <div class="match-meta-right" onclick="event.stopPropagation()">
-                <button class="btn btn-secondary btn-sm match-finance-btn" onclick="window.financeModule.openFinanceModal('${m.id}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.55rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); font-size: 0.78rem;">
+                <button class="btn btn-secondary btn-sm match-finance-btn" onclick="window.financeModule.openFinanceModal('${escapedId}')" title="Quản lý tiền sân, chia tiền & tạo mã VietQR" style="padding: 0.25rem 0.55rem; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); font-size: 0.78rem;">
                   💰 Tiền Sân ${financeTotalCount > 0 ? `(${financePaidCount}/${financeTotalCount})` : ''}
                 </button>
                 <span class="match-result-badge ${resultClass}">${resultText}</span>
