@@ -73,7 +73,12 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── funds-topup.js    # Modal nạp quỹ (#modal-funds-topup), bulk inputs & tính tổng tức thì
 │   │   └── funds-history.js  # Modal lịch sử (#modal-funds-history), bộ lọc Filter Pills & bảng giao dịch
 │   ├── awards.js         # Bảng vinh danh & danh hiệu
-│   ├── poster.js         # Xuất ảnh đồ họa chia sẻ mạng xã hội
+│   ├── poster.js         # [Facade] Bộ điều phối trung tâm tạo poster ảnh (~45 dòng)
+│   ├── poster/           # [Mô-đun hoá] Phân tách nghiệp vụ kết xuất đồ họa Canvas & xuất file
+│   │   ├── poster-core.js     # Quản lý modal, điều khiển controls (1:1 / 9:16, 4 themes) & render
+│   │   ├── poster-draw.js     # Engine vẽ Canvas layout (nền gradient 4 theme, header, footer, bo góc)
+│   │   ├── poster-elements.js # Engine vẽ nội dung (scoreboard hoàng gia, thẻ MOTM, bàn thắng, đội hình)
+│   │   └── poster-export.js   # Xuất ảnh PNG HD, sao chép ảnh vào Clipboard & Web Share API
 │   ├── moments.js        # Bộ điều phối trung tâm (Facade) module khoảnh khắc
 │   ├── moments/          # [Mô-đun hoá] Phân tách nghiệp vụ khoảnh khắc chi tiết
 │   │   ├── moments-feed.js        # Bảng tin khoảnh khắc, photo grid Facebook & thả cảm xúc
@@ -210,7 +215,11 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `finance/finance-checklist.js`: Bảng checklist nộp tiền, 1-chạm xác nhận đã nộp, trừ thẳng vào ví số dư quỹ & xuất báo cáo Messenger/Zalo.
   - `finance/finance-qr.js`: Sinh mã VietQR động theo từng cầu thủ, phát âm thanh "Ting ting" 🔔 độc lập qua Web Audio API & tự động gạch nợ realtime qua Casso Webhook Socket.IO.
 - `awards.js`: Bảng vinh danh cá nhân (Top ghi bàn, Vua kiến tạo, Cầu thủ xuất sắc nhất MOTM, Găng tay vàng).
-- `poster.js`: Xuất poster đội hình và kết quả trận đấu ra định dạng ảnh để chia sẻ mạng xã hội.
+- `poster.js` & `poster/`: [Mô-đun hoá] Bộ tạo poster ảnh thi đấu Full HD, điều phối qua Facade trung tâm (~45 dòng) và phân tách thành 4 submodule chuyên biệt:
+  - `poster/poster-core.js`: Quản lý trạng thái poster, mở/đóng Modal (#poster-generator-modal), tiền tải avatar và điều phối luồng vẽ theo 2 tỉ lệ (1:1 / 9:16).
+  - `poster/poster-draw.js`: Engine vẽ Canvas layout gồm nền gradient đa theme, ánh sáng Neon Stadium, header, footer và khối bo góc.
+  - `poster/poster-elements.js`: Engine vẽ các khối nội dung: bảng điểm scoreboard hoàng gia, thẻ MVP MOTM, danh sách ghi bàn/kiến tạo và đội hình ra sân.
+  - `poster/poster-export.js`: Chức năng xuất ảnh PNG HD, 1-chạm sao chép ảnh vào Clipboard để dán trực tiếp vào Zalo/Facebook và gọi Web Share API trên di động.
 - `moments.js`: Bảng tin khoảnh khắc đội bóng: đăng bài, tải ảnh, thả cảm xúc (tim, bia, bóng, lửa) và bình luận.
 - `weather.js` & `weather/`: [Mô-đun hoá] Radar thời tiết & AI cố vấn sân AKKA, điều phối qua Facade trung tâm (~45 dòng) và phân tách thành 3 submodule chuyên biệt:
   - `weather/weather-core.js`: Quản lý kết nối Open-Meteo & API vệ tinh, fallback phía client, lưới thẻ dự báo 7 ngày và widget tổng quan trên Dashboard.
