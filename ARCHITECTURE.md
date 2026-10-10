@@ -56,7 +56,12 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── matches-live-timer.js  # Đồng hồ thi đấu, Screen Wake Lock & điểm danh Roster
 │   │   ├── matches-live-events.js # Bộ chọn cầu thủ sự kiện nhanh & Timeline trực tiếp
 │   │   └── matches-live-voice.js  # Nhận diện giọng nói (Voice-to-Event) & phân tích Smart NLP
-│   ├── players.js        # Danh sách cầu thủ & form thông tin
+│   ├── players.js        # [Facade] Bộ điều phối trung tâm module cầu thủ (~55 dòng)
+│   ├── players/          # [Mô-đun hoá] Phân tách nghiệp vụ quản lý cầu thủ & tài khoản
+│   │   ├── players-list.js      # Render lưới thẻ FIFA cầu thủ (#players-grid-container) & ví quỹ
+│   │   ├── players-form.js      # Modal thêm/sửa (#player-modal), form submit & xóa cầu thủ
+│   │   ├── players-provision.js # Modal cấp tài khoản & đặt lại mật khẩu (#admin-provision-modal)
+│   │   └── players-profile.js   # Modal chi tiết hồ sơ (#player-profile-modal) & nén ảnh Canvas
 │   ├── finance.js        # [Facade] Bộ điều phối trung tâm chia tiền sân (~45 dòng)
 │   ├── finance/          # [Mô-đun hoá] Phân tách nghiệp vụ chia tiền sân & VietQR
 │   │   ├── finance-modal.js      # Giao diện Modal (#match-finance-modal), form chi phí & tính toán
@@ -195,7 +200,11 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `matches/matches-live-timer.js`: Quản lý đồng hồ thi đấu sân phủi, giữ sáng màn hình ngoài trời (Screen Wake Lock) và điểm danh đội hình.
   - `matches/matches-live-events.js`: Ma trận nút chọn cầu thủ sự kiện nhanh, ghi nhận diễn biến và hiển thị dòng thời gian (Timeline).
   - `matches/matches-live-voice.js`: Trợ lý ghi nhận sự kiện bằng giọng nói tiếng Việt tự nhiên (Web Speech API kết hợp Football NLP).
-- `players.js`: Quản lý danh sách cầu thủ, form thêm/sửa/xoá cầu thủ, upload avatar, thống kê phong độ.
+- `players.js` & `players/`: [Mô-đun hoá] Quản lý cầu thủ, tài khoản & hồ sơ cá nhân, điều phối qua Facade trung tâm (~55 dòng) và phân tách thành 4 submodule chuyên biệt:
+  - `players/players-list.js`: Render lưới thẻ cầu thủ phong cách thẻ FIFA, hiển thị số áo, vị trí, số dư ví quỹ và bộ chỉ số phong độ.
+  - `players/players-form.js`: Quản lý Modal thêm/sửa thông tin cầu thủ (#player-modal), phân quyền Admin lưu trữ và xóa cầu thủ.
+  - `players/players-provision.js`: Quản lý Modal cấp tài khoản thành viên (#admin-provision-modal), tạo mật khẩu ngẫu nhiên, gợi ý username & sao chép thông tin gửi Zalo.
+  - `players/players-profile.js`: Quản lý Modal hồ sơ chi tiết (#player-profile-modal), xem lịch sử chấm điểm từng trận và Engine nén ảnh đại diện Canvas tự động.
 - `finance.js` & `finance/`: [Mô-đun hoá] Nghiệp vụ tính tiền sân & chia bill, điều phối qua Facade trung tâm (~45 dòng) và phân tách thành 3 submodule chuyên biệt:
   - `finance/finance-modal.js`: Giao diện Modal (#match-finance-modal), nhập liệu chi phí, tự động tính chia đầu người & làm tròn.
   - `finance/finance-checklist.js`: Bảng checklist nộp tiền, 1-chạm xác nhận đã nộp, trừ thẳng vào ví số dư quỹ & xuất báo cáo Messenger/Zalo.
