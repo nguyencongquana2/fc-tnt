@@ -29,7 +29,10 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   └── style.css         # Master stylesheet hub hợp nhất toàn bộ bằng @import
 ├── js/                   # Module logic phía Client (SPA)
 │   ├── core.js           # [Decoupling] Service Locator & Event Bus trung tâm (window.TNT)
-│   ├── app.js            # Điều hướng tab, modal, toast
+│   ├── app.js            # [Facade] Bộ điều phối khởi tạo ứng dụng & Dashboard (~280 dòng)
+│   ├── app/              # [Mô-đun hoá] Phân tách nghiệp vụ xác thực & hồ sơ cá nhân
+│   │   ├── app-auth.js       # Quản lý PIN Admin, Thủ Quỹ, Đăng nhập Cầu thủ, Đổi mật khẩu & Header UI
+│   │   └── app-profile.js    # Modal hồ sơ cá nhân (My Profile Hub), cập nhật avatar & liên kết ví quỹ
 │   ├── state.js          # [Facade] Bộ điều phối trung tâm quản lý State & Realtime (~280 dòng)
 │   ├── state/            # [Mô-đun hoá] Phân tách nghiệp vụ State & LocalStorage
 │   │   ├── state-auth.js      # Quản lý PIN Admin, Token Thủ Quỹ, Token PBKDF2 Cầu thủ & Session
@@ -167,7 +170,9 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `state/state-players.js`: Quản lý danh sách cầu thủ, avatar, tính toán thống kê phong độ & bảng vinh danh (Top Goals/Assists/MOTM).
   - `state/state-matches.js`: Quản lý lịch sử trận đấu, kết quả, chi phí quỹ và tổng quan phong độ toàn đội.
   - `state/state-social.js`: Quản lý bài đăng khoảnh khắc (Moments), cảm xúc reactions, bình luận và kịch bản sa bàn chiến thuật (Tactics).
-- `app.js`: Điểm khởi đầu phía client, chuyển đổi tab chính, điều khiển modal đăng nhập thành viên, modal hồ sơ cá nhân (My Profile Hub), modal đổi mật khẩu và toast thông báo.
+- `app.js` & `app/`: [Mô-đun hoá] Điểm khởi đầu phía client & Dashboard, điều phối qua Facade trung tâm (~280 dòng) và phân tách thành 2 submodule chuyên biệt:
+  - `app/app-auth.js`: Quản lý sự kiện đăng nhập PIN Quản trị, quyền Thủ Quỹ, đăng nhập thành viên, đổi mật khẩu và cập nhật trạng thái huy hiệu header.
+  - `app/app-profile.js`: Quản lý Modal hồ sơ cá nhân (My Profile Hub), xem/sửa thông số phong độ, tải ảnh đại diện & kiểm tra số dư ví quỹ.
 - `tactics.js` & `tactics/`: [Mô-đun hoá] Sa bàn chiến thuật sân 7 HTML5 Canvas, điều phối qua Facade trung tâm và phân tách thành 5 submodule chuyên biệt:
   - `tactics/tactics-screen.js`: Bộ điều khiển toàn màn hình (Fullscreen) và tự động xoay ngang 90° trên điện thoại.
   - `tactics/tactics-canvas.js`: Engine vẽ vector (mũi tên, đường chuyền nét đứt, uốn cong Bézier, khoanh vùng highlight, nhãn chữ), Undo/Redo và render đồng bộ 60fps qua `requestAnimationFrame`.
