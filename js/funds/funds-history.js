@@ -190,17 +190,23 @@
         if (t.type === 'MATCH_DEDUCT') typeBadge = '<span class="fund-status-badge badge-red">🔴 Tiền sân</span>';
         if (t.type === 'ADJUSTMENT') typeBadge = '<span class="fund-status-badge badge-yellow">🟡 Điều chỉnh</span>';
 
-        const pAvatar = t.playerAvatar || 'assets/images/default-avatar.png';
-        const pNum = t.playerNumber ? `<span class="fund-player-number-badge" style="width: 22px; height: 22px; font-size: 0.72rem;">${t.playerNumber}</span>` : '';
+        const player = (window.stateManager && typeof window.stateManager.getPlayerById === 'function' ? window.stateManager.getPlayerById(t.playerId) : null)
+          || (Array.isArray(this.playersBalances) ? this.playersBalances.find(p => p.id === t.playerId) : null);
+        const playerNum = (player && player.number !== undefined && player.number !== null && player.number !== '')
+          ? player.number
+          : (t.playerNumber !== undefined ? t.playerNumber : '');
+
+        const pNumBadge = (playerNum !== '' && playerNum !== null)
+          ? `<span class="fund-player-number-badge" style="width: 24px; height: 24px; font-size: 0.74rem;">${playerNum}</span>`
+          : `<span class="fund-player-number-badge" style="width: 24px; height: 24px; font-size: 0.74rem; opacity: 0.7;">⚽</span>`;
 
         return `
           <tr>
             <td style="font-size: 0.76rem; color: var(--text-dim, #94a3b8); white-space: nowrap;">${dateStr}</td>
             <td>
               <div class="history-player-cell">
-                ${pNum}
-                <img src="${esc(pAvatar)}" alt="" class="history-player-avatar" onerror="this.src='assets/images/default-avatar.png'">
-                <strong style="color: #fff; font-size: 0.88rem;">${esc(t.playerName || 'Thành viên')}</strong>
+                ${pNumBadge}
+                <strong style="color: #fff; font-size: 0.88rem;">${esc(t.playerName || player?.name || 'Thành viên')}</strong>
               </div>
             </td>
             <td style="text-align: center;">${typeBadge}</td>
