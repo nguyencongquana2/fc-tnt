@@ -43,14 +43,30 @@ const OFFICIAL_TACTICS = require('./utils/officialTactics');
 const { getDefaultTacticsPieces } = require('./utils/tacticsPieces');
 const { initTacticsSocket } = require('./sockets/tacticsSocket');
 
+// Cấu hình CORS Whitelist theo biến môi trường [MED-03]
+const isProd = process.env.NODE_ENV === 'production';
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+const corsOriginCheck = (origin, callback) => {
+  // Cho phép server-to-server, curl, Postman hoặc same-origin không có header Origin
+  if (!origin || !isProd || allowedOrigins.length === 0) {
+    return callback(null, true);
+  }
+  return callback(null, allowedOrigins.includes(origin));
+};
+
+const corsOptions = {
+  origin: corsOriginCheck,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  credentials: true
+};
+
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-  }
-});
+const io = new Server(server, { cors: corsOptions });
 
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fc_ntn';
@@ -82,7 +98,7 @@ initTacticsSocket(io);
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(securityHeadersMiddleware);
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

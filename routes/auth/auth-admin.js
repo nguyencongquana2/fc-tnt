@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Team = require('../../models/Team');
 const { loginRateLimiter } = require('../../utils/rateLimiter');
-const { RUNTIME_FALLBACK_SECRET } = require('./auth-common');
+const { RUNTIME_FALLBACK_SECRET, hashPin, verifyPinHash } = require('./auth-common');
 
 // Secret ký chữ ký số HMAC an toàn kết hợp salt máy chủ và mã PIN
 function getHmacSecret(currentPin) {
@@ -30,17 +30,51 @@ function generateAdminToken(pin) {
   return `fc_tnt_v2.${payloadB64}.${signature}`;
 }
 
+// Kiểm tra mã PIN Quản trị viên nhập vào (ưu tiên .env, đối soát hash PBKDF2 trong DB)
+async function validateAdminPin(inputPin, isMongoConnected) {
+  if (!inputPin) return false;
+  const cleanPin = String(inputPin).trim();
+
+  // 1. Biến môi trường Render / .env (Ưu tiên tuyệt đối)
+  if (process.env.ADMIN_PIN && String(process.env.ADMIN_PIN).trim()) {
+    const envBuf = Buffer.from(String(process.env.ADMIN_PIN).trim());
+    const inBuf = Buffer.from(cleanPin);
+    return envBuf.length === inBuf.length && crypto.timingSafeEqual(envBuf, inBuf);
+  }
+
+  // 2. Cơ sở dữ liệu MongoDB
+  const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
+  if (connected) {
+    try {
+      const team = await Team.findOne();
+      if (team) {
+        if (team.adminPinHash) {
+          return verifyPinHash(cleanPin, team.adminPinHash);
+        }
+        if (team.adminPin) {
+          const match = verifyPinHash(cleanPin, team.adminPin);
+          if (match) {
+            team.adminPinHash = hashPin(cleanPin);
+            team.adminPin = undefined;
+            await team.save().catch(() => {});
+          }
+          return match;
+        }
+      }
+    } catch (e) {
+      console.warn('[Auth] Lỗi đối soát Admin PIN từ MongoDB:', e.message);
+    }
+  }
+  return false;
+}
+
 // Lấy mã PIN Quản trị viên hiện tại (ưu tiên biến môi trường Render / .env)
 async function getValidAdminPins(isMongoConnected) {
   const pins = new Set();
-
-  // 1. Mã từ biến môi trường Render / .env (Ưu tiên tuyệt đối)
   if (process.env.ADMIN_PIN && String(process.env.ADMIN_PIN).trim()) {
     pins.add(String(process.env.ADMIN_PIN).trim());
     return Array.from(pins);
   }
-
-  // 2. Mã từ MongoDB Database
   const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
   if (connected) {
     try {
@@ -52,12 +86,6 @@ async function getValidAdminPins(isMongoConnected) {
       console.warn('[Auth] Không thể đọc Admin PIN từ MongoDB:', e.message);
     }
   }
-
-  // 3. Cảnh báo bảo mật nếu chưa cấu hình PIN (Không hardcode PIN mặc định 123456)
-  if (pins.size === 0) {
-    console.error('[Security] CẢNH BÁO NGUY HIỂM: Chưa cấu hình ADMIN_PIN trong biến môi trường .env hoặc MongoDB!');
-  }
-
   return Array.from(pins);
 }
 
@@ -128,9 +156,9 @@ function registerAdminRoutes(router, { isMongoConnected }) {
     }
 
     const inputPin = String(pin).trim();
-    const validPins = await getValidAdminPins(isMongoConnected);
+    const isValid = await validateAdminPin(inputPin, isMongoConnected);
 
-    if (validPins.includes(inputPin)) {
+    if (isValid) {
       const token = generateAdminToken(inputPin);
       return res.json({
         success: true,
@@ -145,7 +173,7 @@ function registerAdminRoutes(router, { isMongoConnected }) {
     });
   });
 
-  // POST /api/auth/change-pin (Đổi mã PIN Quản trị viên)
+  // POST /api/auth/change-pin (Đổi mã PIN Quản trị viên - Băm một chiều PBKDF2)
   router.post('/change-pin', requireAdmin, async (req, res) => {
     try {
       const { newPin } = req.body;
@@ -154,13 +182,16 @@ function registerAdminRoutes(router, { isMongoConnected }) {
       }
 
       const cleanPin = String(newPin).trim();
+      const hashedPin = hashPin(cleanPin);
+
       const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
       if (connected) {
         let team = await Team.findOne();
         if (!team) {
-          team = await Team.create({ adminPin: cleanPin });
+          team = await Team.create({ adminPinHash: hashedPin });
         } else {
-          team.adminPin = cleanPin;
+          team.adminPinHash = hashedPin;
+          team.adminPin = undefined; // Xóa sạch plaintext cũ
           await team.save();
         }
       }
@@ -171,7 +202,7 @@ function registerAdminRoutes(router, { isMongoConnected }) {
       return res.json({
         success: true,
         token: newToken,
-        message: 'Đã đổi mã PIN Quản trị thành công! Vui lòng lưu trữ cẩn thận mã PIN mới.'
+        message: 'Đã đổi mã PIN Quản trị thành công! Mã PIN đã được mã hóa an toàn.'
       });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -189,6 +220,7 @@ function registerAdminRoutes(router, { isMongoConnected }) {
 module.exports = {
   getHmacSecret,
   generateAdminToken,
+  validateAdminPin,
   getValidAdminPins,
   verifyAdminToken,
   requireAdmin,

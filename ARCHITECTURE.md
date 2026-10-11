@@ -105,13 +105,13 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   ├── LiveMatchDraft.js # Bản nháp trận đấu Live đồng bộ realtime
 │   ├── Moment.js         # Bài đăng khoảnh khắc & bình luận
 │   ├── Tactic.js         # Kịch bản sa bàn chiến thuật & bình luận trao đổi
-│   └── Team.js           # Thông tin đội bóng, mã PIN Admin & mã PIN Thủ Quỹ
+│   └── Team.js           # Thông tin đội bóng, mã PIN Admin & Thủ Quỹ (PBKDF2-SHA512 + 16 bytes salt)
 ├── routes/               # [Mô-đun hoá] Tách API từ server.js theo miền nghiệp vụ
 │   ├── auth.js           # Bộ điều phối trung tâm (Facade) phân hệ xác thực & bảo mật (requireAdmin, requireTreasurer, requireAdminOrTreasurer)
 │   ├── auth/             # [Mô-đun hoá] Phân tách nghiệp vụ xác thực chi tiết
-│   │   ├── auth-common.js    # Khóa bí mật Runtime secret & cấu hình chung
-│   │   ├── auth-admin.js     # Mã PIN Admin, sinh token HMAC, middleware requireAdmin
-│   │   ├── auth-treasurer.js # Mã PIN Thủ Quỹ, sinh token HMAC, middleware requireTreasurer
+│   │   ├── auth-common.js    # Khóa bí mật Runtime secret, hàm băm & xác thực mã PIN PBKDF2-SHA512 (salt 16-byte)
+│   │   ├── auth-admin.js     # Mã PIN Admin, sinh token HMAC, middleware requireAdmin (hỗ trợ hash & auto-upgrade)
+│   │   ├── auth-treasurer.js # Mã PIN Thủ Quỹ, sinh token HMAC, middleware requireTreasurer (hỗ trợ hash & auto-upgrade)
 │   │   └── auth-player.js    # PBKDF2 hash mật khẩu cầu thủ, token thành viên & hồ sơ
 │   ├── funds.js          # API sổ quỹ, nạp tiền, trừ tiền sân & hoàn tác/xóa giao dịch (requireTreasurer độc quyền)
 │   ├── players.js        # API CRUD cầu thủ & avatar

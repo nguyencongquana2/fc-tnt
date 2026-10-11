@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Team = require('../../models/Team');
 const { loginRateLimiter } = require('../../utils/rateLimiter');
-const { RUNTIME_FALLBACK_SECRET } = require('./auth-common');
+const { RUNTIME_FALLBACK_SECRET, hashPin, verifyPinHash } = require('./auth-common');
 
 function getTreasurerHmacSecret(currentPin) {
   const envSecret = process.env.JWT_SECRET || process.env.TREASURER_SECRET || process.env.ADMIN_SECRET || RUNTIME_FALLBACK_SECRET;
@@ -28,16 +28,51 @@ function generateTreasurerToken(pin) {
   return `fc_tnt_treasurer_v1.${payloadB64}.${signature}`;
 }
 
+// Kiểm tra mã PIN Thủ Quỹ nhập vào (ưu tiên .env, đối soát hash PBKDF2 trong DB)
+async function validateTreasurerPin(inputPin, isMongoConnected) {
+  if (!inputPin) return false;
+  const cleanPin = String(inputPin).trim();
+
+  // 1. Biến môi trường .env (Ưu tiên tuyệt đối)
+  if (process.env.TREASURER_PIN && String(process.env.TREASURER_PIN).trim()) {
+    const envBuf = Buffer.from(String(process.env.TREASURER_PIN).trim());
+    const inBuf = Buffer.from(cleanPin);
+    return envBuf.length === inBuf.length && crypto.timingSafeEqual(envBuf, inBuf);
+  }
+
+  // 2. Cơ sở dữ liệu MongoDB
+  const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
+  if (connected) {
+    try {
+      const team = await Team.findOne();
+      if (team) {
+        if (team.treasurerPinHash) {
+          return verifyPinHash(cleanPin, team.treasurerPinHash);
+        }
+        if (team.treasurerPin) {
+          const match = verifyPinHash(cleanPin, team.treasurerPin);
+          if (match) {
+            team.treasurerPinHash = hashPin(cleanPin);
+            team.treasurerPin = undefined;
+            await team.save().catch(() => {});
+          }
+          return match;
+        }
+      }
+    } catch (e) {
+      console.warn('[Auth] Lỗi đối soát Treasurer PIN từ MongoDB:', e.message);
+    }
+  }
+
+  return false;
+}
+
 async function getValidTreasurerPins(isMongoConnected) {
   const pins = new Set();
-
-  // 1. Ưu tiên biến môi trường .env (Bảo mật cao nhất)
   if (process.env.TREASURER_PIN && String(process.env.TREASURER_PIN).trim()) {
     pins.add(String(process.env.TREASURER_PIN).trim());
     return Array.from(pins);
   }
-
-  // 2. Lấy từ Database
   const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
   if (connected) {
     try {
@@ -45,16 +80,8 @@ async function getValidTreasurerPins(isMongoConnected) {
       if (team && team.treasurerPin) {
         pins.add(String(team.treasurerPin).trim());
       }
-    } catch (e) {
-      console.warn('[Auth] Không thể đọc Treasurer PIN từ MongoDB:', e.message);
-    }
+    } catch (e) {}
   }
-
-  // 3. Cảnh báo bảo mật nếu chưa cấu hình PIN (Không hardcode PIN dự phòng trong code)
-  if (pins.size === 0) {
-    console.warn('[Security] CẢNH BÁO: Chưa cấu hình TREASURER_PIN trong .env hoặc Database!');
-  }
-
   return Array.from(pins);
 }
 
@@ -75,9 +102,22 @@ async function verifyTreasurerToken(token, isMongoConnected) {
         return false;
       }
 
-      const validPins = await getValidTreasurerPins(isMongoConnected);
-      for (const pin of validPins) {
-        const secret = getTreasurerHmacSecret(pin);
+      const keys = new Set();
+      if (process.env.TREASURER_PIN) keys.add(String(process.env.TREASURER_PIN).trim());
+      const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
+      if (connected) {
+        try {
+          const team = await Team.findOne();
+          if (team) {
+            if (team.treasurerPinHash) keys.add(team.treasurerPinHash);
+            if (team.treasurerPin) keys.add(String(team.treasurerPin).trim());
+          }
+        } catch (e) {}
+      }
+      keys.add('');
+
+      for (const k of keys) {
+        const secret = getTreasurerHmacSecret(k);
         const expectedSig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64url');
         const expectedBuf = Buffer.from(expectedSig);
         const providedBuf = Buffer.from(providedSig);
@@ -115,7 +155,7 @@ const requireTreasurer = async (req, res, next) => {
   });
 };
 
-function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPins, generateAdminToken }) {
+function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPins, generateAdminToken, validateAdminPin }) {
   // POST /api/auth/treasurer/login
   router.post('/treasurer/login', loginRateLimiter, async (req, res) => {
     const { pin } = req.body;
@@ -124,9 +164,9 @@ function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPi
     }
 
     const inputPin = String(pin).trim();
-    const validPins = await getValidTreasurerPins(isMongoConnected);
+    const isValid = await validateTreasurerPin(inputPin, isMongoConnected);
 
-    if (validPins.includes(inputPin)) {
+    if (isValid) {
       const token = generateTreasurerToken(inputPin);
       return res.json({
         success: true,
@@ -157,13 +197,13 @@ function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPi
     }
 
     const inputPin = String(pin).trim();
-    const [validAdminPins, validTreasurerPins] = await Promise.all([
-      getValidAdminPins(isMongoConnected),
-      getValidTreasurerPins(isMongoConnected)
-    ]);
+    const isAdminValid = (typeof validateAdminPin === 'function')
+      ? await validateAdminPin(inputPin, isMongoConnected)
+      : (await getValidAdminPins(isMongoConnected)).includes(inputPin);
+    const isTreasurerValid = await validateTreasurerPin(inputPin, isMongoConnected);
 
     // 1. Kiểm tra mã PIN Quản trị viên
-    if (validAdminPins.includes(inputPin)) {
+    if (isAdminValid) {
       const token = generateAdminToken(inputPin);
       return res.json({
         success: true,
@@ -174,7 +214,7 @@ function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPi
     }
 
     // 2. Kiểm tra mã PIN Quỹ đội (Thủ Quỹ)
-    if (validTreasurerPins.includes(inputPin)) {
+    if (isTreasurerValid) {
       const token = generateTreasurerToken(inputPin);
       return res.json({
         success: true,
@@ -190,7 +230,7 @@ function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPi
     });
   });
 
-  // POST /api/auth/treasurer/change-pin
+  // POST /api/auth/treasurer/change-pin (Đổi mã PIN Thủ Quỹ - Băm một chiều PBKDF2)
   router.post('/treasurer/change-pin', requireTreasurer, async (req, res) => {
     try {
       const { newPin } = req.body;
@@ -199,13 +239,16 @@ function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPi
       }
 
       const cleanPin = String(newPin).trim();
+      const hashedPin = hashPin(cleanPin);
+
       const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : (mongoose.connection && mongoose.connection.readyState === 1));
       if (connected) {
         let team = await Team.findOne();
         if (!team) {
-          team = await Team.create({ treasurerPin: cleanPin });
+          team = await Team.create({ treasurerPinHash: hashedPin });
         } else {
-          team.treasurerPin = cleanPin;
+          team.treasurerPinHash = hashedPin;
+          team.treasurerPin = undefined; // Xóa sạch plaintext cũ khỏi DB
           await team.save();
         }
       }
@@ -216,7 +259,7 @@ function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPi
       return res.json({
         success: true,
         token: newToken,
-        message: 'Đã đổi mã PIN Thủ Quỹ thành công! Vui lòng lưu trữ cẩn thận mã PIN mới.'
+        message: 'Đã đổi mã PIN Thủ Quỹ thành công! Mã PIN đã được mã hóa an toàn.'
       });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -227,6 +270,7 @@ function registerTreasurerRoutes(router, { isMongoConnected }, { getValidAdminPi
 module.exports = {
   getTreasurerHmacSecret,
   generateTreasurerToken,
+  validateTreasurerPin,
   getValidTreasurerPins,
   verifyTreasurerToken,
   requireTreasurer,

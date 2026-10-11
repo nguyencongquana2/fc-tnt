@@ -16,7 +16,13 @@ const teamSchema = new mongoose.Schema({
   adminPin: {
     type: String
   },
+  adminPinHash: {
+    type: String
+  },
   treasurerPin: {
+    type: String
+  },
+  treasurerPinHash: {
     type: String
   }
 }, {

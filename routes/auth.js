@@ -13,6 +13,7 @@ const {
   getHmacSecret,
   generateAdminToken,
   getValidAdminPins,
+  validateAdminPin,
   verifyAdminToken,
   requireAdmin,
   registerAdminRoutes
@@ -22,6 +23,7 @@ const {
   getTreasurerHmacSecret,
   generateTreasurerToken,
   getValidTreasurerPins,
+  validateTreasurerPin,
   verifyTreasurerToken,
   requireTreasurer,
   registerTreasurerRoutes
@@ -45,7 +47,7 @@ function createAuthRouter(context) {
   registerAdminRoutes(router, context);
 
   // 2. Đăng ký các route Thủ Quỹ & Đăng nhập PIN hợp nhất (/treasurer/*, /pin-login)
-  registerTreasurerRoutes(router, context, { getValidAdminPins, generateAdminToken });
+  registerTreasurerRoutes(router, context, { getValidAdminPins, generateAdminToken, validateAdminPin });
 
   // 3. Đăng ký các route Tài khoản Thành viên & Hồ sơ (/player/*)
   registerPlayerRoutes(router, { ...context, requireAdmin });
@@ -85,6 +87,8 @@ module.exports = {
   verifyPlayerToken,
   getValidAdminPins,
   getValidTreasurerPins,
+  validateAdminPin,
+  validateTreasurerPin,
   generateAdminToken,
   generateTreasurerToken,
   generatePlayerToken,
