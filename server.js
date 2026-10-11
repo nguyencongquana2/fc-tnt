@@ -458,7 +458,10 @@ server.listen(PORT, () => {
   console.log(`=================================================`);
   console.log(`🚀 FC TNT Real-time Server is running!`);
   console.log(`🌐 Local URL: http://localhost:${PORT}`);
-  console.log(`🌿 Database: ${MONGODB_URI}`);
+  const maskedUri = MONGODB_URI.includes('@')
+    ? MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')
+    : MONGODB_URI;
+  console.log(`🌿 Database: ${maskedUri}`);
   console.log(`⚡ Real-time WebSocket: Active`);
   console.log(`=================================================`);
 });

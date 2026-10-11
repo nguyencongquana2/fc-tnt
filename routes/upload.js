@@ -103,9 +103,9 @@ function createUploadRouter({ isMongoConnected }) {
         return res.status(400).json({ success: false, error: 'Dữ liệu file không được để trống' });
       }
 
-      // Giới hạn độ dài chuỗi dữ liệu (Tối đa ~15MB Base64) để chống DoS tràn RAM
-      if (typeof fileData !== 'string' || fileData.length > 15 * 1024 * 1024) {
-        return res.status(400).json({ success: false, error: 'Dung lượng tệp vượt quá giới hạn tối đa 15MB!' });
+      // Giới hạn Base64 tối đa 3.5MB để tránh quá tải RAM và giới hạn 16MB BSON của MongoDB
+      if (typeof fileData !== 'string' || fileData.length > 3.5 * 1024 * 1024) {
+        return res.status(400).json({ success: false, error: 'Dung lượng tệp Base64 tải trực tiếp quá lớn (tối đa 2.5MB)! Vui lòng cấu hình Cloudinary hoặc dán link ngoài.' });
       }
 
       // Ngăn chặn mã độc, Stored SVG XSS hoặc JavaScript URI

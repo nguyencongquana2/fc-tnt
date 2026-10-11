@@ -352,9 +352,10 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
         return res.json({ success: true, message: 'Số dư không thay đổi.', player });
       }
 
-      player.fundBalance = targetBalance;
       if (connected) {
-        await player.save();
+        await Player.findOneAndUpdate({ id: cleanPId }, { $set: { fundBalance: targetBalance } });
+      } else {
+        player.fundBalance = targetBalance;
       }
 
       const cleanReason = String(reason || 'Điều chỉnh số dư thủ công').trim().slice(0, 200);

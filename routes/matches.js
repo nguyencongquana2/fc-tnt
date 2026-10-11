@@ -49,18 +49,29 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   router.put('/:id', authFinance, async (req, res) => {
     try {
       const { id } = req.params;
-      const updates = req.body;
+      let updates = req.body;
+
+      // Phân quyền chặt chẽ: Thủ quỹ chỉ được phép cập nhật dữ liệu tài chính của trận đấu
+      if (!req.isAdmin && req.isTreasurer) {
+        if (updates && updates.finance) {
+          updates = { finance: updates.finance };
+        } else {
+          return res.status(403).json({ error: 'Thủ quỹ chỉ có quyền cập nhật dữ liệu tài chính của trận đấu!' });
+        }
+      }
+
+      const cleanId = String(id).trim();
 
       if (isMongoConnected()) {
-        const updated = await Match.findOneAndUpdate({ id }, updates, { new: true });
-        broadcastDataUpdate('matches', `⭐ Điểm số trận gặp "${updated?.opponent || ''}" vừa được cập nhật!`);
+        const updated = await Match.findOneAndUpdate({ id: cleanId }, { $set: updates }, { new: true });
+        broadcastDataUpdate('matches', `⭐ Thông tin trận gặp "${updated?.opponent || ''}" vừa được cập nhật!`);
         return res.json(updated);
       }
 
-      const idx = fallbackData.matches.findIndex(m => m.id === id);
+      const idx = fallbackData.matches.findIndex(m => m.id === cleanId);
       if (idx !== -1) {
         fallbackData.matches[idx] = { ...fallbackData.matches[idx], ...updates };
-        broadcastDataUpdate('matches', `⭐ Điểm số trận gặp "${fallbackData.matches[idx].opponent || ''}" vừa được cập nhật!`);
+        broadcastDataUpdate('matches', `⭐ Thông tin trận gặp "${fallbackData.matches[idx].opponent || ''}" vừa được cập nhật!`);
         return res.json(fallbackData.matches[idx]);
       }
       res.status(404).json({ error: 'Match not found' });
