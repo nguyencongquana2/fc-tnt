@@ -203,13 +203,41 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
       }
 
       const connected = (typeof isMongoConnected === 'function' ? isMongoConnected() : false);
+      const cleanMatchId = (typeof matchId === 'string' && matchId.trim()) ? matchId.trim() : null;
+      let targetMatch = null;
+      let effectiveParticipantIds = participantIds.map(p => (typeof p === 'string' ? p.trim() : '')).filter(Boolean);
+
+      if (cleanMatchId) {
+        if (connected) {
+          targetMatch = await Match.findOne({ id: cleanMatchId });
+        } else if (fallbackData && Array.isArray(fallbackData.matches)) {
+          targetMatch = fallbackData.matches.find(m => m.id === cleanMatchId);
+        }
+
+        if (targetMatch && targetMatch.finance && Array.isArray(targetMatch.finance.payments)) {
+          const payerId = targetMatch.finance.payerPlayerId;
+          effectiveParticipantIds = effectiveParticipantIds.filter(pId => {
+            if (payerId && pId === payerId) return false;
+            const rec = targetMatch.finance.payments.find(p => p.playerId === pId);
+            return !rec || !rec.isPaid;
+          });
+        }
+      }
+
+      if (effectiveParticipantIds.length === 0) {
+        return res.json({
+          success: true,
+          message: 'Tất cả thành viên trong danh sách đều đã nộp tiền sân từ trước, không cần trừ thêm!',
+          count: 0,
+          updatedPlayers: [],
+          transactions: []
+        });
+      }
+
       const createdTransactions = [];
       const updatedPlayers = [];
 
-      for (const pId of participantIds) {
-        const cleanPId = (typeof pId === 'string') ? pId.trim() : null;
-        if (!cleanPId) continue;
-
+      for (const pId of effectiveParticipantIds) {
         let balanceBefore = 0;
         let balanceAfter = 0;
         let playerName = '';
@@ -217,7 +245,7 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
         if (connected) {
           // Thao tác nguyên tử (Atomic Update $inc) chống Race Condition
           const updatedPlayer = await Player.findOneAndUpdate(
-            { id: cleanPId },
+            { id: pId },
             { $inc: { fundBalance: -amountToDeduct } },
             { new: true }
           );
@@ -228,7 +256,7 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
           balanceBefore = balanceAfter + amountToDeduct;
           playerName = updatedPlayer.name;
         } else if (fallbackData && Array.isArray(fallbackData.players)) {
-          const player = fallbackData.players.find(p => p.id === cleanPId);
+          const player = fallbackData.players.find(p => p.id === pId);
           if (!player) continue;
 
           balanceBefore = Number(player.fundBalance) || 0;
@@ -242,43 +270,28 @@ function createFundsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate
         const noteText = String(note || `Tiền sân trận vs ${matchOpponent || 'đối thủ'}`).trim().slice(0, 200);
         const txDoc = {
           id: `ft_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
-          playerId: cleanPId, playerName, amount: -amountToDeduct, balanceBefore, balanceAfter,
-          type: 'MATCH_DEDUCT', matchId: (typeof matchId === 'string' ? matchId.trim() : ''),
+          playerId: pId, playerName, amount: -amountToDeduct, balanceBefore, balanceAfter,
+          type: 'MATCH_DEDUCT', matchId: (cleanMatchId || ''),
           matchOpponent: (typeof matchOpponent === 'string' ? matchOpponent.trim().slice(0, 100) : ''),
           note: noteText, createdBy: 'Thủ quỹ', createdAt: new Date()
         };
         const savedTx = connected ? await FundTransaction.create(txDoc) : (fallbackData.fundTransactions.unshift(txDoc), txDoc);
         createdTransactions.push(savedTx);
-        updatedPlayers.push({ playerId: cleanPId, name: playerName, deducted: amountToDeduct, balanceAfter });
+        updatedPlayers.push({ playerId: pId, name: playerName, deducted: amountToDeduct, balanceAfter });
       }
 
-      // Tự động cập nhật trạng thái đã nộp tiền trong trận đấu nếu có matchId (kiểm tra kiểu string an toàn)
-      const cleanMatchId = (typeof matchId === 'string' && matchId.trim()) ? matchId.trim() : null;
-      if (cleanMatchId) {
+      // Tự động cập nhật trạng thái đã nộp tiền trong trận đấu nếu có
+      if (targetMatch && targetMatch.finance && Array.isArray(targetMatch.finance.payments)) {
+        targetMatch.finance.payments.forEach(payment => {
+          if (effectiveParticipantIds.includes(payment.playerId)) {
+            payment.isPaid = true;
+            payment.paidAt = new Date().toISOString();
+            payment.note = 'Trừ vào ví quỹ đội';
+          }
+        });
         if (connected) {
-          const match = await Match.findOne({ id: cleanMatchId });
-          if (match && match.finance && Array.isArray(match.finance.payments)) {
-            match.finance.payments.forEach(payment => {
-              if (participantIds.includes(payment.playerId)) {
-                payment.isPaid = true;
-                payment.paidAt = new Date().toISOString();
-                payment.note = 'Trừ vào ví quỹ đội';
-              }
-            });
-            match.markModified('finance');
-            await match.save();
-          }
-        } else if (fallbackData && Array.isArray(fallbackData.matches)) {
-          const match = fallbackData.matches.find(m => m.id === cleanMatchId);
-          if (match && match.finance && Array.isArray(match.finance.payments)) {
-            match.finance.payments.forEach(payment => {
-              if (participantIds.includes(payment.playerId)) {
-                payment.isPaid = true;
-                payment.paidAt = new Date().toISOString();
-                payment.note = 'Trừ vào ví quỹ đội';
-              }
-            });
-          }
+          targetMatch.markModified('finance');
+          await targetMatch.save();
         }
       }
 

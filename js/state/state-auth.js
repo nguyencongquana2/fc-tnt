@@ -38,6 +38,9 @@
           } else {
             sessionStorage.setItem(TREASURER_AUTH_KEY, data.token);
           }
+          if (root.TNT && root.TNT.bus) {
+            root.TNT.bus.emit('auth:treasurer_changed', { isTreasurer: true, token: data.token });
+          }
           this.notify();
           return { success: true, message: data.message };
         } else {
@@ -52,6 +55,9 @@
       this.isTreasurer = false;
       sessionStorage.removeItem(TREASURER_AUTH_KEY);
       localStorage.removeItem(TREASURER_AUTH_KEY);
+      if (root.TNT && root.TNT.bus) {
+        root.TNT.bus.emit('auth:treasurer_changed', { isTreasurer: false });
+      }
       this.notify();
     },
 
@@ -103,23 +109,23 @@
           if (data && data.success) {
             if (data.role === 'admin') {
               this.isAdmin = true;
-              this.isTreasurer = false;
               if (remember) {
                 localStorage.setItem(ADMIN_AUTH_KEY, data.token);
-                localStorage.removeItem(TREASURER_AUTH_KEY);
               } else {
                 sessionStorage.setItem(ADMIN_AUTH_KEY, data.token);
-                sessionStorage.removeItem(TREASURER_AUTH_KEY);
+              }
+              if (root.TNT && root.TNT.bus) {
+                root.TNT.bus.emit('auth:admin_changed', { isAdmin: true, token: data.token });
               }
             } else if (data.role === 'treasurer') {
               this.isTreasurer = true;
-              this.isAdmin = false;
               if (remember) {
                 localStorage.setItem(TREASURER_AUTH_KEY, data.token);
-                localStorage.removeItem(ADMIN_AUTH_KEY);
               } else {
                 sessionStorage.setItem(TREASURER_AUTH_KEY, data.token);
-                sessionStorage.removeItem(ADMIN_AUTH_KEY);
+              }
+              if (root.TNT && root.TNT.bus) {
+                root.TNT.bus.emit('auth:treasurer_changed', { isTreasurer: true, token: data.token });
               }
             }
             this.notify();
@@ -135,9 +141,6 @@
         const treasRes = await this.loginTreasurer(cleanPin, remember);
         if (treasRes && treasRes.success) {
           this.isTreasurer = true;
-          this.isAdmin = false;
-          localStorage.removeItem(ADMIN_AUTH_KEY);
-          sessionStorage.removeItem(ADMIN_AUTH_KEY);
           this.notify();
           return { success: true, role: 'treasurer', message: treasRes.message || 'Đăng nhập Thủ Quỹ thành công!' };
         }

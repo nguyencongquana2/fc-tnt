@@ -210,6 +210,10 @@
     // Render toàn bộ nội dung trong modal
     renderFinanceModal(match) {
       const isAdmin = window.stateManager ? window.stateManager.isAdmin : false;
+      const isTreasurer = (window.stateManager ? window.stateManager.isTreasurer : false)
+        || (window.TNT && window.TNT.funds && typeof window.TNT.funds.isTreasurer === 'function' ? window.TNT.funds.isTreasurer() : false)
+        || Boolean(sessionStorage.getItem('fc_tnt_treasurer_token') || localStorage.getItem('fc_tnt_treasurer_token'));
+      const canManageFinance = isAdmin || isTreasurer;
       const allPlayers = window.stateManager ? window.stateManager.getPlayers() : [];
       const fin = this.currentFinanceData;
 
@@ -219,6 +223,15 @@
       const activeParticipantIds = new Set(fin.payments.map(p => p.playerId));
       const bankObj = VIET_BANKS.find(b => b.code === fin.payerBankCode);
       const bankDisplayName = bankObj ? bankObj.name : (fin.payerBankCode || 'Vietcombank');
+
+      let roleBadgeHTML = `<span class="auth-role-badge viewer" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">👁️ Chế độ Thành Viên</span>`;
+      if (isAdmin && isTreasurer) {
+        roleBadgeHTML = `<span class="auth-role-badge admin" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(16, 185, 129, 0.25)); border-color: rgba(245, 158, 11, 0.5);">👑 Quản Trị & 💰 Thủ Quỹ</span>`;
+      } else if (isAdmin) {
+        roleBadgeHTML = `<span class="auth-role-badge admin" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">👑 Quyền Quản Trị</span>`;
+      } else if (isTreasurer) {
+        roleBadgeHTML = `<span class="auth-role-badge admin" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.5); color: #10b981;">💰 Quyền Thủ Quỹ</span>`;
+      }
 
       modalBody.innerHTML = `
         <!-- Match Info Header -->
@@ -230,15 +243,7 @@
           </div>
 
           <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-            ${!isAdmin ? `
-              <span class="auth-role-badge viewer" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
-                👁️ Chế độ Thành Viên
-              </span>
-            ` : `
-              <span class="auth-role-badge admin" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
-                👑 Quyền Quản Trị
-              </span>
-            `}
+            ${roleBadgeHTML}
             <button class="btn btn-gold btn-sm" onclick="window.financeModule.copyMessengerReport()" id="btn-copy-messenger" style="font-weight: 700; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
               📋 1 Chạm Copy Báo Cáo Messenger
             </button>
@@ -250,7 +255,7 @@
           <div class="fin-left-col">
             <div class="fin-card">
               
-              ${isAdmin ? `
+              ${canManageFinance ? `
                 <h4 class="fin-section-title">💰 1. Thiết Lập Chi Phí Trận</h4>
                 
                 <div class="fin-input-grid">
@@ -403,10 +408,10 @@
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                 <h4 class="fin-section-title" style="margin: 0;">👥 3. Danh Sách Đóng Tiền (<span id="fin-display-count">${fin.payments.length}</span>)</h4>
                 
-                ${isAdmin ? `
+                ${canManageFinance ? `
                   <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-gold btn-sm" onclick="window.financeModule.deductFromMemberFunds()" id="btn-deduct-fund" title="Trừ trực tiếp tiền sân vào ví số dư quỹ của các cầu thủ tham gia" style="font-weight: 700; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
-                      ⚡ Trừ Ví Số Dư Quỹ
+                    <button type="button" class="btn btn-gold btn-sm" onclick="window.financeModule.deductFromMemberFunds()" id="btn-deduct-fund" title="Trừ tiền sân vào ví số dư quỹ của các cầu thủ CHƯA NỘP (Quyền Thủ Quỹ)" style="font-weight: 700; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+                      ⚡ Trừ Ví Số Dư Quỹ <span style="font-size: 0.7rem; opacity: 0.85; padding: 1px 4px; border-radius: 3px; background: rgba(0,0,0,0.25); margin-left: 3px;">👑 Thủ Quỹ</span>
                     </button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.financeModule.setAllPayments(true)" title="Tất cả đã chuyển">
                       ✅ Tất Cả Đã Nộp
@@ -418,8 +423,8 @@
                 ` : ''}
               </div>
 
-              ${isAdmin ? `
-                <!-- Accordion chọn danh sách cầu thủ tham gia (Chỉ Admin mới có) -->
+              ${canManageFinance ? `
+                <!-- Accordion chọn danh sách cầu thủ tham gia -->
                 <details style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 1rem; font-size: 0.85rem;">
                   <summary style="cursor: pointer; font-weight: 600; color: var(--accent-cyan);">
                     ⚙️ Tùy chỉnh danh sách người chia (Bấm để thêm/bớt cầu thủ)
@@ -459,16 +464,16 @@
         <!-- Action Footer -->
         <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
           <div style="color: var(--text-dim); font-size: 0.85rem;">
-            ${isAdmin ? `
-              💡 <em>Mẹo: Bạn đang ở quyền Quản Trị. Chạm vào nút 🔴 Chưa nộp để chuyển sang 🟢 Đã nộp.</em>
+            ${canManageFinance ? `
+              💡 <em>Mẹo: Bạn có quyền quản lý tài chính. Chạm vào nút 🔴 Chưa nộp để chuyển sang 🟢 Đã nộp.</em>
             ` : `
-              💡 <em>Thành viên quét mã VietQR ở trên để nộp tiền. Quản trị viên sau khi nhận được tiền sẽ xác nhận vào hệ thống.</em>
+              💡 <em>Thành viên quét mã VietQR ở trên để nộp tiền. Ban cán sự sau khi nhận được tiền sẽ xác nhận vào hệ thống.</em>
             `}
           </div>
 
           <div style="display: flex; gap: 0.75rem;">
             <button type="button" class="btn btn-secondary" onclick="window.financeModule.closeFinanceModal()">Đóng</button>
-            ${isAdmin ? `
+            ${canManageFinance ? `
               <button type="button" class="btn btn-primary" onclick="window.financeModule.saveCurrentFinance(true)">💾 Lưu Cấu Hình</button>
             ` : ''}
           </div>

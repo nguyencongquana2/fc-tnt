@@ -48,13 +48,19 @@
         this.data.matches[index] = { ...this.data.matches[index], ...updatedFields };
         this.saveData();
 
+        const headers = { 'Content-Type': 'application/json' };
+        const adminToken = (typeof this.getAdminToken === 'function') ? this.getAdminToken() : '';
+        if (adminToken) headers['x-admin-token'] = adminToken;
+
+        const treasurerToken = (typeof this.getTreasurerToken === 'function')
+          ? this.getTreasurerToken()
+          : (sessionStorage.getItem('fc_tnt_treasurer_token') || localStorage.getItem('fc_tnt_treasurer_token') || '');
+        if (treasurerToken) headers['x-treasurer-token'] = treasurerToken;
+
         // Gửi API cập nhật lên server MongoDB
         this._syncToServer(`${API_BASE}/matches/${id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-token': this.getAdminToken()
-          },
+          headers,
           body: JSON.stringify(this.data.matches[index])
         }, 'updateMatch');
 

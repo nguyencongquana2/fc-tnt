@@ -24,6 +24,10 @@
       if (!listContainer || !this.currentFinanceData) return;
 
       const isAdmin = window.stateManager ? window.stateManager.isAdmin : false;
+      const isTreasurer = (window.stateManager ? window.stateManager.isTreasurer : false)
+        || (window.TNT && window.TNT.funds && typeof window.TNT.funds.isTreasurer === 'function' ? window.TNT.funds.isTreasurer() : false)
+        || Boolean(sessionStorage.getItem('fc_tnt_treasurer_token') || localStorage.getItem('fc_tnt_treasurer_token'));
+      const canManage = isAdmin || isTreasurer;
       const allPlayers = window.stateManager ? window.stateManager.getPlayers() : [];
       const payments = this.currentFinanceData.payments;
 
@@ -68,7 +72,7 @@
                       📱 QR
                     </button>
                   ` : ''}
-                  ${isAdmin ? `
+                  ${canManage ? `
                     <button 
                       type="button" 
                       class="fin-toggle-paid-btn ${p.isPaid ? 'btn-paid' : 'btn-unpaid'}"
@@ -81,7 +85,7 @@
                     <span 
                       class="fin-toggle-paid-btn ${p.isPaid ? 'btn-paid' : 'btn-unpaid'}" 
                       style="cursor: default; opacity: 0.9; user-select: none;"
-                      title="Trạng thái xác nhận bởi Quản Trị Viên"
+                      title="Trạng thái xác nhận bởi Quản Trị Viên / Thủ Quỹ"
                     >
                       ${p.isPaid ? '🟢 ĐÃ NỘP' : '🔴 CHƯA NỘP'}
                     </span>
@@ -94,10 +98,15 @@
       }).join('');
     },
 
-    // 1-Chạm Toggle nộp tiền của 1 cầu thủ (Dành cho Quản trị viên)
+    // 1-Chạm Toggle nộp tiền của 1 cầu thủ (Dành cho Quản trị viên HOẶC Thủ Quỹ)
     togglePlayerPayment(playerId) {
-      if (!window.stateManager || !window.stateManager.isAdmin) {
-        alert('🔒 Bạn đang ở chế độ Thành Viên (Chỉ Xem). Vui lòng đăng nhập Quản Trị Viên (Mã PIN) để tick xác nhận nộp tiền!');
+      const isAdmin = window.stateManager ? window.stateManager.isAdmin : false;
+      const isTreasurer = (window.stateManager ? window.stateManager.isTreasurer : false)
+        || (window.TNT && window.TNT.funds && typeof window.TNT.funds.isTreasurer === 'function' ? window.TNT.funds.isTreasurer() : false)
+        || Boolean(sessionStorage.getItem('fc_tnt_treasurer_token') || localStorage.getItem('fc_tnt_treasurer_token'));
+
+      if (!isAdmin && !isTreasurer) {
+        alert('🔒 Bạn đang ở chế độ Thành Viên (Chỉ Xem). Vui lòng đăng nhập Quản Trị Viên hoặc Thủ Quỹ để tick xác nhận nộp tiền!');
         return;
       }
 
@@ -124,10 +133,15 @@
       }
     },
 
-    // Đánh dấu tất cả đã nộp hoặc chưa nộp
+    // Đánh dấu tất cả đã nộp hoặc chưa nộp (Quản trị viên HOẶC Thủ Quỹ)
     setAllPayments(isPaid) {
-      if (!window.stateManager || !window.stateManager.isAdmin) {
-        alert('🔒 Chỉ Quản Trị Viên mới có quyền thực hiện thao tác này!');
+      const isAdmin = window.stateManager ? window.stateManager.isAdmin : false;
+      const isTreasurer = (window.stateManager ? window.stateManager.isTreasurer : false)
+        || (window.TNT && window.TNT.funds && typeof window.TNT.funds.isTreasurer === 'function' ? window.TNT.funds.isTreasurer() : false)
+        || Boolean(sessionStorage.getItem('fc_tnt_treasurer_token') || localStorage.getItem('fc_tnt_treasurer_token'));
+
+      if (!isAdmin && !isTreasurer) {
+        alert('🔒 Thao tác này yêu cầu quyền Quản Trị Viên hoặc Thủ Quỹ!');
         return;
       }
 
@@ -149,7 +163,7 @@
       }
     },
 
-    // Trừ trực tiếp tiền sân vào ví số dư quỹ của các cầu thủ tham gia
+    // Trừ trực tiếp tiền sân vào ví số dư quỹ của các cầu thủ tham gia (Quyền Thủ Quỹ - 1 Chạm)
     async deductFromMemberFunds() {
       if (!this.currentFinanceData || !this.currentFinanceData.payments || this.currentFinanceData.payments.length === 0) {
         alert('Không có danh sách cầu thủ để trừ tiền quỹ!');
@@ -163,28 +177,50 @@
         return;
       }
 
-      const participantIds = fin.payments.map(p => p.playerId);
+      const payerId = fin.payerPlayerId;
+      // Chỉ lấy các cầu thủ CHƯA NỘP và KHÔNG PHẢI người đã ứng tiền
+      const unpaidPayments = (fin.payments || []).filter(p => !p.isPaid && p.playerId !== payerId);
+
+      if (unpaidPayments.length === 0) {
+        alert('✅ Tất cả thành viên trong trận đấu này đều ĐÃ NỘP TIỀN SÂN (hoặc là người ứng tiền)!\nKhông còn ai chưa nộp để trừ ví.');
+        return;
+      }
+
+      const participantIds = unpaidPayments.map(p => p.playerId);
       const count = participantIds.length;
+      const unpaidNames = unpaidPayments.map(p => p.playerName || 'Cầu thủ').join(', ');
 
       let treasurerToken = window.TNT && window.TNT.funds && typeof window.TNT.funds.getTreasurerToken === 'function'
         ? window.TNT.funds.getTreasurerToken()
         : (sessionStorage.getItem('fc_tnt_treasurer_token') || localStorage.getItem('fc_tnt_treasurer_token') || '');
 
+      // Nếu chưa có token trong phiên, yêu cầu nhập PIN Thủ Quỹ (chỉ nhập 1 lần)
       if (!treasurerToken) {
-        const pin = prompt('🔐 Thao tác này yêu cầu quyền Thủ Quỹ!\nVui lòng nhập Mã PIN Thủ Quỹ để thực hiện trừ tiền vào ví:');
+        const pin = prompt('🔐 Thao tác trừ ví yêu cầu quyền THỦ QUỸ!\nVui lòng nhập Mã PIN Thủ Quỹ:');
         if (!pin) return;
 
         try {
           const authRes = await fetch('/api/auth/treasurer/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin })
+            body: JSON.stringify({ pin: pin.trim() })
           });
           const authData = await authRes.json();
           if (authRes.ok && authData.success) {
             treasurerToken = authData.token;
             localStorage.setItem('fc_tnt_treasurer_token', treasurerToken);
+            if (window.stateManager) window.stateManager.isTreasurer = true;
             if (window.TNT && window.TNT.state) window.TNT.state.isTreasurer = true;
+            if (window.TNT && window.TNT.bus) {
+              window.TNT.bus.emit('auth:treasurer_changed', { isTreasurer: true, token: treasurerToken });
+            }
+            if (window.app && typeof window.app.updateAuthUI === 'function') {
+              window.app.updateAuthUI();
+            }
+            const match = window.stateManager ? window.stateManager.getMatchById(this.currentMatchId) : null;
+            if (match && typeof this.renderFinanceModal === 'function') {
+              this.renderFinanceModal(match);
+            }
           } else {
             alert(authData.error || 'Mã PIN Thủ Quỹ không chính xác!');
             return;
@@ -200,9 +236,11 @@
 
       const confirmMsg = `Xác nhận TRỪ TIỀN SÂN VÀO VÍ SỐ DƯ QUỸ:\n` +
         `- Số tiền trừ mỗi người: ${formatMoney(splitAmount)}\n` +
-        `- Số cầu thủ áp dụng: ${count} người\n` +
+        `- Số cầu thủ CHƯA NỘP sẽ trừ: ${count} người\n` +
+        `- Danh sách: ${unpaidNames}\n` +
         `- Trận đấu: FC TNT vs ${opponent}\n\n` +
-        `Hệ thống sẽ trừ thẳng vào ví của ${count} cầu thủ và tự động đánh dấu ĐÃ NỘP. Bạn có chắc chắn không?`;
+        `💡 Lưu ý: Hệ thống CHỈ TRỪ những người CHƯA NỘP. Những người đã nộp hoặc đã ứng tiền sẽ KHÔNG bị trừ lặp lại.\n` +
+        `Bạn có chắc chắn muốn thực hiện?`;
 
       if (!confirm(confirmMsg)) return;
 
@@ -231,6 +269,21 @@
               p.note = 'Trừ vào ví quỹ đội';
             }
           });
+
+          // Cập nhật ngay số dư ví trong local state để giao diện phản ánh tức thì
+          if (Array.isArray(data.updatedPlayers) && window.stateManager) {
+            data.updatedPlayers.forEach(up => {
+              const pl = window.stateManager.getPlayerById(up.playerId);
+              if (pl) {
+                pl.fundBalance = up.balanceAfter;
+              }
+            });
+          }
+
+          if (window.TNT && window.TNT.bus) {
+            window.TNT.bus.emit('funds:updated', data);
+            window.TNT.bus.emit('players:updated');
+          }
 
           this.updateQRAndStatsDisplay();
           this.renderChecklistTable();
@@ -265,7 +318,11 @@
         });
 
         if (showToast) {
-          alert('✅ Đã lưu cấu hình tiền sân và danh sách đóng tiền thành công!');
+          if (window.showToast) {
+            window.showToast('✅ Đã lưu cấu hình tiền sân và danh sách đóng tiền thành công!', 'success');
+          } else {
+            alert('✅ Đã lưu cấu hình tiền sân và danh sách đóng tiền thành công!');
+          }
           if (window.matchesModule && typeof window.matchesModule.renderMatches === 'function') {
             window.matchesModule.renderMatches();
           }

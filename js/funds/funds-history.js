@@ -20,6 +20,11 @@
       }
       this.historyFilterType = 'all';
       document.body.classList.remove('no-scroll');
+
+      // Đảm bảo số dư và bảng quỹ được làm mới khi đóng modal
+      if (typeof this.renderFundsPage === 'function') {
+        this.renderFundsPage();
+      }
     },
 
     async openHistoryModal(playerId = null) {
@@ -286,15 +291,31 @@
           this.rawTransactions = (this.rawTransactions || []).filter(t => t.id !== txId);
           this._renderHistoryRows();
 
-          if (typeof this.loadBalances === 'function') {
-            await this.loadBalances();
+          // 1. Cập nhật số dư bảng quỹ và các thẻ thống kê ngay lập tức mà không cần reload
+          if (typeof this.fetchBalances === 'function') {
+            await this.fetchBalances();
+          }
+          if (typeof this.renderFundsPage === 'function') {
+            this.renderFundsPage();
           }
 
-          if (window.stateManager && typeof window.stateManager.loadAllData === 'function') {
-            window.stateManager.loadAllData();
+          // 2. Đồng bộ lại dữ liệu toàn cục cho stateManager & các tab khác
+          if (window.stateManager && typeof window.stateManager.syncWithBackend === 'function') {
+            await window.stateManager.syncWithBackend(true);
+            if (typeof window.stateManager.notify === 'function') {
+              window.stateManager.notify();
+            }
           }
+          if (window.playersModule && typeof window.playersModule.renderPlayers === 'function') {
+            window.playersModule.renderPlayers();
+          }
+          if (window.matchesModule && typeof window.matchesModule.renderMatches === 'function') {
+            window.matchesModule.renderMatches();
+          }
+
+          // 3. Phát tín hiệu qua Event Bus
           if (window.TNT && window.TNT.bus) {
-            window.TNT.bus.emit('funds:updated', { deletedId: txId });
+            window.TNT.bus.emit('funds:updated', { deletedId: txId, newBalance: data.newBalance });
           }
         } else {
           alert('Không thể xóa giao dịch: ' + (data.error || 'Lỗi không xác định'));

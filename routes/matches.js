@@ -8,8 +8,9 @@ const Match = require('../models/Match');
 const { createAiRouter, analyzeMatchWithNLP, getPlayerAliases } = require('./ai');
 const { createLiveMatchRouter } = require('./liveMatch');
 
-function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpdate, requireAdmin }) {
+function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpdate, requireAdmin, requireAdminOrTreasurer }) {
   const router = express.Router();
+  const authFinance = requireAdminOrTreasurer || requireAdmin;
 
   // GET /api/matches
   router.get('/', async (req, res) => {
@@ -24,7 +25,7 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // POST /api/matches
+  // POST /api/matches (Chỉ Quản trị viên mới được tạo trận đấu)
   router.post('/', requireAdmin, async (req, res) => {
     try {
       const matchData = req.body;
@@ -44,8 +45,8 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // PUT /api/matches/:id
-  router.put('/:id', requireAdmin, async (req, res) => {
+  // PUT /api/matches/:id (Quản trị viên hoặc Thủ quỹ cập nhật cấu hình/tài chính)
+  router.put('/:id', authFinance, async (req, res) => {
     try {
       const { id } = req.params;
       const updates = req.body;
@@ -68,7 +69,7 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // DELETE /api/matches/:id
+  // DELETE /api/matches/:id (Chỉ Quản trị viên mới được xóa trận)
   router.delete('/:id', requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
@@ -87,8 +88,8 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // PUT /api/matches/:id/finance
-  router.put('/:id/finance', requireAdmin, async (req, res) => {
+  // PUT /api/matches/:id/finance (Quản trị viên HOẶC Thủ quỹ)
+  router.put('/:id/finance', authFinance, async (req, res) => {
     try {
       const { id } = req.params;
       const financeData = req.body;
@@ -116,8 +117,8 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
     }
   });
 
-  // PATCH /api/matches/:id/finance/toggle-payment
-  router.patch('/:id/finance/toggle-payment', requireAdmin, async (req, res) => {
+  // PATCH /api/matches/:id/finance/toggle-payment (Quản trị viên HOẶC Thủ quỹ)
+  router.patch('/:id/finance/toggle-payment', authFinance, async (req, res) => {
     try {
       const { id } = req.params;
       const { playerId, isPaid } = req.body;

@@ -102,6 +102,22 @@ class StateManager {
 
           // Đồng bộ lại dữ liệu tức thì từ server
           await this.syncWithBackend(true);
+          this.notify();
+
+          // Tự động làm mới trang Sổ Quỹ thời gian thực nếu có sự kiện về quỹ
+          if (payload && payload.type === 'funds') {
+            if (window.TNT && window.TNT.funds && typeof window.TNT.funds.fetchBalances === 'function') {
+              await window.TNT.funds.fetchBalances();
+              if (typeof window.TNT.funds.renderFundsPage === 'function') {
+                window.TNT.funds.renderFundsPage();
+              }
+            }
+          }
+
+          // Phát custom event cho các module khác tự động cập nhật
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('tnt:data_updated', { detail: payload }));
+          }
 
           if (payload && payload.message) {
             if (window.appModule && window.appModule.showToast) {

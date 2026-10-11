@@ -27,7 +27,7 @@ const LiveMatchDraft = require('./models/LiveMatchDraft');
 const Tactic = require('./models/Tactic');
 
 // Modular Route Handlers
-const { createAuthRouter, requireAdmin, getValidAdminPins } = require('./routes/auth');
+const { createAuthRouter, requireAdmin, requireTreasurer, requireAdminOrTreasurer, getValidAdminPins } = require('./routes/auth');
 const { createPlayersRouter } = require('./routes/players');
 const { createMatchesRouter } = require('./routes/matches');
 const { createAiRouter } = require('./routes/ai');
@@ -249,6 +249,8 @@ const routeContext = {
   fallbackData,
   broadcastDataUpdate,
   requireAdmin,
+  requireTreasurer,
+  requireAdminOrTreasurer,
   io
 };
 

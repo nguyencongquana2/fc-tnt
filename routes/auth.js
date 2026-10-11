@@ -53,10 +53,32 @@ function createAuthRouter(context) {
   return router;
 }
 
+// Middleware xác thực liên thông Quản trị viên HOẶC Thủ Quỹ (Dành cho nghiệp vụ tài chính trận đấu)
+const requireAdminOrTreasurer = async (req, res, next) => {
+  const adminToken = req.headers['x-admin-token'];
+  const treasurerToken = req.headers['x-treasurer-token'];
+
+  if (adminToken && await verifyAdminToken(adminToken)) {
+    req.isAdmin = true;
+    return next();
+  }
+
+  if (treasurerToken && await verifyTreasurerToken(treasurerToken)) {
+    req.isTreasurer = true;
+    return next();
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: 'Yêu cầu quyền Quản trị viên hoặc Thủ quỹ để thực hiện thao tác này!'
+  });
+};
+
 module.exports = {
   createAuthRouter,
   requireAdmin,
   requireTreasurer,
+  requireAdminOrTreasurer,
   requirePlayerAuth,
   verifyAdminToken,
   verifyTreasurerToken,

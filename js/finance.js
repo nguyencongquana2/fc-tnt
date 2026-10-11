@@ -19,6 +19,18 @@
 
       if (typeof window !== 'undefined') {
         setTimeout(() => this.initSocketListeners(), 1200);
+
+        if (root.TNT && root.TNT.bus) {
+          root.TNT.bus.on('auth:treasurer_changed', () => {
+            const modal = document.getElementById('match-finance-modal');
+            if (modal && modal.classList.contains('active') && this.currentMatchId) {
+              const match = window.stateManager ? window.stateManager.getMatchById(this.currentMatchId) : null;
+              if (match && typeof this.renderFinanceModal === 'function') {
+                this.renderFinanceModal(match);
+              }
+            }
+          });
+        }
       }
     }
   }
