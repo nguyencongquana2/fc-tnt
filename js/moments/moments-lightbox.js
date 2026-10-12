@@ -13,15 +13,6 @@ Object.assign(window.momentsModule, {
     this.openLightbox(media, index);
   },
 
-  openLightboxFromEnc(encJson, index) {
-    try {
-      const media = JSON.parse(decodeURIComponent(encJson));
-      this.openLightbox(media, index);
-    } catch (e) {
-      console.warn('[MomentsLightbox] Lỗi parse media JSON:', e.message);
-    }
-  },
-
   openLightbox(media, startIndex = 0) {
     if (!media || media.length === 0) return;
     this.currentLightboxMedia = media;

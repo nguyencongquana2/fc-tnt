@@ -19,10 +19,6 @@
       return sessionStorage.getItem(TREASURER_AUTH_KEY) || localStorage.getItem(TREASURER_AUTH_KEY) || '';
     },
 
-    isTreasurerUser() {
-      return Boolean(this.getTreasurerToken());
-    },
-
     async loginTreasurer(pin, remember = true) {
       try {
         const res = await fetch(`${API_BASE}/auth/treasurer/login`, {

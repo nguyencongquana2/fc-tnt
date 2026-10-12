@@ -133,20 +133,6 @@
   }
 }
 
-.funds-page-card {
-  background: rgba(13, 20, 36, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  padding: 1.15rem;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  box-sizing: border-box;
-}
-
 /* =========================================================================
    TOP SUMMARY CARDS (3 CARD THỐNG KÊ TỔNG QUAN)
    ========================================================================= */
@@ -442,8 +428,7 @@
   flex-wrap: wrap;
 }
 
-.funds-filter-pill,
-.fund-filter-pill {
+.funds-filter-pill {
   padding: 0.38rem 0.75rem;
   border-radius: 999px;
   font-size: 0.76rem;
@@ -457,15 +442,13 @@
   user-select: none;
 }
 
-.funds-filter-pill:hover,
-.fund-filter-pill:hover {
+.funds-filter-pill:hover {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   transform: translateY(-1px);
 }
 
-.funds-filter-pill.active,
-.fund-filter-pill.active {
+.funds-filter-pill.active {
   background: rgba(245, 158, 11, 0.2);
   color: #fbbf24;
   border-color: rgba(245, 158, 11, 0.5);
@@ -647,8 +630,7 @@
     scrollbar-width: none;
   }
 
-  .funds-filter-pill,
-  .fund-filter-pill {
+  .funds-filter-pill {
     flex-shrink: 0;
     font-size: 0.73rem;
     padding: 0.32rem 0.65rem;

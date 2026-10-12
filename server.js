@@ -27,7 +27,7 @@ const LiveMatchDraft = require('./models/LiveMatchDraft');
 const Tactic = require('./models/Tactic');
 
 // Modular Route Handlers
-const { createAuthRouter, requireAdmin, requireTreasurer, requireAdminOrTreasurer, getValidAdminPins } = require('./routes/auth');
+const { createAuthRouter, requireAdmin, requireTreasurer, requireAdminOrTreasurer } = require('./routes/auth');
 const { createPlayersRouter } = require('./routes/players');
 const { createMatchesRouter } = require('./routes/matches');
 const { createAiRouter } = require('./routes/ai');
@@ -41,7 +41,6 @@ const { createFundsRouter } = require('./routes/funds');
 const { securityHeadersMiddleware } = require('./utils/securityHeaders');
 const { globalRateLimiter } = require('./utils/rateLimiter');
 const OFFICIAL_TACTICS = require('./utils/officialTactics');
-const { getDefaultTacticsPieces } = require('./utils/tacticsPieces');
 const { initTacticsSocket } = require('./sockets/tacticsSocket');
 
 // Cấu hình CORS Whitelist theo biến môi trường [MED-03]

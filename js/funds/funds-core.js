@@ -215,10 +215,6 @@
       }
     }
 
-    renderFundsModal() {
-      return this.renderFundsPage();
-    }
-
     _renderFundsPageContent(container) {
       if (!container) return;
 
