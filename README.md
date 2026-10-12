@@ -51,10 +51,11 @@
 ### 5. 💰 Sổ Quỹ & Chia Tiền Sân Tự Động (VietQR Payment)
 - Nhập tổng tiền sân và nước uống -> Hệ thống tự động chia đều cho các thành viên tham gia thi đấu.
 - Tạo mã **VietQR** chuyển khoản tức thì kèm cú pháp nộp tiền chuẩn xác.
-- Theo dõi trạng thái đã đóng / chưa đóng tiền của từng người.
+- Theo dõi trạng thái đã đóng / chưa đóng tiền của từng người. Tích hợp Casso Webhook tự động đối soát giao dịch nộp tiền.
 
 ### 6. 🏆 Bảng Vinh Danh & Thống Kê Phong Độ (Hall of Fame)
-- Tự động thống kê và xếp hạng: **Top Ghi Bàn (Vua Phá Lưới)**, **Vua Kiến Tạo**, **Cầu Thủ Xuất Sắc Nhất Trận (MOTM)** và **Găng Tay Vàng**.
+- Đồng bộ trực quan 3 bảng xếp hạng: **Điểm trung bình (MVP)**, **Vua phá lưới (Chiếc Giày Vàng)** và **Vua kiến tạo (Nhạc Trưởng)**.
+- Hiệu ứng vinh danh đặc trưng với huy hiệu bục nhận thưởng và vòng hào quang avatar.
 
 ### 7. 📸 Bảng Tin Khoảnh Khắc (FC TNT Moments)
 - Đăng album ảnh kỷ niệm (liên hoan, ra mắt áo đấu, tiệc sinh nhật).
@@ -69,7 +70,7 @@
 
 ## 🏗️ Cấu Trúc Dự Án (Project Structure)
 
-Dự án được tổ chức theo mô hình phân tách trách nhiệm rõ ràng:
+Dự án được tổ chức theo kiến trúc **Modular Monolith** phân tách trách nhiệm rõ ràng:
 
 ```
 FC-TNT/
@@ -97,31 +98,36 @@ FC-TNT/
 │   ├── Match.js          # Chi tiết trận đấu & đội hình
 │   ├── LiveMatchDraft.js # Bản nháp trận đấu Live
 │   ├── Moment.js         # Bài đăng khoảnh khắc
+│   ├── ProcessedPayment.js # Lưu vết giao dịch VietQR (TTL Index 30 ngày chống Replay)
 │   └── Team.js           # Cấu hình đội bóng & Admin PIN
-├── routes/               # API Router Backend mô-đun hoá
-│   ├── auth.js           # API xác thực PIN & middleware requireAdmin
-│   ├── players.js        # API CRUD cầu thủ & avatar
+├── routes/               # API Router Backend mô-đun hoá (Modular Monolith)
+│   ├── auth/ & auth.js   # API xác thực PIN, PBKDF2 hash & middleware requireAdmin
+│   ├── funds/ & funds.js # API quản lý quỹ đội bóng, đối soát số dư & giao dịch
 │   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận
-│   ├── ai.js             # API AI rate match chấm điểm trận đấu & NLP Gemini
+│   ├── players.js        # API CRUD cầu thủ & avatar
+│   ├── payments.js       # Casso Webhook tự động đối soát VietQR
+│   ├── tactics.js        # API chiến thuật sơ đồ sân bóng
+│   ├── upload.js         # API lưu trữ ảnh Cloudinary an toàn
+│   ├── ai/ & ai.js       # API AI rate match chấm điểm trận đấu & NLP Gemini
 │   ├── liveMatch.js      # API live match sync bản nháp thời gian thực
 │   ├── moments.js        # API khoảnh khắc, cảm xúc & bình luận
-│   └── weather.js        # API thời tiết Open-Meteo & AI cố vấn mặt sân
+│   └── weather/ & weather.js # API thời tiết Open-Meteo & AI cố vấn mặt sân
 ├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung Backend & Frontend (UMD)
 │   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định
 │   ├── playerAliases.js   # Bảng bí danh cầu thủ cho AI NLP & Live Match Voice
-│   └── rateLimiter.js     # Bộ lọc trượt (Sliding Window) chống Brute-force PIN & bảo vệ Gemini API
+│   └── rateLimiter.js     # Bộ lọc trượt (Sliding Window) chống Brute-force PIN & DoS API
 ├── scripts/              # Công cụ tiện ích
 │   └── generate_favicons.py # Script Python tự động sinh bộ favicon & logo
-├── .env                  # Biến môi trường
+├── .env.example          # Mẫu biến môi trường (an toàn, không chứa secret)
 ├── index.html            # Khung giao diện chính SPA
 ├── manifest.json         # Cấu hình PWA
 ├── package.json          # Dependencies & npm scripts
-├── server.js             # App Bootstrap tinh gọn (~220 dòng)
+├── server.js             # App Bootstrap tinh gọn
 ├── ARCHITECTURE.md       # Tài liệu chi tiết kiến trúc kỹ thuật
 └── FEATURE_ROADMAP.md    # Lộ trình nâng cấp tính năng tương lai
 ```
 
-> Chi tiết kỹ thuật vui lòng tham khảo [ARCHITECTURE.md](file:///ARCHITECTURE.md).
+> Chi tiết kỹ thuật vui lòng tham khảo [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ---
 
@@ -142,24 +148,37 @@ npm install
 ```
 
 ### 3. Cấu hình biến môi trường (`.env`)
-Tạo file `.env` tại thư mục gốc của dự án:
+
+Sao chép file cấu hình mẫu `.env.example` để tạo file cấu hình cục bộ:
 ```bash
 cp .env.example .env
 ```
-Nội dung file `.env`:
+
+Mở file `.env` và thiết lập các giá trị phù hợp với môi trường của bạn:
 ```env
-# Cổng chạy ứng dụng
 PORT=3000
-
-# Chuỗi kết nối MongoDB (Local hoặc MongoDB Atlas)
-MONGODB_URI=mongodb://localhost:27017/fc_tnt
-
-# Mã PIN Quản trị viên (Dùng để thêm/sửa/xoá trận đấu và cầu thủ)
-ADMIN_PIN=123456
-
-# Google Gemini API Key (Dùng cho AI chấm điểm trận đấu & cố vấn thời tiết)
+MONGODB_URI=mongodb://localhost:27017/fc_ntn
+ADMIN_PIN=your_custom_admin_pin_here
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
+
+#### Bảng tra cứu các biến môi trường:
+
+| Biến môi trường | Bắt buộc | Mặc định / Ví dụ | Mục đích sử dụng |
+| :--- | :---: | :--- | :--- |
+| `PORT` | Không | `3000` | Cổng HTTP mà server lắng nghe |
+| `MONGODB_URI` | **Có** | `mongodb://localhost:27017/fc_ntn` | Chuỗi kết nối MongoDB (Local hoặc MongoDB Atlas) |
+| `ADMIN_PIN` | **Có** | `your_custom_admin_pin_here` | Mã PIN quyền Quản trị viên (Khuyến nghị: Tối thiểu 6 ký tự bí mật) |
+| `GEMINI_API_KEY` | Tùy chọn | `your_gemini_api_key_here` | API Key Google Gemini (kích hoạt AI chấm điểm trận & cố vấn thời tiết) |
+| `TREASURER_PIN` | Tùy chọn | `your_treasurer_pin_here` | Mã PIN phân quyền Thủ quỹ (chỉ thao tác thu/chi quỹ đội) |
+| `JWT_SECRET` | Tùy chọn | `your_super_secret_jwt_key` | Khóa bí mật dùng để ký xác thực token phiên |
+| `CASSO_WEBHOOK_TOKEN`| Tùy chọn | `your_casso_webhook_token` | Token bảo mật đối soát tự động giao dịch nộp tiền VietQR |
+
+> [!IMPORTANT]
+> **Quy chuẩn bảo mật dự án:**
+> - Tuyệt đối không commit file `.env` lên GitHub (đã được cấu hình chặn bởi `.gitignore`).
+> - Luôn thay thế `ADMIN_PIN` bằng mã số bí mật của riêng bạn trước khi triển khai thực tế.
+> - Trên môi trường Production (như Render), khai báo các biến này qua mục **Environment Variables** trên Dashboard quản lý.
 
 ### 4. Khởi động ứng dụng
 ```bash
@@ -175,9 +194,13 @@ Mở trình duyệt và truy cập: **`http://localhost:3000`**
 
 ## 🔐 Xác Thực & Quản Trị (Admin Access)
 
-- **Mã PIN mặc định**: `123456` (hoặc cấu hình qua biến `ADMIN_PIN` trong `.env`).
-- Để thao tác Thêm/Sửa/Xóa cầu thủ, tạo trận đấu mới, hoặc khôi phục dữ liệu, nhấn vào nút **"Đăng nhập Quản trị viên"** ở thanh điều hướng và nhập mã PIN.
-- Sau khi đăng nhập, hệ thống sẽ lưu token an toàn trong phiên làm việc.
+- Hệ thống bảo vệ các tính năng quan trọng (Thêm/Sửa/Xóa cầu thủ, tạo trận đấu mới, quản lý quỹ đội) thông qua **Mã PIN bảo mật** cấu hình tại biến môi trường `ADMIN_PIN`.
+- Để đăng nhập: Nhấn vào nút **"Đăng nhập Quản trị viên"** ở góc phải thanh điều hướng và nhập mã PIN của bạn.
+- Các cơ chế bảo mật chuyên sâu đi kèm:
+  - **Mã hóa PBKDF2**: Lưu trữ băm bảo mật kèm salt ngẫu nhiên cho mã PIN trong cơ sở dữ liệu.
+  - **Chống Timing Attack**: Sử dụng `crypto.timingSafeEqual` để loại trừ khả năng tấn công phân tích thời gian phản hồi.
+  - **Rate Limiting chống Brute-Force**: Giới hạn số lần thử mã PIN sai để chống việc dò quét tự động.
+  - **HMAC SHA-256 Token**: Cấp quyền phiên an toàn cho trình duyệt với cơ chế tự hủy token sau khi hết hạn.
 
 ---
 
@@ -193,16 +216,17 @@ Dự án được cấu hình sẵn để triển khai dễ dàng lên các nề
    - **Build Command**: `npm install`
    - **Start Command**: `node server.js`
 4. Khai báo các **Environment Variables**:
-   - `MONGODB_URI`: Chuỗi kết nối tới MongoDB Atlas.
-   - `ADMIN_PIN`: Mã PIN bảo mật cho Admin.
-   - `GEMINI_API_KEY`: API Key từ Google AI Studio.
+   - `MONGODB_URI`: Chuỗi kết nối tới MongoDB Atlas (kèm username/password).
+   - `ADMIN_PIN`: Mã PIN bảo mật cho Quản trị viên (đặt chuỗi bảo mật riêng của bạn).
+   - `GEMINI_API_KEY`: API Key lấy từ Google AI Studio.
+   - `NODE_ENV`: `production`
 
 ---
 
 ## 🗺️ Lộ Trình Phát Triển (Roadmap)
 
 Xem kế hoạch phát triển các tính năng tiếp theo (Tích hợp Bot thông báo Zalo, Sổ quỹ nâng cao, Điểm danh trận đấu...) tại tài liệu:
-👉 **[FEATURE_ROADMAP.md](file:///FEATURE_ROADMAP.md)**
+👉 **[FEATURE_ROADMAP.md](./FEATURE_ROADMAP.md)**
 
 ---
 
