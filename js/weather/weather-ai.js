@@ -7,20 +7,7 @@
 (function (root) {
   'use strict';
 
-  function escapeHtml(str) {
-    if (root.TNT && root.TNT.utils && typeof root.TNT.utils.escapeHtml === 'function') {
-      return root.TNT.utils.escapeHtml(str);
-    }
-    if (typeof root.escapeHtml === 'function') {
-      return root.escapeHtml(str);
-    }
-    return String(str || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
+  const escapeHtml = root.escapeHtml || (str => (str == null ? '' : String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;')));
 
   const WeatherAiMixin = {
     renderAiChat() {
