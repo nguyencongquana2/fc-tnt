@@ -245,12 +245,19 @@ Object.assign(window.matchesModule, {
               ${subs.length > 0 ? subs.map(ps => {
                 const p = window.stateManager.getPlayerById(ps.playerId);
                 if (!p) return '';
+                const isGuest = window.TNTGuestJersey ? window.TNTGuestJersey.isGuestPlayer(p) : Boolean(p.isGuest);
+                let avatarSrc = p.avatar;
+                if ((!avatarSrc || avatarSrc.includes('unsplash')) && isGuest && window.TNTGuestJersey) {
+                  avatarSrc = window.TNTGuestJersey.generateJerseyDataUri(p.jerseyColor || 'white', p.number || 'K', p.invitedBy);
+                }
+                if (!avatarSrc) avatarSrc = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+
                 const rating = Number(ps.rating) || 7.0;
                 const ratingClass = this.getRatingClass(rating);
                 const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
 
                 return `
-                  <div class="sub-player-card" 
+                  <div class="sub-player-card ${isGuest ? 'is-guest' : 'is-official'}" 
                        id="player-card-${p.id}"
                        draggable="true"
                        ondragstart="window.matchesModule.handleDragStart(event, '${p.id}', 'BENCH')"
@@ -259,13 +266,17 @@ Object.assign(window.matchesModule, {
                        ondragleave="window.matchesModule.handleSubCardDragLeave(event)"
                        ondrop="window.matchesModule.handleSubCardDrop(event, '${p.id}')"
                        onclick="window.matchesModule.openQuickEdit('${p.id}')">
+                    ${isGuest 
+                      ? `<span class="sub-guest-badge-icon" title="Viện binh / Khách">🤝</span>` 
+                      : `<span class="sub-official-badge-icon" title="Thành viên chính thức FC TNT">⭐</span>`
+                    }
                     ${ps.note ? `<div class="sub-speech-indicator" title="Nhận xét: ${window.escapeHtml(ps.note)}">💬</div>` : ''}
                     <div class="sub-avatar-wrap">
-                      <img class="sub-avatar" src="${p.avatar}" alt="${window.escapeHtml(displayName)}">
+                      <img class="sub-avatar" src="${avatarSrc}" alt="${window.escapeHtml(displayName)}">
                       <span class="sub-rating-badge ${ratingClass}">${rating.toFixed(1)}</span>
                     </div>
                     <div class="sub-name">${window.escapeHtml(displayName)}</div>
-                    <div class="sub-pos">#${p.number} • ${p.position}</div>
+                    <div class="sub-pos">#${p.number} • ${p.position} ${isGuest && p.invitedBy ? `<span style="color: var(--accent-gold); font-size: 0.65rem;">(${window.escapeHtml(p.invitedBy)})</span>` : ''}</div>
                     ${ps.goals > 0 ? `<span style="font-size: 0.72rem; color: var(--accent-ruby); font-weight:700; margin-top:2px;">⚽ ${ps.goals}</span>` : ''}
                     ${ps.assists > 0 ? `<span style="font-size: 0.72rem; color: var(--accent-cyan); font-weight:700;">👟 ${ps.assists}</span>` : ''}
                   </div>

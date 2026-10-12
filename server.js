@@ -39,6 +39,7 @@ const createUploadRouter = require('./routes/upload');
 const { createPaymentsRouter } = require('./routes/payments');
 const { createFundsRouter } = require('./routes/funds');
 const { securityHeadersMiddleware } = require('./utils/securityHeaders');
+const { globalRateLimiter } = require('./utils/rateLimiter');
 const OFFICIAL_TACTICS = require('./utils/officialTactics');
 const { getDefaultTacticsPieces } = require('./utils/tacticsPieces');
 const { initTacticsSocket } = require('./sockets/tacticsSocket');
@@ -99,6 +100,7 @@ app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(securityHeadersMiddleware);
 app.use(cors(corsOptions));
+app.use('/api', globalRateLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

@@ -51,13 +51,21 @@
       const p = window.stateManager ? window.stateManager.getPlayerById(ps.playerId) : null;
       if (!p) return '';
 
+      const isGuest = root.TNTGuestJersey ? root.TNTGuestJersey.isGuestPlayer(p) : Boolean(p.isGuest);
+      let avatarSrc = p.avatar;
+      if ((!avatarSrc || avatarSrc.includes('unsplash')) && isGuest && root.TNTGuestJersey) {
+        avatarSrc = root.TNTGuestJersey.generateJerseyDataUri(p.jerseyColor || 'white', p.number || 'K', p.invitedBy);
+      }
+      if (!avatarSrc) avatarSrc = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+
       const rating = Number(ps.rating) || 7.0;
       const ratingClass = typeof this.getRatingClass === 'function' ? this.getRatingClass(rating) : '';
       const isMOTM = ps.playerId === motmId && rating >= 7.0;
       const displayName = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : p.name;
+      const guestSponsorTag = isGuest && p.invitedBy ? `<span class="pitch-guest-tag">(${escapeHtml(p.invitedBy)})</span>` : '';
 
       return `
-        <div class="sofascore-player-node" 
+        <div class="sofascore-player-node ${isGuest ? 'is-guest' : ''}" 
              id="pitch-player-${p.id}"
              draggable="true"
              ondragstart="window.matchesModule.handleDragStart(event, '${p.id}', '${slotId}')"
@@ -66,10 +74,14 @@
              ondragleave="window.matchesModule.handleSlotDragLeave(event)"
              ondrop="window.matchesModule.handleSlotDrop(event, '${slotId}', '${p.id}')"
              onclick="window.matchesModule.openQuickEdit('${p.id}')"
-             title="Kéo để đổi vị trí hoặc bấm để chấm điểm">
+             title="${escapeHtml(displayName)}${isGuest ? ' (Viện binh / Khách)' : ''} - Kéo để đổi vị trí hoặc bấm để chấm điểm">
           
           <div class="sofascore-avatar-box">
-            <img class="sofascore-avatar-img" src="${p.avatar}" alt="${escapeHtml(displayName)}">
+            <img class="sofascore-avatar-img" src="${avatarSrc}" alt="${escapeHtml(displayName)}">
+            ${isGuest 
+              ? `<div class="sofa-guest-badge-icon" title="Viện binh / Khách mời">🤝</div>` 
+              : `<div class="sofa-official-star-icon" title="Thành viên chính thức FC TNT">⭐</div>`
+            }
             ${ps.note ? `<div class="sofa-speech-indicator" title="Nhận xét: ${escapeHtml(ps.note)}">💬</div>` : ''}
             
             <!-- HUY HIỆU BÊN PHẢI (⚽ BÀN THẮNG & 👟 KIẾN TẠO CHUẨN SOFASCORE) -->
@@ -102,7 +114,7 @@
             </div>
           </div>
 
-          <div class="sofascore-player-name">${p.number} ${escapeHtml(displayName)}</div>
+          <div class="sofascore-player-name">${p.number} ${escapeHtml(displayName)} ${guestSponsorTag}</div>
           <div style="font-size: 0.62rem; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px #000; font-weight:700;">${escapeHtml(roleLabel)}</div>
         </div>
       `;

@@ -8,7 +8,7 @@ const Moment = require('../models/Moment');
 const Player = require('../models/Player');
 const { verifyAdminToken, verifyPlayerToken } = require('./auth');
 const { commentRateLimiter, reactionRateLimiter } = require('../utils/rateLimiter');
-const { isValidReaction, validateCommentInput } = require('../utils/validators');
+const { isValidReaction, validateCommentInput, isValidHttpUrl } = require('../utils/validators');
 
 function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate, requireAdmin }) {
   const router = express.Router();
@@ -59,6 +59,13 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         return res.status(400).json({ error: 'Tiêu đề và ngày diễn ra kỷ niệm là bắt buộc!' });
       }
 
+      if (momentData.videoUrl) {
+        const vUrl = String(momentData.videoUrl).trim();
+        if (vUrl && !isValidHttpUrl(vUrl)) {
+          return res.status(400).json({ error: 'Đường dẫn video không an toàn hoặc không hợp lệ (phải bắt đầu bằng http:// hoặc https://)!' });
+        }
+      }
+
       if (!momentData.id) {
         momentData.id = 'moment_' + Date.now();
       }
@@ -94,7 +101,8 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // PUT /api/moments/:id
   router.put('/:id', async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID khoảnh khắc không hợp lệ!' });
       const adminToken = req.headers['x-admin-token'];
       const playerToken = req.headers['x-player-token'];
       const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
@@ -117,8 +125,15 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         }
       }
 
+      if (updateData.videoUrl) {
+        const vUrl = String(updateData.videoUrl).trim();
+        if (vUrl && !isValidHttpUrl(vUrl)) {
+          return res.status(400).json({ error: 'Đường dẫn video không an toàn hoặc không hợp lệ (phải bắt đầu bằng http:// hoặc https://)!' });
+        }
+      }
+
       if (isMongoConnected()) {
-        const existing = await Moment.findOne({ id });
+        const existing = await Moment.findOne({ id: cleanId });
         if (!existing) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
         const isPostOwner = Boolean(existing.authorId && playerSession && existing.authorId === playerSession.playerId);
@@ -126,13 +141,13 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
           return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới được sửa bài này!' });
         }
 
-        const updated = await Moment.findOneAndUpdate({ id }, updateData, { new: true });
+        const updated = await Moment.findOneAndUpdate({ id: cleanId }, updateData, { new: true });
         broadcastDataUpdate('moments', `📸 Bài viết "${updated.title}" vừa được cập nhật!`);
         return res.json(updated);
       }
 
       fallbackData.moments = fallbackData.moments || [];
-      const idx = fallbackData.moments.findIndex(m => m.id === id);
+      const idx = fallbackData.moments.findIndex(m => m.id === cleanId);
       if (idx !== -1) {
         const existing = fallbackData.moments[idx];
         const isPostOwner = Boolean(existing.authorId && playerSession && existing.authorId === playerSession.playerId);
@@ -152,7 +167,8 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // DELETE /api/moments/:id
   router.delete('/:id', async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID khoảnh khắc không hợp lệ!' });
       const adminToken = req.headers['x-admin-token'];
       const playerToken = req.headers['x-player-token'];
       const isAdmin = await verifyAdminToken(adminToken, isMongoConnected);
@@ -167,7 +183,7 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       }
 
       if (isMongoConnected()) {
-        const existing = await Moment.findOne({ id });
+        const existing = await Moment.findOne({ id: cleanId });
         if (!existing) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc để xóa' });
 
         const isPostOwner = Boolean(existing.authorId && playerSession && existing.authorId === playerSession.playerId);
@@ -175,13 +191,13 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
           return res.status(403).json({ error: 'Chỉ tác giả bài viết hoặc Quản trị viên mới có quyền xóa bài này!' });
         }
 
-        await Moment.findOneAndDelete({ id });
+        await Moment.findOneAndDelete({ id: cleanId });
         broadcastDataUpdate('moments', '📸 Một khoảnh khắc vừa được xóa.');
-        return res.json({ success: true, id });
+        return res.json({ success: true, id: cleanId });
       }
 
       fallbackData.moments = fallbackData.moments || [];
-      const idx = fallbackData.moments.findIndex(m => m.id === id);
+      const idx = fallbackData.moments.findIndex(m => m.id === cleanId);
       if (idx !== -1) {
         const existing = fallbackData.moments[idx];
         const isPostOwner = Boolean(existing.authorId && playerSession && existing.authorId === playerSession.playerId);
@@ -190,7 +206,7 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         }
         fallbackData.moments.splice(idx, 1);
         broadcastDataUpdate('moments', '📸 Một khoảnh khắc vừa được xóa.');
-        return res.json({ success: true, id });
+        return res.json({ success: true, id: cleanId });
       }
       res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
     } catch (err) {
@@ -201,7 +217,8 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // POST /api/moments/:id/react (Thả cảm xúc - rate limiter chống spam)
   router.post('/:id/react', reactionRateLimiter, async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID khoảnh khắc không hợp lệ!' });
       const { reactionType, userKey = 'anonymous' } = req.body;
 
       if (!isValidReaction(reactionType)) {
@@ -211,11 +228,11 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       const playerToken = req.headers['x-player-token'];
       const playerSession = verifyPlayerToken(playerToken);
       const safeUserKey = (playerSession && playerSession.playerId)
-        ? playerSession.playerId
+        ? String(playerSession.playerId).trim()
         : (typeof userKey === 'string' && userKey.trim() ? userKey.trim().slice(0, 80) : 'anonymous');
 
       if (isMongoConnected()) {
-        const moment = await Moment.findOne({ id });
+        const moment = await Moment.findOne({ id: cleanId });
         if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
         if (!moment.reactions) {
@@ -269,7 +286,8 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // POST /api/moments/:id/comments (Đăng bình luận - rate limiter & validation chống spam/XSS)
   router.post('/:id/comments', commentRateLimiter, async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID khoảnh khắc không hợp lệ!' });
       const validation = validateCommentInput(req.body || {});
 
       if (!validation.isValid) {
@@ -354,7 +372,9 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // DELETE /api/moments/:id/comments/:commentId (Xóa bình luận - Admin hoặc chính chủ)
   router.delete('/:id/comments/:commentId', async (req, res) => {
     try {
-      const { id, commentId } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      const cleanCommentId = String(req.params.commentId || '').trim();
+      if (!cleanId || !cleanCommentId) return res.status(400).json({ error: 'ID khoảnh khắc hoặc ID bình luận không hợp lệ!' });
       const adminToken = req.headers['x-admin-token'];
       const playerToken = req.headers['x-player-token'];
 
@@ -366,10 +386,10 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       }
 
       if (isMongoConnected()) {
-        const moment = await Moment.findOne({ id });
+        const moment = await Moment.findOne({ id: cleanId });
         if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
-        const comment = (moment.comments || []).find(c => c.id === commentId);
+        const comment = (moment.comments || []).find(c => c.id === cleanCommentId);
         if (!comment) return res.status(404).json({ error: 'Không tìm thấy bình luận' });
 
         const cAuthorId = comment.authorId ? String(comment.authorId) : '';
@@ -382,19 +402,19 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         }
 
         const updated = await Moment.findOneAndUpdate(
-          { id },
-          { $pull: { comments: { id: commentId } } },
+          { id: cleanId },
+          { $pull: { comments: { id: cleanCommentId } } },
           { new: true }
         );
-        broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: id, action: 'delete_comment', commentId });
+        broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: cleanId, action: 'delete_comment', commentId: cleanCommentId });
         return res.json({ success: true, comments: updated ? updated.comments : [] });
       }
 
       fallbackData.moments = fallbackData.moments || [];
-      const moment = fallbackData.moments.find(m => m.id === id);
+      const moment = fallbackData.moments.find(m => m.id === cleanId);
       if (!moment) return res.status(404).json({ error: 'Không tìm thấy khoảnh khắc' });
 
-      const comment = (moment.comments || []).find(c => c.id === commentId);
+      const comment = (moment.comments || []).find(c => c.id === cleanCommentId);
       if (!comment) return res.status(404).json({ error: 'Không tìm thấy bình luận' });
 
       const cAuthorId = comment.authorId ? String(comment.authorId) : '';
@@ -406,8 +426,8 @@ function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         return res.status(403).json({ error: 'Chỉ tác giả bình luận hoặc Ban Quản Trị mới có quyền xóa bình luận này!' });
       }
 
-      moment.comments = (moment.comments || []).filter(c => c.id !== commentId);
-      broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: id, action: 'delete_comment', commentId });
+      moment.comments = (moment.comments || []).filter(c => c.id !== cleanCommentId);
+      broadcastDataUpdate('moments', '💬 Bình luận đã được xóa.', { momentId: cleanId, action: 'delete_comment', commentId: cleanCommentId });
       res.json({ success: true, comments: moment.comments });
     } catch (err) {
       console.warn('[Moments] Lỗi xóa comment:', err.message);

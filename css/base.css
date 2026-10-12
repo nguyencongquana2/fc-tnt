@@ -520,6 +520,230 @@ body {
   margin-top: 0.35rem;
 }
 
+/* ==========================================================================
+   DASHBOARD MINI SPOTLIGHT LEADERS (SYNCHRONIZED WITH AWARDS TAB)
+   ========================================================================== */
+.spotlight-card {
+  border-radius: var(--radius-xl);
+  padding: 1.25rem 1.35rem;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight-card:hover {
+  transform: translateY(-4px);
+}
+
+.spotlight-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.spotlight-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.spotlight-icon-badge.mvp {
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+.spotlight-icon-badge.scorer {
+  background: linear-gradient(135deg, #ef4444, #ea580c);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+.spotlight-icon-badge.assist {
+  background: linear-gradient(135deg, #06b6d4, #0d9488);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+/* 1. Spotlight MVP (Royal Gold) */
+.stat-card.spotlight-mvp {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.85) 60%, var(--bg-card) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(245, 158, 11, 0.08);
+}
+.stat-card.spotlight-mvp::before {
+  background: linear-gradient(to right, #fbbf24, #f59e0b, transparent);
+  height: 3px;
+}
+.stat-card.spotlight-mvp:hover {
+  border-color: rgba(245, 158, 11, 0.7);
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.25);
+}
+.label-mvp {
+  color: #fbbf24 !important;
+  font-weight: 800;
+}
+
+/* 2. Spotlight Scorer (Crimson / Fiery Orange) */
+.stat-card.spotlight-scorer {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, rgba(15, 23, 42, 0.85) 60%, var(--bg-card) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(239, 68, 68, 0.08);
+}
+.stat-card.spotlight-scorer::before {
+  background: linear-gradient(to right, #ef4444, #f97316, transparent);
+  height: 3px;
+}
+.stat-card.spotlight-scorer:hover {
+  border-color: rgba(239, 68, 68, 0.7);
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.25);
+}
+.label-scorer {
+  color: #f87171 !important;
+  font-weight: 800;
+}
+
+/* 3. Spotlight Assist (Electric Cyan / Neon Emerald) */
+.stat-card.spotlight-assist {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.14) 0%, rgba(15, 23, 42, 0.85) 60%, var(--bg-card) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(6, 182, 212, 0.08);
+}
+.stat-card.spotlight-assist::before {
+  background: linear-gradient(to right, #06b6d4, #10b981, transparent);
+  height: 3px;
+}
+.stat-card.spotlight-assist:hover {
+  border-color: rgba(6, 182, 212, 0.7);
+  box-shadow: 0 10px 30px rgba(6, 182, 212, 0.25);
+}
+.label-assist {
+  color: #22d3ee !important;
+  font-weight: 800;
+}
+
+/* Spotlight Player Row Layout */
+.spotlight-player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.spotlight-avatar-box {
+  position: relative;
+  border-radius: 50%;
+  padding: 2.5px;
+  flex-shrink: 0;
+}
+
+.spotlight-avatar-box img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.spotlight-avatar-box.wrap-mvp {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.45);
+}
+.spotlight-avatar-box.wrap-scorer {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+.spotlight-avatar-box.wrap-assist {
+  background: linear-gradient(135deg, #06b6d4, #10b981);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+}
+
+.spotlight-avatar-crown {
+  position: absolute;
+  top: -8px;
+  right: -5px;
+  font-size: 0.95rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.spotlight-player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.spotlight-player-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotlight-player-sub {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Stat Pill Badge inside Spotlight */
+.spotlight-stat-pill {
+  font-family: var(--font-display);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.spotlight-stat-pill .stat-val {
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.spotlight-stat-pill .stat-icon {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+.spotlight-stat-pill.badge-mvp {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15);
+}
+
+.spotlight-stat-pill.badge-scorer {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.15);
+}
+
+.spotlight-stat-pill.badge-assist {
+  background: rgba(6, 182, 212, 0.2);
+  color: #67e8f9;
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  box-shadow: 0 2px 10px rgba(6, 182, 212, 0.15);
+}
+
+.spotlight-empty-hint {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  padding: 0.6rem 0;
+  font-style: italic;
+}
+
 
 /* ==========================================================================
    ADMIN & VIEWER AUTHENTICATION STYLES

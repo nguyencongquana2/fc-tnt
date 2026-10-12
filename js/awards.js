@@ -63,18 +63,27 @@ window.awardsModule = {
     const top3 = list[2] || null;
     const restList = list.slice(3, 10); // Positions 4 to 10
 
+    const isMvp = categoryType === 'mvp';
+    const isScorer = categoryType === 'scorer';
+    const isAssist = categoryType === 'assist';
+    const rank1Crown = isScorer ? '🔥' : (isAssist ? '🎯' : '👑');
+    const rank1BaseLabel = isScorer ? '⚽ 1' : (isAssist ? '🎯 1' : '🏆 1');
+    const unitText = isMvp ? 'Điểm' : (isScorer ? 'Bàn' : 'Kiến tạo');
+
     let podiumHtml = `
-      <div class="podium-wrapper">
+      <div class="podium-wrapper category-${categoryType}">
         <!-- Rank 2 -->
         ${top2 ? `
           <div class="podium-step rank-2" onclick="window.playersModule.viewPlayerProfile('${top2.player.id}')" style="cursor: pointer;">
             <div class="podium-player-card">
               <div class="podium-avatar-wrap">
-                <img class="podium-avatar" src="${top2.player.avatar}" alt="${top2.player.name}">
+                <img class="podium-avatar" src="${top2.player.avatar}" alt="${window.escapeHtml(top2.player.name)}">
                 <div class="podium-rank-badge">2</div>
               </div>
               <div class="podium-player-name">${window.escapeHtml(top2.player.nickname || top2.player.name)}</div>
-              <div class="podium-player-stat" style="color: var(--accent-silver);">${top2[statKey]} ${statIcon}</div>
+              <div class="podium-player-stat stat-pill-${categoryType}">
+                <span>${top2[statKey]}</span> <span>${statIcon}</span>
+              </div>
             </div>
             <div class="podium-base">🥈 2</div>
           </div>
@@ -84,15 +93,17 @@ window.awardsModule = {
         ${top1 ? `
           <div class="podium-step rank-1" onclick="window.playersModule.viewPlayerProfile('${top1.player.id}')" style="cursor: pointer;">
             <div class="podium-player-card">
-              <span class="podium-crown">👑</span>
+              <span class="podium-crown">${rank1Crown}</span>
               <div class="podium-avatar-wrap">
                 <img class="podium-avatar" src="${top1.player.avatar}" alt="${window.escapeHtml(top1.player.name)}">
                 <div class="podium-rank-badge">1</div>
               </div>
-              <div class="podium-player-name" style="font-weight: 800; color: #fbbf24;">${window.escapeHtml(top1.player.nickname || top1.player.name)}</div>
-              <div class="podium-player-stat" style="color: #fbbf24;">${top1[statKey]} ${statIcon}</div>
+              <div class="podium-player-name podium-name-rank1">${window.escapeHtml(top1.player.nickname || top1.player.name)}</div>
+              <div class="podium-player-stat stat-pill-${categoryType} stat-pill-hero">
+                <span class="stat-num">${top1[statKey]}</span> <span class="stat-unit">${statIcon} ${unitText}</span>
+              </div>
             </div>
-            <div class="podium-base">🏆 1</div>
+            <div class="podium-base">${rank1BaseLabel}</div>
           </div>
         ` : '<div class="podium-step rank-1"><div class="podium-base">-</div></div>'}
 
@@ -105,7 +116,9 @@ window.awardsModule = {
                 <div class="podium-rank-badge">3</div>
               </div>
               <div class="podium-player-name">${window.escapeHtml(top3.player.nickname || top3.player.name)}</div>
-              <div class="podium-player-stat" style="color: var(--accent-bronze);">${top3[statKey]} ${statIcon}</div>
+              <div class="podium-player-stat stat-pill-${categoryType}">
+                <span>${top3[statKey]}</span> <span>${statIcon}</span>
+              </div>
             </div>
             <div class="podium-base">🥉 3</div>
           </div>
@@ -117,19 +130,19 @@ window.awardsModule = {
     let listHtml = '';
     if (restList.length > 0) {
       listHtml = `
-        <div class="leaderboard-list">
+        <div class="leaderboard-list category-${categoryType}">
           ${restList.map((item, idx) => `
-            <div class="leaderboard-row" onclick="window.playersModule.viewPlayerProfile('${item.player.id}')" style="cursor: pointer;">
+            <div class="leaderboard-row row-${categoryType}" onclick="window.playersModule.viewPlayerProfile('${item.player.id}')" style="cursor: pointer;">
               <div class="row-left">
                 <span class="rank-num">#${idx + 4}</span>
-                <img class="row-avatar" src="${item.player.avatar}" alt="${item.player.name}">
+                <img class="row-avatar" src="${item.player.avatar}" alt="${window.escapeHtml(item.player.name)}">
                 <div class="row-info">
-                  <h4>${item.player.nickname || item.player.name}</h4>
+                  <h4>${window.escapeHtml(item.player.nickname || item.player.name)}</h4>
                   <span>${item.player.position} #${item.player.number} • ${item.matchesPlayed} trận</span>
                 </div>
               </div>
-              <div class="row-stat-value" style="color: var(--accent-emerald);">
-                ${item[statKey]} ${statIcon}
+              <div class="row-stat-badge stat-badge-${categoryType}">
+                <span>${item[statKey]}</span> <span>${statIcon}</span>
               </div>
             </div>
           `).join('')}

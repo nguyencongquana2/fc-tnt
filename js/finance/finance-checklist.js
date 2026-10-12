@@ -38,7 +38,14 @@
 
       listContainer.innerHTML = payments.map((p, idx) => {
         const player = allPlayers.find(x => x.id === p.playerId);
-        const avatar = player ? player.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+        const isGuestFn = (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function')
+          ? root.TNTGuestJersey.isGuestPlayer
+          : (pl => Boolean(pl && (pl.isGuest || pl.invitedBy)));
+        const isGuest = isGuestFn(player);
+        let avatar = player ? player.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+        if (isGuest && root.TNTGuestJersey && (!avatar || avatar.includes('unsplash'))) {
+          avatar = root.TNTGuestJersey.generateJerseyDataUri(player?.jerseyColor || 'white', player?.number || 'K', player?.invitedBy);
+        }
         const isPayer = (p.playerId === this.currentFinanceData.payerPlayerId);
 
         return `
@@ -46,10 +53,14 @@
             <td style="width: 40px; text-align: center; color: var(--text-dim); font-weight: 600;">${idx + 1}</td>
             <td>
               <div style="display: flex; align-items: center; gap: 0.6rem;">
-                <img src="${avatar}" alt="${window.escapeHtml(p.playerName)}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid ${p.isPaid ? 'var(--accent-emerald)' : 'rgba(255,255,255,0.1)'};">
+                <img src="${avatar}" alt="${window.escapeHtml(p.playerName)}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid ${p.isPaid ? 'var(--accent-emerald)' : (isGuest ? 'rgba(245, 158, 11, 0.7)' : 'rgba(255,255,255,0.1)')};">
                 <div>
-                  <strong style="color: var(--text-main); font-size: 0.95rem;">${window.escapeHtml(p.playerName)}</strong>
-                  ${isPayer ? '<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); font-size: 0.7rem; margin-left: 4px; padding: 2px 6px; border-radius: 4px;">Người ứng tiền</span>' : ''}
+                  <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                    <strong style="color: var(--text-main); font-size: 0.95rem;">${window.escapeHtml(p.playerName)}</strong>
+                    ${isPayer ? '<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px;">Người ứng tiền</span>' : ''}
+                    ${isGuest ? `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); font-size: 0.68rem; padding: 1px 5px; border-radius: 4px;" title="Cầu thủ Khách: Vui lòng nộp qua VietQR hoặc tiền mặt (không trừ ví quỹ)">🤝 Khách${player && player.invitedBy ? ` (${window.escapeHtml(player.invitedBy)})` : ''}</span>` : ''}
+                  </div>
+                  ${p.note ? `<div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 1px;">${window.escapeHtml(p.note)}</div>` : ''}
                 </div>
               </div>
             </td>
@@ -178,17 +189,42 @@
       }
 
       const payerId = fin.payerPlayerId;
-      // Chỉ lấy các cầu thủ CHƯA NỘP và KHÔNG PHẢI người đã ứng tiền
-      const unpaidPayments = (fin.payments || []).filter(p => !p.isPaid && p.playerId !== payerId);
+      const allPlayers = window.stateManager ? window.stateManager.getPlayers() : [];
+      const isGuestFn = (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function')
+        ? root.TNTGuestJersey.isGuestPlayer
+        : (pl => Boolean(pl && (pl.isGuest || pl.invitedBy)));
 
-      if (unpaidPayments.length === 0) {
-        alert('✅ Tất cả thành viên trong trận đấu này đều ĐÃ NỘP TIỀN SÂN (hoặc là người ứng tiền)!\nKhông còn ai chưa nộp để trừ ví.');
+      // Tách bạch: Thành viên chính thức vs Khách mời chưa nộp
+      const unpaidOfficial = [];
+      const unpaidGuests = [];
+
+      (fin.payments || []).forEach(p => {
+        if (p.isPaid || p.playerId === payerId) return;
+        const pl = allPlayers.find(x => x.id === p.playerId);
+        if (isGuestFn(pl) || (p.note && p.note.includes('Khách'))) {
+          unpaidGuests.push({ payment: p, player: pl });
+        } else {
+          unpaidOfficial.push({ payment: p, player: pl });
+        }
+      });
+
+      if (unpaidOfficial.length === 0) {
+        if (unpaidGuests.length > 0) {
+          const guestNames = unpaidGuests.map(g => g.payment.playerName).join(', ');
+          alert(
+            `ℹ️ Tất cả THÀNH VIÊN CHÍNH THỨC đều đã nộp tiền sân (hoặc đã ứng tiền)!\n\n` +
+            `⚠️ Hiện còn ${unpaidGuests.length} KHÁCH MỜI chưa nộp:\n👉 ${guestNames}\n\n` +
+            `💡 Khách mời không có ví số dư quỹ đội. Vui lòng cho khách quét mã VietQR hoặc thu tiền mặt trực tiếp!`
+          );
+        } else {
+          alert('✅ Tất cả thành viên trong trận đấu này đều ĐÃ NỘP TIỀN SÂN (hoặc là người ứng tiền)!\nKhông còn ai chưa nộp để trừ ví.');
+        }
         return;
       }
 
-      const participantIds = unpaidPayments.map(p => p.playerId);
+      const participantIds = unpaidOfficial.map(item => item.payment.playerId);
       const count = participantIds.length;
-      const unpaidNames = unpaidPayments.map(p => p.playerName || 'Cầu thủ').join(', ');
+      const unpaidNames = unpaidOfficial.map(item => item.payment.playerName || 'Cầu thủ').join(', ');
 
       let treasurerToken = window.TNT && window.TNT.funds && typeof window.TNT.funds.getTreasurerToken === 'function'
         ? window.TNT.funds.getTreasurerToken()
@@ -234,12 +270,19 @@
       const match = window.stateManager ? window.stateManager.getMatchById(this.currentMatchId) : null;
       const opponent = match ? match.opponent : 'Đối thủ';
 
-      const confirmMsg = `Xác nhận TRỪ TIỀN SÂN VÀO VÍ SỐ DƯ QUỸ:\n` +
+      let confirmMsg = `Xác nhận TRỪ TIỀN SÂN VÀO VÍ SỐ DƯ QUỸ:\n` +
         `- Số tiền trừ mỗi người: ${formatMoney(splitAmount)}\n` +
-        `- Số cầu thủ CHƯA NỘP sẽ trừ: ${count} người\n` +
-        `- Danh sách: ${unpaidNames}\n` +
-        `- Trận đấu: FC TNT vs ${opponent}\n\n` +
-        `💡 Lưu ý: Hệ thống CHỈ TRỪ những người CHƯA NỘP. Những người đã nộp hoặc đã ứng tiền sẽ KHÔNG bị trừ lặp lại.\n` +
+        `- Số THÀNH VIÊN CHÍNH THỨC sẽ trừ: ${count} người\n` +
+        `- Danh sách thành viên: ${unpaidNames}\n` +
+        `- Trận đấu: FC TNT vs ${opponent}\n\n`;
+
+      if (unpaidGuests.length > 0) {
+        confirmMsg += `⚠️ LƯU Ý VỀ KHÁCH MỜI:\n` +
+          `Có ${unpaidGuests.length} khách mời (${unpaidGuests.map(g => g.payment.playerName).join(', ')}) chưa nộp sẽ KHÔNG BỊ TRỪ VÍ.\n` +
+          `Khách cần nộp qua mã VietQR hoặc tiền mặt trực tiếp cho người ứng tiền.\n\n`;
+      }
+
+      confirmMsg += `💡 Lưu ý: Hệ thống CHỈ TRỪ VÍ thành viên chính thức chưa nộp. Những người đã nộp hoặc người ứng tiền sẽ KHÔNG bị trừ lặp lại.\n` +
         `Bạn có chắc chắn muốn thực hiện?`;
 
       if (!confirm(confirmMsg)) return;
@@ -339,14 +382,34 @@
 
       const match = window.stateManager ? window.stateManager.getMatchById(this.currentMatchId) : null;
       const fin = this.currentFinanceData;
+      const allPlayers = window.stateManager ? window.stateManager.getPlayers() : [];
+      const isGuestFn = (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function')
+        ? root.TNTGuestJersey.isGuestPlayer
+        : (pl => Boolean(pl && (pl.isGuest || pl.invitedBy)));
 
       const paidList = fin.payments.filter(p => p.isPaid).map(p => {
-        return p.playerId === fin.payerPlayerId ? `${p.playerName} (Ứng tiền)` : p.playerName;
+        const pl = allPlayers.find(x => x.id === p.playerId);
+        const guestTag = isGuestFn(pl) ? ' (Khách)' : '';
+        return p.playerId === fin.payerPlayerId ? `${p.playerName} (Ứng tiền)` : `${p.playerName}${guestTag}`;
       });
-      const unpaidList = fin.payments.filter(p => !p.isPaid).map(p => p.playerName);
+
+      const unpaidOfficial = [];
+      const unpaidGuests = [];
+      fin.payments.filter(p => !p.isPaid).forEach(p => {
+        const pl = allPlayers.find(x => x.id === p.playerId);
+        if (isGuestFn(pl)) {
+          unpaidGuests.push(p.playerName);
+        } else {
+          unpaidOfficial.push(p.playerName);
+        }
+      });
 
       const VIET_BANKS = (root.TNTFinanceMixins && root.TNTFinanceMixins.modal && root.TNTFinanceMixins.modal.VIET_BANKS) || [];
       const bankName = fin.payerBankCode;
+
+      const unpaidSummary = [];
+      if (unpaidOfficial.length > 0) unpaidSummary.push(`• Thành viên (${unpaidOfficial.length}): ${unpaidOfficial.join(', ')}`);
+      if (unpaidGuests.length > 0) unpaidSummary.push(`• Khách mời (${unpaidGuests.length}): ${unpaidGuests.join(', ')} (Quét QR / chuyển khoản)`);
 
       const text = [
         `⚽ TỔNG KẾT TIỀN SÂN FC TNT - [${match ? match.date : 'Hôm nay'}]`,
@@ -361,9 +424,10 @@
         `• Cú pháp: TNT [Ten_Ban] Tran ${match ? match.date.replace(/-/g, '') : ''}`,
         `─────────────────────────`,
         `✅ ĐÃ CHUYỂN (${paidList.length}/${fin.payments.length}): ${paidList.length > 0 ? paidList.join(', ') : 'Chưa có ai'}`,
-        `⏳ CHƯA CHUYỂN (${unpaidList.length}): ${unpaidList.length > 0 ? unpaidList.join(', ') : 'Đã thu đủ 100%! 🎉'}`,
-        unpaidList.length > 0 ? `\n👉 Anh em chưa chuyển quét mã QR hoặc bắn nốt giúp mình nhé!` : `\n🎉 Cảm ơn anh em đã đóng đủ tiền sân!`
-      ].join('\n');
+        `⏳ CHƯA CHUYỂN (${unpaidOfficial.length + unpaidGuests.length}):`,
+        ...(unpaidSummary.length > 0 ? unpaidSummary : ['🎉 Đã thu đủ 100%! Cảm ơn anh em!']),
+        (unpaidOfficial.length === 0 && unpaidGuests.length === 0) ? `\n🎉 Cảm ơn anh em & khách mời đã đóng đủ tiền sân!` : `\n👉 Anh em & khách mời chưa chuyển quét mã QR hoặc bắn nốt giúp mình nhé!`
+      ].filter(Boolean).join('\n');
 
       if (root.TNT && root.TNT.utils && typeof root.TNT.utils.copyToClipboard === 'function') {
         root.TNT.utils.copyToClipboard(text, '📋 Đã sao chép nội dung báo cáo thu tiền vào Clipboard!').then(() => {

@@ -148,40 +148,73 @@ window.appModule = {
     const topScorer = leaderboards.topScorers[0];
     const topAssist = leaderboards.topAssists[0];
 
-    if (mvpSpotlight && topMVP) {
-      mvpSpotlight.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <img src="${topMVP.player.avatar}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-gold);">
-          <div>
-            <div style="font-weight: 800; color: #fff;">${topMVP.player.name}</div>
-            <div style="font-size: 0.8rem; color: var(--accent-gold);">Điểm TB: ${topMVP.avgRating}/10 (${topMVP.matchesPlayed} trận)</div>
+    if (mvpSpotlight) {
+      if (topMVP) {
+        mvpSpotlight.innerHTML = `
+          <div class="spotlight-player-row">
+            <div class="spotlight-avatar-box wrap-mvp">
+              <img src="${window.escapeHtml(topMVP.player.avatar)}" alt="${window.escapeHtml(topMVP.player.name)}">
+              <span class="spotlight-avatar-crown">👑</span>
+            </div>
+            <div class="spotlight-player-info">
+              <div class="spotlight-player-name">${window.escapeHtml(topMVP.player.nickname || topMVP.player.name)}</div>
+              <div class="spotlight-player-sub">${topMVP.player.position || 'MF'} #${topMVP.player.number || 0} • ${topMVP.matchesPlayed} trận</div>
+            </div>
+            <div class="spotlight-stat-pill badge-mvp">
+              <span class="stat-val">${topMVP.avgRating}</span>
+              <span class="stat-icon">⭐ Điểm</span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        mvpSpotlight.innerHTML = '<div class="spotlight-empty-hint">Chưa có dữ liệu chấm điểm trận đấu</div>';
+      }
     }
 
-    if (scorerSpotlight && topScorer) {
-      scorerSpotlight.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <img src="${topScorer.player.avatar}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-ruby);">
-          <div>
-            <div style="font-weight: 800; color: #fff;">${topScorer.player.name}</div>
-            <div style="font-size: 0.8rem; color: var(--accent-ruby);">${topScorer.totalGoals} bàn thắng</div>
+    if (scorerSpotlight) {
+      if (topScorer) {
+        scorerSpotlight.innerHTML = `
+          <div class="spotlight-player-row">
+            <div class="spotlight-avatar-box wrap-scorer">
+              <img src="${window.escapeHtml(topScorer.player.avatar)}" alt="${window.escapeHtml(topScorer.player.name)}">
+              <span class="spotlight-avatar-crown">🔥</span>
+            </div>
+            <div class="spotlight-player-info">
+              <div class="spotlight-player-name">${window.escapeHtml(topScorer.player.nickname || topScorer.player.name)}</div>
+              <div class="spotlight-player-sub">${topScorer.player.position || 'FW'} #${topScorer.player.number || 0} • ${topScorer.matchesPlayed} trận</div>
+            </div>
+            <div class="spotlight-stat-pill badge-scorer">
+              <span class="stat-val">${topScorer.totalGoals}</span>
+              <span class="stat-icon">⚽ Bàn</span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        scorerSpotlight.innerHTML = '<div class="spotlight-empty-hint">Chưa có bàn thắng nào được ghi</div>';
+      }
     }
 
-    if (assistSpotlight && topAssist) {
-      assistSpotlight.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <img src="${topAssist.player.avatar}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-cyan);">
-          <div>
-            <div style="font-weight: 800; color: #fff;">${topAssist.player.name}</div>
-            <div style="font-size: 0.8rem; color: var(--accent-cyan);">${topAssist.totalAssists} kiến tạo</div>
+    if (assistSpotlight) {
+      if (topAssist) {
+        assistSpotlight.innerHTML = `
+          <div class="spotlight-player-row">
+            <div class="spotlight-avatar-box wrap-assist">
+              <img src="${window.escapeHtml(topAssist.player.avatar)}" alt="${window.escapeHtml(topAssist.player.name)}">
+              <span class="spotlight-avatar-crown">🎯</span>
+            </div>
+            <div class="spotlight-player-info">
+              <div class="spotlight-player-name">${window.escapeHtml(topAssist.player.nickname || topAssist.player.name)}</div>
+              <div class="spotlight-player-sub">${topAssist.player.position || 'MF'} #${topAssist.player.number || 0} • ${topAssist.matchesPlayed} trận</div>
+            </div>
+            <div class="spotlight-stat-pill badge-assist">
+              <span class="stat-val">${topAssist.totalAssists}</span>
+              <span class="stat-icon">👟 Kiến tạo</span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        assistSpotlight.innerHTML = '<div class="spotlight-empty-hint">Chưa có đường kiến tạo nào</div>';
+      }
     }
 
     // Render Recent Matches preview on dashboard

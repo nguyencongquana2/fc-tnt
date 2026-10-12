@@ -7,6 +7,7 @@ const express = require('express');
 const crypto = require('crypto');
 const Match = require('../models/Match');
 const Player = require('../models/Player');
+const ProcessedPayment = require('../models/ProcessedPayment');
 const { paymentWebhookLimiter } = require('../utils/rateLimiter');
 
 // Bộ nhớ đệm lưu tối đa 500 Transaction ID gần nhất để chống xử lý trùng lặp (FIFO Idempotency)
@@ -80,8 +81,21 @@ function createPaymentsRouter({ isMongoConnected, fallbackData, broadcastDataUpd
 
         if (amount <= 0 || !description) continue;
 
-        // Chống xử lý trùng lặp giao dịch
-        if (transId && processedTransactionIds.has(transId)) {
+        // Chống replay attack & xử lý trùng lặp giao dịch (bền vững qua ProcessedPayment model + cache RAM)
+        let isAlreadyProcessed = false;
+        if (transId) {
+          if (processedTransactionIds.has(transId)) {
+            isAlreadyProcessed = true;
+          } else if (connected) {
+            const foundInDb = await ProcessedPayment.findOne({ transactionId: transId });
+            if (foundInDb) {
+              processedTransactionIds.add(transId);
+              isAlreadyProcessed = true;
+            }
+          }
+        }
+
+        if (isAlreadyProcessed) {
           console.log(`[PaymentsWebhook] Bỏ qua giao dịch đã xử lý trước đó: ${transId}`);
           continue;
         }
@@ -105,7 +119,18 @@ function createPaymentsRouter({ isMongoConnected, fallbackData, broadcastDataUpd
         });
 
         if (matchResult && matchResult.success) {
-          if (transId) markTransactionProcessed(transId);
+          if (transId) {
+            markTransactionProcessed(transId);
+            if (connected) {
+              await ProcessedPayment.create({
+                transactionId: transId,
+                amount,
+                description
+              }).catch(err => {
+                if (err.code !== 11000) console.warn('[PaymentsWebhook] Lỗi lưu ProcessedPayment:', err.message);
+              });
+            }
+          }
           results.push(matchResult);
         }
       }

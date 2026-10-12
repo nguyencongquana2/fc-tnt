@@ -45,15 +45,24 @@ Object.assign(window.matchesModule, {
         const activePlayerIds = (m.playerStats || []).map(ps => ps.playerId);
         if (playersContainer) {
           playersContainer.innerHTML = allPlayers.map(p => {
+            const isGuest = window.TNTGuestJersey ? window.TNTGuestJersey.isGuestPlayer(p) : Boolean(p.isGuest);
+            let av = p.avatar;
+            if ((!av || av.includes('unsplash')) && isGuest && window.TNTGuestJersey) {
+              av = window.TNTGuestJersey.generateJerseyDataUri(p.jerseyColor || 'white', p.number || 'K', p.invitedBy);
+            }
+            if (!av) av = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+
             const nick = (p.nickname && p.nickname.trim() && p.nickname.trim() !== p.name) ? ` (${p.nickname.trim()})` : '';
             const isChecked = activePlayerIds.includes(p.id);
             return `
-              <label class="lineup-item-label ${isChecked ? 'selected-item' : ''}" id="lineup-label-${p.id}">
+              <label class="lineup-item-label ${isChecked ? 'selected-item' : ''} ${isGuest ? 'is-guest-item' : ''}" id="lineup-label-${p.id}">
                 <input type="checkbox" name="selected_players" value="${p.id}" ${isChecked ? 'checked' : ''} onchange="document.getElementById('lineup-label-${p.id}').classList.toggle('selected-item', this.checked)">
-                <img class="lineup-item-avatar" src="${p.avatar}" alt="${p.name}">
+                <img class="lineup-item-avatar" src="${av}" alt="${p.name}">
                 <div style="overflow: hidden;">
-                  <div class="lineup-item-name">${p.name}${nick}</div>
-                  <div style="font-size: 0.68rem; color: var(--text-dim);">#${p.number} • ${p.position}</div>
+                  <div class="lineup-item-name" style="${isGuest ? 'color: var(--accent-gold);' : ''}">
+                    ${p.name}${nick} ${isGuest ? '<span style="font-size: 0.62rem; background: rgba(245,158,11,0.2); padding: 1px 4px; border-radius: 3px;">Khách</span>' : ''}
+                  </div>
+                  <div style="font-size: 0.68rem; color: var(--text-dim);">#${p.number} • ${p.position} ${isGuest && p.invitedBy ? `(${p.invitedBy})` : ''}</div>
                 </div>
               </label>
             `;
@@ -77,14 +86,24 @@ Object.assign(window.matchesModule, {
 
       if (playersContainer) {
         playersContainer.innerHTML = allPlayers.map(p => {
+          const isGuest = window.TNTGuestJersey ? window.TNTGuestJersey.isGuestPlayer(p) : Boolean(p.isGuest);
+          let av = p.avatar;
+          if ((!av || av.includes('unsplash')) && isGuest && window.TNTGuestJersey) {
+            av = window.TNTGuestJersey.generateJerseyDataUri(p.jerseyColor || 'white', p.number || 'K', p.invitedBy);
+          }
+          if (!av) av = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+
           const nick = (p.nickname && p.nickname.trim() && p.nickname.trim() !== p.name) ? ` (${p.nickname.trim()})` : '';
+          const isChecked = !isGuest; // Khách mặc định không tự động tích vào trận mới
           return `
-            <label class="lineup-item-label selected-item" id="lineup-label-${p.id}">
-              <input type="checkbox" name="selected_players" value="${p.id}" checked onchange="document.getElementById('lineup-label-${p.id}').classList.toggle('selected-item', this.checked)">
-              <img class="lineup-item-avatar" src="${p.avatar}" alt="${p.name}">
+            <label class="lineup-item-label ${isChecked ? 'selected-item' : ''} ${isGuest ? 'is-guest-item' : ''}" id="lineup-label-${p.id}">
+              <input type="checkbox" name="selected_players" value="${p.id}" ${isChecked ? 'checked' : ''} onchange="document.getElementById('lineup-label-${p.id}').classList.toggle('selected-item', this.checked)">
+              <img class="lineup-item-avatar" src="${av}" alt="${p.name}">
               <div style="overflow: hidden;">
-                <div class="lineup-item-name">${p.name}${nick}</div>
-                <div style="font-size: 0.68rem; color: var(--text-dim);">#${p.number} • ${p.position}</div>
+                <div class="lineup-item-name" style="${isGuest ? 'color: var(--accent-gold);' : ''}">
+                  ${p.name}${nick} ${isGuest ? '<span style="font-size: 0.62rem; background: rgba(245,158,11,0.2); padding: 1px 4px; border-radius: 3px;">Khách</span>' : ''}
+                </div>
+                <div style="font-size: 0.68rem; color: var(--text-dim);">#${p.number} • ${p.position} ${isGuest && p.invitedBy ? `(${p.invitedBy})` : ''}</div>
               </div>
             </label>
           `;

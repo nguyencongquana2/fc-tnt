@@ -98,6 +98,13 @@
 
       let filtered = [...this.playersBalances];
 
+      // Sổ quỹ chỉ tính và hiển thị thành viên chính thức của đội bóng (loại bỏ hoàn toàn viện binh / khách mời)
+      const isGuestFn = (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function')
+        ? root.TNTGuestJersey.isGuestPlayer
+        : (p => Boolean(p && (p.isGuest || p.invitedBy)));
+
+      filtered = filtered.filter(p => !isGuestFn(p));
+
       // 1. Lọc theo trạng thái quỹ
       if (this.filterStatus === 'debt') {
         filtered = filtered.filter(p => (Number(p.fundBalance) || 0) < 0);
@@ -218,20 +225,31 @@
       const isTreas = this.isTreasurer();
       const esc = window.escapeHtml || (s => s);
 
-      // Thống kê phân loại thành viên
-      const totalPlayers = this.playersBalances.length;
-      const debtPlayers = this.playersBalances.filter(p => (Number(p.fundBalance) || 0) < 0).length;
-      const lowPlayers = this.playersBalances.filter(p => {
+      // Thống kê phân loại thành viên (Sổ quỹ chỉ dành riêng cho thành viên chính thức)
+      const isGuestFn = (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function')
+        ? root.TNTGuestJersey.isGuestPlayer
+        : (p => Boolean(p && (p.isGuest || p.invitedBy)));
+      const activeBalances = this.playersBalances.filter(p => !isGuestFn(p));
+
+      let calcTotalFund = 0, calcPositiveFund = 0, calcNegativeFund = 0;
+      activeBalances.forEach(p => {
+        const bal = Number(p.fundBalance) || 0;
+        if (bal >= 0) calcPositiveFund += bal; else calcNegativeFund += Math.abs(bal);
+        calcTotalFund += bal;
+      });
+
+      const totalPlayers = activeBalances.length;
+      const debtPlayers = activeBalances.filter(p => (Number(p.fundBalance) || 0) < 0).length;
+      const lowPlayers = activeBalances.filter(p => {
         const b = Number(p.fundBalance) || 0;
         return b >= 0 && b <= 50000;
       }).length;
-      const goodPlayers = this.playersBalances.filter(p => (Number(p.fundBalance) || 0) > 50000).length;
-      const positivePlayers = this.playersBalances.filter(p => (Number(p.fundBalance) || 0) > 0).length;
+      const goodPlayers = activeBalances.filter(p => (Number(p.fundBalance) || 0) > 50000).length;
+      const positivePlayers = activeBalances.filter(p => (Number(p.fundBalance) || 0) > 0).length;
       const coveragePercent = totalPlayers > 0 ? Math.round((positivePlayers / totalPlayers) * 100) : 0;
 
-      const negativeVal = Number(this.summary.negativeFund) || 0;
-      const negativeDisplay = negativeVal > 0 ? `-${this.formatMoney(negativeVal)}` : '0đ';
-      const negativeClass = negativeVal > 0 ? 'text-danger' : 'text-neutral';
+      const negativeDisplay = calcNegativeFund > 0 ? `-${this.formatMoney(calcNegativeFund)}` : '0đ';
+      const negativeClass = calcNegativeFund > 0 ? 'text-danger' : 'text-neutral';
 
       container.innerHTML = `
         <!-- 1. TOP SUMMARY CARDS (3 THẺ GRADIENT CÓ WATERMARK) -->
@@ -239,14 +257,14 @@
           <div class="funds-summary-box box-total">
             <div class="box-watermark">💰</div>
             <span class="box-label">Tổng Quỹ Hiện Có</span>
-            <strong class="box-value ${this.summary.totalFund >= 0 ? 'text-positive' : 'text-danger'}">
-              ${this.formatMoney(this.summary.totalFund)}
+            <strong class="box-value ${calcTotalFund >= 0 ? 'text-positive' : 'text-danger'}">
+              ${this.formatMoney(calcTotalFund)}
             </strong>
           </div>
           <div class="funds-summary-box box-positive">
             <div class="box-watermark">🟢</div>
             <span class="box-label">Tổng Dư Có Sẵn</span>
-            <strong class="box-value text-positive">${this.formatMoney(this.summary.positiveFund)}</strong>
+            <strong class="box-value text-positive">${this.formatMoney(calcPositiveFund)}</strong>
           </div>
           <div class="funds-summary-box box-negative">
             <div class="box-watermark">🔴</div>

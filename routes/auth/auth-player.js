@@ -263,6 +263,7 @@ function registerPlayerRoutes(router, { isMongoConnected, fallbackData, broadcas
         });
       }
 
+      const cleanPlayerId = String(playerId || '').trim();
       const cleanUser = String(username).trim().toLowerCase();
       const cleanPass = String(tempPassword).trim();
 
@@ -277,7 +278,7 @@ function registerPlayerRoutes(router, { isMongoConnected, fallbackData, broadcas
 
       // Kiểm tra xem username đã bị cầu thủ khác dùng chưa
       if (connected) {
-        const existing = await Player.findOne({ username: cleanUser, id: { $ne: playerId } });
+        const existing = await Player.findOne({ username: cleanUser, id: { $ne: cleanPlayerId } });
         if (existing) {
           return res.status(400).json({
             success: false,
@@ -288,9 +289,9 @@ function registerPlayerRoutes(router, { isMongoConnected, fallbackData, broadcas
 
       let player = null;
       if (connected) {
-        player = await Player.findOne({ id: playerId });
+        player = await Player.findOne({ id: cleanPlayerId });
       } else if (fallbackData && Array.isArray(fallbackData.players)) {
-        player = fallbackData.players.find(p => p.id === playerId);
+        player = fallbackData.players.find(p => p.id === cleanPlayerId);
       }
 
       if (!player) {

@@ -193,22 +193,32 @@
       });
     },
 
-    getLeaderboards() {
+    getLeaderboards(includeGuests = false) {
       const allStats = this.getPlayerOverallStats();
+      const isGuestCheck = (p) => {
+        if (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function') {
+          return root.TNTGuestJersey.isGuestPlayer(p);
+        }
+        return Boolean(p && p.isGuest);
+      };
 
-      const topScorers = [...allStats]
+      const rankedStats = includeGuests 
+        ? allStats 
+        : allStats.filter(s => !isGuestCheck(s.player));
+
+      const topScorers = [...rankedStats]
         .filter(s => s.totalGoals > 0)
         .sort((a, b) => b.totalGoals - a.totalGoals || b.totalAssists - a.totalAssists || b.avgRating - a.avgRating);
 
-      const topAssists = [...allStats]
+      const topAssists = [...rankedStats]
         .filter(s => s.totalAssists > 0)
         .sort((a, b) => b.totalAssists - a.totalAssists || b.totalGoals - a.totalGoals || b.avgRating - a.avgRating);
 
-      const topRatings = [...allStats]
+      const topRatings = [...rankedStats]
         .filter(s => s.matchesPlayed > 0)
         .sort((a, b) => b.avgRating - a.avgRating || b.matchesPlayed - a.matchesPlayed || b.goalContributions - a.goalContributions);
 
-      const topAppearances = [...allStats]
+      const topAppearances = [...rankedStats]
         .filter(s => s.matchesPlayed > 0)
         .sort((a, b) => b.matchesPlayed - a.matchesPlayed || b.avgRating - a.avgRating);
 
@@ -217,7 +227,7 @@
         topAssists,
         topRatings,
         topAppearances,
-        allStats
+        allStats: rankedStats
       };
     }
   };

@@ -86,8 +86,23 @@
     };
   }
 
+  /**
+   * Kiểm tra tính hợp lệ và an toàn của URL (Web link, Video Cloudinary/YouTube, ảnh...)
+   * Chỉ cho phép giao thức http: hoặc https:
+   * Chống XSS qua các giao thức nguy hiểm (javascript:, vbscript:, data:text/html, file:, blob:...)
+   */
+  function isValidHttpUrl(urlStr, maxLength = 2048) {
+    if (!urlStr || typeof urlStr !== 'string') return false;
+    const trimmed = urlStr.trim();
+    if (!trimmed || trimmed.length > maxLength) return false;
+    if (/\s/.test(trimmed)) return false;
+    if (/^(javascript|vbscript|data|file|about|blob):/i.test(trimmed)) return false;
+    return /^https?:\/\/[a-z0-9]/i.test(trimmed);
+  }
+
   return {
     isValidAvatar,
+    isValidHttpUrl,
     isValidReaction,
     validateCommentInput,
     VALID_REACTION_TYPES

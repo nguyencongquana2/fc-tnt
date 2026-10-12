@@ -83,15 +83,16 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // DELETE /api/matches/:id (Chỉ Quản trị viên mới được xóa trận)
   router.delete('/:id', requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID trận đấu không hợp lệ!' });
 
       if (isMongoConnected()) {
-        await Match.findOneAndDelete({ id });
+        await Match.findOneAndDelete({ id: cleanId });
         broadcastDataUpdate('matches', '🗑️ Một trận đấu vừa được xóa khỏi lịch sử.');
         return res.json({ success: true, message: 'Match deleted' });
       }
 
-      fallbackData.matches = fallbackData.matches.filter(m => m.id !== id);
+      fallbackData.matches = fallbackData.matches.filter(m => m.id !== cleanId);
       broadcastDataUpdate('matches', '🗑️ Một trận đấu vừa được xóa khỏi lịch sử.');
       res.json({ success: true });
     } catch (err) {
@@ -102,12 +103,13 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // PUT /api/matches/:id/finance (Quản trị viên HOẶC Thủ quỹ)
   router.put('/:id/finance', authFinance, async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID trận đấu không hợp lệ!' });
       const financeData = req.body;
 
       if (isMongoConnected()) {
         const updated = await Match.findOneAndUpdate(
-          { id },
+          { id: cleanId },
           { $set: { finance: financeData } },
           { new: true }
         );
@@ -116,7 +118,7 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         return res.json(updated);
       }
 
-      const idx = fallbackData.matches.findIndex(m => m.id === id);
+      const idx = fallbackData.matches.findIndex(m => m.id === cleanId);
       if (idx !== -1) {
         fallbackData.matches[idx].finance = financeData;
         broadcastDataUpdate('matches', '💰 Tiền sân trận đấu vừa được cập nhật!');
@@ -131,19 +133,21 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // PATCH /api/matches/:id/finance/toggle-payment (Quản trị viên HOẶC Thủ quỹ)
   router.patch('/:id/finance/toggle-payment', authFinance, async (req, res) => {
     try {
-      const { id } = req.params;
-      const { playerId, isPaid } = req.body;
+      const cleanId = String(req.params.id || '').trim();
+      const cleanPlayerId = String(req.body.playerId || '').trim();
+      const { isPaid } = req.body;
+      if (!cleanId || !cleanPlayerId) return res.status(400).json({ error: 'ID trận đấu hoặc ID cầu thủ không hợp lệ!' });
 
       if (isMongoConnected()) {
-        const match = await Match.findOne({ id });
+        const match = await Match.findOne({ id: cleanId });
         if (!match) return res.status(404).json({ error: 'Match not found' });
 
         if (!match.finance) match.finance = { payments: [] };
         if (!match.finance.payments) match.finance.payments = [];
 
-        const pIdx = match.finance.payments.findIndex(p => p.playerId === playerId);
+        const pIdx = match.finance.payments.findIndex(p => p.playerId === cleanPlayerId);
         if (pIdx !== -1) {
-          match.finance.payments[pIdx].isPaid = isPaid;
+          match.finance.payments[pIdx].isPaid = Boolean(isPaid);
           match.finance.payments[pIdx].paidAt = isPaid ? new Date() : null;
         }
         await match.save();
@@ -151,12 +155,12 @@ function createMatchesRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         return res.json(match);
       }
 
-      const idx = fallbackData.matches.findIndex(m => m.id === id);
+      const idx = fallbackData.matches.findIndex(m => m.id === cleanId);
       if (idx !== -1) {
         if (!fallbackData.matches[idx].finance) fallbackData.matches[idx].finance = { payments: [] };
-        const pIdx = fallbackData.matches[idx].finance.payments.findIndex(p => p.playerId === playerId);
+        const pIdx = fallbackData.matches[idx].finance.payments.findIndex(p => p.playerId === cleanPlayerId);
         if (pIdx !== -1) {
-          fallbackData.matches[idx].finance.payments[pIdx].isPaid = isPaid;
+          fallbackData.matches[idx].finance.payments[pIdx].isPaid = Boolean(isPaid);
           fallbackData.matches[idx].finance.payments[pIdx].paidAt = isPaid ? new Date().toISOString() : null;
         }
         broadcastDataUpdate('matches', isPaid ? '💳 Đã ghi nhận nộp tiền sân thành công!' : '💳 Đã hủy trạng thái nộp tiền sân.');

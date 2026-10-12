@@ -49,6 +49,21 @@ const playerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // --- PHÂN HỆ KHÁCH MỜI / VIỆN BINH (GUEST PLAYER) ---
+  isGuest: {
+    type: Boolean,
+    default: false
+  },
+  invitedBy: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  jerseyColor: {
+    type: String,
+    default: '',
+    trim: true
+  },
   // --- HỆ THỐNG TÀI KHOẢN THÀNH VIÊN (MEMBER AUTH & PROFILE) ---
   username: {
     type: String,

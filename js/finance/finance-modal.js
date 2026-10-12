@@ -430,18 +430,24 @@
                     ⚙️ Tùy chỉnh danh sách người chia (Bấm để thêm/bớt cầu thủ)
                   </summary>
                   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.4rem; margin-top: 0.75rem; max-height: 140px; overflow-y: auto; padding-right: 4px;">
-                    ${allPlayers.map(p => `
-                      <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; background: rgba(0,0,0,0.2); padding: 4px 6px; border-radius: 4px;">
+                    ${allPlayers.map(p => {
+                      const isGuestCheck = (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function')
+                        ? root.TNTGuestJersey.isGuestPlayer
+                        : (pl => Boolean(pl && (pl.isGuest || pl.invitedBy)));
+                      const isGuest = isGuestCheck(p);
+                      return `
+                      <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; background: rgba(0,0,0,0.2); padding: 4px 6px; border-radius: 4px;" title="${isGuest ? 'Cầu thủ Khách / Viện binh' : 'Thành viên chính thức'}">
                         <input type="checkbox" class="fin-participant-checkbox" value="${p.id}" ${activeParticipantIds.has(p.id) ? 'checked' : ''} onchange="window.financeModule.recalculateAndRefresh()">
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${window.escapeHtml(p.name)}</span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${isGuest ? '🤝 ' : ''}${window.escapeHtml(p.name)}</span>
                       </label>
-                    `).join('')}
+                    `;
+                    }).join('')}
                   </div>
                 </details>
               ` : ''}
 
               <!-- Bảng Checklist -->
-              <div class="fin-table-wrapper" style="max-height: 340px; overflow-y: auto;">
+              <div class="fin-table-wrapper">
                 <table class="fin-table">
                   <thead>
                     <tr>

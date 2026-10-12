@@ -228,19 +228,23 @@
 
       const primaryDisplayName = escapeHtml((player.nickname && player.nickname.trim()) ? player.nickname.trim() : player.name);
       const secondaryRealName = escapeHtml((player.name && player.name.trim() && player.name.trim().toLowerCase() !== primaryDisplayName.toLowerCase()) ? player.name.trim() : '');
+      const isGuestCheck = (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function')
+        ? root.TNTGuestJersey.isGuestPlayer
+        : (p => Boolean(p && p.isGuest));
+      const isGuest = isGuestCheck(player);
 
       content.innerHTML = `
         <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
           ${canEditProfileAvatar ? `
             <div style="position: relative; cursor: pointer;" onclick="window.playersModule.quickUploadAvatar('${player.id}')" title="Bấm để tải ảnh đại diện từ điện thoại/máy tính">
-              <img src="${player.avatar}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-emerald);">
+              <img src="${player.avatar}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; ${isGuest ? 'border: 2.5px dashed rgba(245, 158, 11, 0.6);' : 'border: 3.5px solid var(--accent-emerald); box-shadow: 0 0 16px rgba(16, 185, 129, 0.45);'}">
               <div style="position: absolute; bottom: 0; right: 0; background: var(--accent-emerald); color: #000; font-size: 0.75rem; font-weight: 800; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.6);">
                 📷
               </div>
             </div>
           ` : `
             <div style="position: relative;">
-              <img src="${player.avatar}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-emerald);">
+              <img src="${player.avatar}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; ${isGuest ? 'border: 2.5px dashed rgba(245, 158, 11, 0.6);' : 'border: 3.5px solid var(--accent-emerald); box-shadow: 0 0 16px rgba(16, 185, 129, 0.45);'}">
             </div>
           `}
           <div>
@@ -253,9 +257,15 @@
                 </button>
               ` : ''}
               ${isAdmin ? `
-                <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openProvisionModal('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; color: var(--accent-gold);">
-                  🔑 ${player.username ? 'Đổi Mật Khẩu TK' : 'Cấp Tài Khoản'}
-                </button>
+                ${isGuest ? `
+                  <button class="btn btn-secondary btn-sm" onclick="window.playersModule.promotePlayer('${player.id}', event)" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; color: var(--accent-gold);" title="Thăng hạng lên thành viên chính thức">
+                    ⭐ Thăng Hạng
+                  </button>
+                ` : `
+                  <button class="btn btn-secondary btn-sm" onclick="window.playersModule.openProvisionModal('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; color: var(--accent-gold);">
+                    🔑 ${player.username ? 'Đổi Mật Khẩu TK' : 'Cấp Tài Khoản'}
+                  </button>
+                `}
                 <button class="btn btn-secondary btn-sm" onclick="window.playersModule.closeProfileModal(); window.playersModule.openPlayerModal('${player.id}')" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
                   ✏️ Sửa Thông Tin
                 </button>
@@ -264,8 +274,27 @@
                 </button>
               ` : ''}
             </div>
-            <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">#${player.number} ${secondaryRealName ? `• Họ tên: "${secondaryRealName}"` : ''}</p>
-            <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem;">${escapeHtml(player.note || 'Chưa có ghi chú đặc biệt')}</p>
+            <p style="color: var(--accent-emerald); font-weight: 600; font-size: 1rem;">
+              #${player.number} ${secondaryRealName ? `• Họ tên: "${secondaryRealName}"` : ''}
+              ${isGuest 
+                ? `<span style="font-size: 0.72rem; background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); padding: 2px 7px; border-radius: 4px; margin-left: 6px; font-weight: 700;">🤝 KHÁCH MỜI</span>` 
+                : `<span style="font-size: 0.72rem; background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.45); padding: 2px 7px; border-radius: 4px; margin-left: 6px; font-weight: 700;">⭐ THÀNH VIÊN CHÍNH THỨC</span>`
+              }
+            </p>
+            ${isGuest ? `
+              <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.35rem;">
+                ${player.invitedBy ? `
+                  <div style="font-size: 0.84rem; color: var(--accent-gold); display: flex; align-items: center; gap: 0.35rem;">
+                    <span>🤝</span> <span>Người bảo lãnh: <strong>${escapeHtml(player.invitedBy)}</strong></span>
+                  </div>
+                ` : ''}
+                <div style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 6px; padding: 4px 10px; font-size: 0.84rem; color: #38bdf8; width: fit-content;">
+                  <span>👓</span> <span><strong>Đặc điểm nhận diện:</strong> ${escapeHtml(player.note || 'Chưa có ghi chú đặc điểm (VD: Đeo kính, người cao...)')}</span>
+                </div>
+              </div>
+            ` : `
+              <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem;">${escapeHtml(player.note || 'Chưa có ghi chú đặc biệt')}</p>
+            `}
             ${player.bankAccountNumber ? `
               <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 3px 8px; margin-top: 0.4rem; font-size: 0.8rem; color: var(--accent-gold);">
                 💳 <strong>${escapeHtml(player.bankCode || 'NH')}:</strong> ${escapeHtml(player.bankAccountNumber)} ${player.bankAccountName ? `(${escapeHtml(player.bankAccountName)})` : ''}

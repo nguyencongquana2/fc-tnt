@@ -337,28 +337,37 @@
       </div>
 
       <div class="stat-cards-grid" style="margin-bottom: 2.5rem;">
-        <div class="stat-card gold" style="cursor: pointer;" onclick="window.appModule.switchTab('awards')">
+        <div class="stat-card spotlight-card spotlight-mvp" onclick="window.appModule.switchTab('awards')" title="Xem chi tiết Bảng Trao Thưởng MVP">
           <div class="stat-card-header">
-            <span class="stat-card-label" style="color: var(--accent-gold);">👑 CẦU THỦ XUẤT SẮC (MVP)</span>
-            <span class="stat-card-icon">🏆</span>
+            <div class="spotlight-title-wrap">
+              <span class="spotlight-icon-badge mvp">👑</span>
+              <span class="stat-card-label label-mvp">CẦU THỦ XUẤT SẮC (MVP)</span>
+            </div>
+            <span class="award-tag-pill pill-mvp">⭐ Rating MVP</span>
           </div>
-          <div id="dash-mvp-spotlight">Đang cập nhật...</div>
+          <div id="dash-mvp-spotlight" class="spotlight-content">Đang cập nhật...</div>
         </div>
 
-        <div class="stat-card" style="cursor: pointer;" onclick="window.appModule.switchTab('awards')">
+        <div class="stat-card spotlight-card spotlight-scorer" onclick="window.appModule.switchTab('awards')" title="Xem chi tiết Bảng Vua Phá Lưới">
           <div class="stat-card-header">
-            <span class="stat-card-label" style="color: var(--accent-ruby);">⚽ VUA PHÁ LƯỚI</span>
-            <span class="stat-card-icon">🥇</span>
+            <div class="spotlight-title-wrap">
+              <span class="spotlight-icon-badge scorer">⚽</span>
+              <span class="stat-card-label label-scorer">VUA PHÁ LƯỚI</span>
+            </div>
+            <span class="award-tag-pill pill-scorer">🔥 Giày Vàng</span>
           </div>
-          <div id="dash-scorer-spotlight">Đang cập nhật...</div>
+          <div id="dash-scorer-spotlight" class="spotlight-content">Đang cập nhật...</div>
         </div>
 
-        <div class="stat-card cyan" style="cursor: pointer;" onclick="window.appModule.switchTab('awards')">
+        <div class="stat-card spotlight-card spotlight-assist" onclick="window.appModule.switchTab('awards')" title="Xem chi tiết Bảng Vua Kiến Tạo">
           <div class="stat-card-header">
-            <span class="stat-card-label" style="color: var(--accent-cyan);">👟 VUA KIẾN TẠO</span>
-            <span class="stat-card-icon">🎯</span>
+            <div class="spotlight-title-wrap">
+              <span class="spotlight-icon-badge assist">👟</span>
+              <span class="stat-card-label label-assist">VUA KIẾN TẠO</span>
+            </div>
+            <span class="award-tag-pill pill-assist">⚡ Nhạc Trưởng</span>
           </div>
-          <div id="dash-assist-spotlight">Đang cập nhật...</div>
+          <div id="dash-assist-spotlight" class="spotlight-content">Đang cập nhật...</div>
         </div>
       </div>
 
@@ -384,8 +393,8 @@
       </div>
 
       <div class="awards-grid">
-        <div class="award-category-card">
-          <div class="award-card-header">
+        <div class="award-category-card card-mvp">
+          <div class="award-card-header header-mvp">
             <div class="award-badge-title">
               <div class="award-icon-box mvp">👑</div>
               <div>
@@ -393,12 +402,13 @@
                 <p>Điểm trung bình (Rating) cao nhất</p>
               </div>
             </div>
+            <span class="award-tag-pill pill-mvp">⭐ Rating MVP</span>
           </div>
           <div id="mvp-container"></div>
         </div>
 
-        <div class="award-category-card">
-          <div class="award-card-header">
+        <div class="award-category-card card-scorer">
+          <div class="award-card-header header-scorer">
             <div class="award-badge-title">
               <div class="award-icon-box scorer">⚽</div>
               <div>
@@ -406,12 +416,13 @@
                 <p>Nhiều bàn thắng nhất toàn đội</p>
               </div>
             </div>
+            <span class="award-tag-pill pill-scorer">🔥 Giày Vàng</span>
           </div>
           <div id="scorers-container"></div>
         </div>
 
-        <div class="award-category-card">
-          <div class="award-card-header">
+        <div class="award-category-card card-assist">
+          <div class="award-card-header header-assist">
             <div class="award-badge-title">
               <div class="award-icon-box assist">🎯</div>
               <div>
@@ -419,6 +430,7 @@
                 <p>Nhiều đường chuyền thành bàn nhất</p>
               </div>
             </div>
+            <span class="award-tag-pill pill-assist">⚡ Nhạc Trưởng</span>
           </div>
           <div id="assists-container"></div>
         </div>
@@ -690,9 +702,29 @@
           <h2 class="section-title">👥 Đội Hình Cầu Thủ</h2>
           <p class="section-subtitle">Quản lý thành viên trong đội bóng, vị trí, số áo và xem hồ sơ</p>
         </div>
-        <button class="btn btn-primary admin-only" id="add-player-btn">
-          ➕ Thêm Cầu Thủ Mới
-        </button>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-secondary admin-only" onclick="window.matchesModule ? window.matchesModule.openQuickAddGuestModal('players') : null" title="Thêm nhanh viện binh / khách mời đi đá cùng" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); color: var(--accent-gold);">
+            🤝 + Thêm Khách / Viện Binh
+          </button>
+          <button class="btn btn-primary admin-only" id="add-player-btn">
+            ➕ Thêm Cầu Thủ Mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Filter Pills cho Đội Hình (Lọc Thành viên chính thức / Khách mời) -->
+      <div class="players-filter-bar">
+        <div class="players-filter-pills">
+          <button type="button" class="players-filter-pill active" data-filter="official" onclick="window.playersModule.setPlayerFilter('official')">
+            ⭐ Thành Viên Chính Thức (<span id="count-official-players">0</span>)
+          </button>
+          <button type="button" class="players-filter-pill" data-filter="guest" onclick="window.playersModule.setPlayerFilter('guest')">
+            🤝 Khách Mời / Viện Binh (<span id="count-guest-players">0</span>)
+          </button>
+          <button type="button" class="players-filter-pill" data-filter="all" onclick="window.playersModule.setPlayerFilter('all')">
+            🌐 Tất Cả (<span id="count-all-players">0</span>)
+          </button>
+        </div>
       </div>
 
       <div id="players-grid-container" class="players-grid"></div>
@@ -1098,7 +1130,10 @@
                   <label class="form-label" style="margin-bottom: 0; color: #fff;">👥 DANH SÁCH CẦU THỦ ĐI ĐÁ:</label>
                   <span style="font-size: 0.75rem; color: var(--text-dim);">Chọn các anh em có mặt trận này</span>
                 </div>
-                <div style="display: flex; gap: 0.4rem;">
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-secondary btn-sm"
+                    style="font-size: 0.72rem; padding: 0.2rem 0.55rem; font-weight: 700; color: var(--accent-gold); border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1);"
+                    onclick="window.matchesModule.openQuickAddGuestModal('match')">🤝 + Thêm Khách / Viện Binh</button>
                   <button type="button" class="btn btn-secondary btn-sm"
                     style="font-size: 0.72rem; padding: 0.2rem 0.5rem;"
                     onclick="window.matchesModule.selectAllLineup(true)">Chọn Tất Cả</button>
@@ -1133,6 +1168,98 @@
           <button type="button" class="btn btn-secondary"
             onclick="window.matchesModule.closeCreateMatchModal()">Hủy</button>
           <button type="submit" class="btn btn-primary">💾 Lưu Trận Đấu & Chấm Điểm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: THÊM NHANH KHÁCH MỜI / VIỆN BINH ĐI ĐÁ CÙNG -->
+  <!-- ======================================================== -->
+  <div class="modal-overlay" id="quick-add-guest-modal" style="z-index: 10050;">
+    <div class="modal-container modal-sm" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="quick-guest-modal-title">🤝 Thêm Viện Binh / Khách Đi Đá Cùng</h3>
+        <button type="button" class="modal-close-btn" onclick="window.matchesModule.closeQuickAddGuestModal()">&times;</button>
+      </div>
+      <form id="quick-add-guest-form" onsubmit="window.matchesModule.handleSaveQuickGuest(event)">
+        <div class="modal-body" style="padding: 1.25rem;">
+          <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1.1rem; line-height: 1.45;" id="quick-guest-modal-desc">
+            💡 Quản lý bạn bè của anh em đi đá cùng. Tự động sinh avatar áo đấu nhận diện, không lo rác danh sách đội bóng chính thức!
+          </p>
+
+          <div class="form-group" style="margin-bottom: 0.9rem;">
+            <label class="form-label" for="guest-quick-fullname">Họ và tên cầu thủ</label>
+            <input type="text" class="form-control" id="guest-quick-fullname" placeholder="VD: Lê Tuấn Đạt, Bạn Thành Nam..." autocomplete="off" oninput="window.matchesModule.updateGuestAvatarPreview()">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.9rem;">
+            <label class="form-label" for="guest-quick-name">Tên gọi / Biệt danh *</label>
+            <input type="text" class="form-control" id="guest-quick-name" placeholder="VD: Đạt, Tuấn, Neymar(Khách)..." required autocomplete="off" oninput="window.matchesModule.updateGuestAvatarPreview()">
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.9rem;">
+            <div class="form-group">
+              <label class="form-label" for="guest-quick-invited-by">Bạn của ai (Bảo lãnh):</label>
+              <select class="form-control" id="guest-quick-invited-by" onchange="window.matchesModule.updateGuestAvatarPreview()">
+                <option value="">-- Không rõ --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="guest-quick-pos">Vị trí sở trường:</label>
+              <select class="form-control" id="guest-quick-pos">
+                <option value="FW">Tiền đạo (FW)</option>
+                <option value="MF">Tiền vệ (MF)</option>
+                <option value="DF">Hậu vệ (DF)</option>
+                <option value="GK">Thủ môn (GK)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 0.75rem; margin-bottom: 0.9rem;">
+            <div class="form-group">
+              <label class="form-label" for="guest-quick-color">Màu áo nhận diện trên sân:</label>
+              <select class="form-control" id="guest-quick-color" onchange="window.matchesModule.updateGuestAvatarPreview()">
+                <option value="white">⚪ Áo Trắng</option>
+                <option value="red">🔴 Áo Đỏ</option>
+                <option value="blue">🔵 Áo Xanh Dương</option>
+                <option value="yellow">🟡 Áo Vàng</option>
+                <option value="green">🟢 Áo Xanh Lá</option>
+                <option value="black">⚫ Áo Đen</option>
+                <option value="orange">🟠 Áo Cam</option>
+                <option value="purple">🟣 Áo Tím</option>
+                <option value="brazil">🇧🇷 Áo Vàng Xanh (Brazil)</option>
+                <option value="argentina">🇦🇷 Áo Sọc Xanh Trắng (Arg)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="guest-quick-num">Số áo (Tùy chọn):</label>
+              <input type="number" class="form-control" id="guest-quick-num" placeholder="Tự sinh 90+" min="1" max="99" oninput="window.matchesModule.updateGuestAvatarPreview()">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label" for="guest-quick-note">Đặc điểm nhận diện / Mô tả:</label>
+            <input type="text" class="form-control" id="guest-quick-note" placeholder="VD: Đeo kính, người cao, đá chân trái nhiệt tình..." autocomplete="off">
+          </div>
+
+          <!-- Khung xem trước Avatar áo đấu trực quan -->
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 1rem;">
+            <img id="guest-quick-avatar-preview" src="" alt="Jersey Preview" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+            <div style="min-width: 0;">
+              <div style="font-weight: 800; font-size: 0.92rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="guest-preview-name-label">
+                Viện Binh
+              </div>
+              <div style="font-size: 0.75rem; color: var(--accent-emerald); margin-top: 2px;" id="guest-preview-sub-label">
+                ✨ Avatar Áo Đấu Tự Động Sinh
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.85rem 1.25rem;">
+          <button type="button" class="btn btn-secondary" onclick="window.matchesModule.closeQuickAddGuestModal()">Hủy</button>
+          <button type="submit" class="btn btn-emerald" id="quick-guest-submit-btn" style="font-weight: 800;">✓ Xác Nhận Thêm Viện Binh</button>
         </div>
       </form>
     </div>
@@ -2489,6 +2616,7 @@
 
   <!-- Shared Utilities & Constants (SSOT) -->
   <script src="utils/officialPlayers.js?v=4.6"></script>
+  <script src="utils/guestJersey.js?v=5.6"></script>
   <script src="utils/officialTactics.js?v=4.6"></script>
   <script src="utils/playerAliases.js?v=4.6"></script>
   <script src="utils/validators.js?v=4.7"></script>
@@ -2504,11 +2632,12 @@
   <script src="js/players/players-form.js?v=5.0"></script>
   <script src="js/players/players-provision.js?v=5.0"></script>
   <script src="js/players/players-profile.js?v=5.0"></script>
-  <script src="js/players/players-list.js?v=5.0"></script>
+  <script src="js/players/players-list.js?v=5.6"></script>
   <script src="js/players.js?v=5.0"></script>
   <script src="js/matches/matches-list.js?v=5.0"></script>
   <script src="js/matches/matches-detail.js?v=5.0"></script>
   <script src="js/matches/matches-form.js?v=5.0"></script>
+  <script src="js/matches/matches-guest.js?v=5.0"></script>
   <script src="js/matches/matches-pitch-dnd.js?v=5.0"></script>
   <script src="js/matches/matches-pitch-edit.js?v=5.0"></script>
   <script src="js/matches/matches-pitch.js?v=5.0"></script>
@@ -2524,11 +2653,11 @@
   <script src="js/finance/finance-checklist.js?v=5.0"></script>
   <script src="js/finance/finance-qr.js?v=5.0"></script>
   <script src="js/finance.js?v=5.0"></script>
-  <script src="js/funds/funds-topup.js?v=5.4"></script>
-  <script src="js/funds/funds-history.js?v=5.4"></script>
-  <script src="js/funds/funds-adjust.js?v=5.4"></script>
-  <script src="js/funds/funds-core.js?v=5.4"></script>
-  <script src="js/finance-funds.js?v=5.4"></script>
+  <script src="js/funds/funds-topup.js?v=5.5"></script>
+  <script src="js/funds/funds-history.js?v=5.5"></script>
+  <script src="js/funds/funds-adjust.js?v=5.5"></script>
+  <script src="js/funds/funds-core.js?v=5.6"></script>
+  <script src="js/finance-funds.js?v=5.5"></script>
   <script src="js/awards.js?v=4.3"></script>
   <script src="js/poster/poster-draw.js?v=5.0"></script>
   <script src="js/poster/poster-elements.js?v=5.0"></script>

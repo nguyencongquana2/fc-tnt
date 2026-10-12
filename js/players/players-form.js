@@ -29,6 +29,12 @@
       }
     },
 
+    openEditGuestModal(playerId) {
+      if (window.matchesModule && typeof window.matchesModule.openEditGuestModal === 'function') {
+        window.matchesModule.openEditGuestModal(playerId);
+      }
+    },
+
     openPlayerModal(id = null) {
       if (!window.stateManager || !window.stateManager.isAdmin) {
         showToast('Vui lòng đăng nhập Quản trị viên để thêm/sửa cầu thủ!', 'error');
@@ -36,6 +42,20 @@
           window.appModule.openAdminModal();
         }
         return;
+      }
+
+      // Nếu là cầu thủ khách mời / viện binh, chuyển sang modal sửa khách gọn nhẹ
+      if (id && window.stateManager) {
+        const player = window.stateManager.getPlayerById(id);
+        const isGuestFn = (root.TNTGuestJersey && typeof root.TNTGuestJersey.isGuestPlayer === 'function')
+          ? root.TNTGuestJersey.isGuestPlayer
+          : (p => Boolean(p && p.isGuest));
+        if (player && isGuestFn(player)) {
+          if (window.matchesModule && typeof window.matchesModule.openEditGuestModal === 'function') {
+            window.matchesModule.openEditGuestModal(id);
+            return;
+          }
+        }
       }
 
       this.currentEditId = id;
@@ -130,6 +150,12 @@
       };
 
       if (this.currentEditId) {
+        const existing = window.stateManager ? window.stateManager.getPlayerById(this.currentEditId) : null;
+        if (existing) {
+          if (existing.isGuest !== undefined) playerData.isGuest = existing.isGuest;
+          if (existing.invitedBy) playerData.invitedBy = existing.invitedBy;
+          if (existing.jerseyColor) playerData.jerseyColor = existing.jerseyColor;
+        }
         window.stateManager.updatePlayer(this.currentEditId, playerData);
         showToast(`Đã cập nhật cầu thủ: ${playerData.name}`, 'success');
       } else {

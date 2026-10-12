@@ -50,6 +50,7 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── matches-list.js        # Render thẻ danh sách trận & banner Live Match
 │   │   ├── matches-detail.js      # Modal chi tiết trận (#match-detail-modal), đội hình sân 7 & reviews
 │   │   ├── matches-form.js        # Modal tạo/sửa trận (#match-form-modal), chọn đội hình & PIN bảo mật
+│   │   ├── matches-guest.js       # Thêm nhanh viện binh/khách (#quick-add-guest-modal), áo đấu & tích hợp đội hình
 │   │   ├── matches-pitch-dnd.js   # Kéo-thả (Drag & Drop) hoán đổi vị trí & thay người ghế dự bị
 │   │   ├── matches-pitch-edit.js  # Thẻ chấm điểm nhanh (Quick Edit Card), thanh trượt & steppers
 │   │   ├── matches-pitch.js       # Render sa bàn sân 7 Sofascore (3-1-2), huy hiệu sự kiện & MOTM
@@ -101,6 +102,7 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 ├── models/               # Mongoose Schemas (MongoDB)
 │   ├── Player.js         # Hồ sơ cầu thủ & số dư quỹ (fundBalance)
 │   ├── FundTransaction.js # Lịch sử biến động số dư ví thành viên (Top-up, Match deduct, Adjust)
+│   ├── ProcessedPayment.js # Nhật ký ID giao dịch Casso đã xử lý (chống Replay Attack Webhook, TTL 30 ngày)
 │   ├── Match.js          # Lịch sử trận đấu & đội hình
 │   ├── LiveMatchDraft.js # Bản nháp trận đấu Live đồng bộ realtime
 │   ├── Moment.js         # Bài đăng khoảnh khắc & bình luận
@@ -113,7 +115,11 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   │   ├── auth-admin.js     # Mã PIN Admin, sinh token HMAC, middleware requireAdmin (hỗ trợ hash & auto-upgrade)
 │   │   ├── auth-treasurer.js # Mã PIN Thủ Quỹ, sinh token HMAC, middleware requireTreasurer (hỗ trợ hash & auto-upgrade)
 │   │   └── auth-player.js    # PBKDF2 hash mật khẩu cầu thủ, token thành viên & hồ sơ
-│   ├── funds.js          # API sổ quỹ, nạp tiền, trừ tiền sân & hoàn tác/xóa giao dịch (requireTreasurer độc quyền)
+│   ├── funds.js          # Bộ điều phối trung tâm (Facade) phân hệ Sổ Quỹ Đội & Ví Thành Viên (~29 dòng)
+│   ├── funds/            # [Mô-đun hoá] Phân tách nghiệp vụ sổ quỹ chi tiết
+│   │   ├── funds-balances.js     # API thống kê số dư, tổng quỹ khả dụng & danh sách ví thành viên
+│   │   ├── funds-transactions.js # API biến động số dư, nạp quỹ (Top-up) & xóa/hoàn tác giao dịch
+│   │   └── funds-operations.js   # API trừ tiền sân (Match deduct) & điều chỉnh số dư (Manual adjust)
 │   ├── players.js        # API CRUD cầu thủ & avatar
 │   ├── matches.js        # API trận đấu & quản lý thu chi quỹ trận (liên thông quyền requireAdminOrTreasurer cho tài chính)
 │   ├── payments.js       # API Webhook Casso.vn, tự động gạch nợ tiền sân & Ting ting realtime
@@ -133,11 +139,12 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   └── tacticsSocket.js  # Phòng họp sa bàn trực tiếp, sync kéo thả & vẽ vector
 ├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung giữa Backend & Frontend (UMD)
 │   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định ban đầu
+│   ├── guestJersey.js    # Nhận diện khách mời (SSOT), sinh avatar Áo Đấu SVG theo màu & người bảo lãnh
 │   ├── officialTactics.js # Kịch bản bài tập chiến thuật sân 7 chuẩn mẫu (SSOT)
 │   ├── tacticsPieces.js  # 15 quân cờ sân 7 mặc định & bóng dùng chung Server/Client (SSOT)
 │   ├── playerAliases.js   # Từ điển alias và phân giải tên cầu thủ cho AI NLP & Voice
-│   ├── rateLimiter.js     # Bộ lọc trượt (Sliding Window) chống Brute-force PIN, lạm dụng AI, Spam Comment & Avatar DoS
-│   ├── validators.js      # Bộ kiểm chuẩn dữ liệu đầu vào (Avatar, Comment, Reactions) dùng chung UMD
+│   ├── rateLimiter.js     # Bộ lọc trượt (Sliding Window): Global Rate Limiter, Brute-force PIN, lạm dụng AI, Spam Comment & Avatar DoS
+│   ├── validators.js      # Bộ kiểm chuẩn dữ liệu đầu vào (URL Scheme an toàn, Avatar, Comment, Reactions) dùng chung UMD
 │   └── securityHeaders.js # Bộ tạo HTTP Headers bảo vệ web (CSP, HSTS, X-Frame, No-Sniff, Permissions)
 ├── scripts/              # Công cụ tự động hóa
 │   └── generate_favicons.py # Tự động tạo bộ icon favicon & logo
@@ -156,6 +163,7 @@ Tách rời các endpoint từ `server.js` thành các module độc lập theo 
 - `auth.js`: Xác thực mã PIN quản trị (`/api/auth/login`), đổi PIN (`/api/auth/change-pin`), kiểm tra token (`/api/auth/check`) và middleware `requireAdmin`. Đồng thời quản lý hệ thống tài khoản thành viên: đăng nhập cầu thủ (`/api/auth/player/login`), đổi mật khẩu (`/api/auth/player/change-password`), Admin cấp tài khoản khởi tạo (`/api/auth/player/provision`), lấy thông tin cá nhân (`/api/auth/player/me`) và cập nhật hồ sơ (`/api/auth/player/profile`).
 - `players.js`: Quản lý danh sách cầu thủ (`/api/players`), thêm/sửa/xóa cầu thủ và cập nhật avatar tự do (tự động loại trừ `passwordHash` khi trả về danh sách công khai).
 - `matches.js`: Lịch sử trận đấu (`/api/matches`) và quản lý thu chi/quỹ trận sân bóng.
+- `funds.js`: Quản lý Sổ Quỹ Đội (`/api/funds/*`), số dư ví thành viên chính thức (`/api/funds/balances`), nạp quỹ (`/api/funds/topup`), trừ tiền sân sau trận (`/api/funds/deduct-match` - tự động bỏ qua khách mời / viện binh) và lịch sử biến động số dư quỹ. Được bảo vệ nghiêm ngặt bởi middleware `requireTreasurer`.
 - `payments.js`: Webhook tự động hóa thanh toán tiền sân qua Casso.vn (`/api/payments/casso-webhook`), xác thực chữ ký số an toàn, bóc tách cú pháp chuyển khoản (`TNT M... P...`), chống xử lý trùng lặp giao dịch (Idempotency), phát âm thanh Ting ting & cập nhật tiến độ thanh toán thời gian thực qua Socket.IO.
 - `tactics.js`: API lưu trữ và quản lý kịch bản sa bàn chiến thuật (`/api/tactics`), bài tập cố định (phạt góc, ném biên, thoát pressing) và bình luận thảo luận chiến thuật thực chiến.
 - `ai.js` & `ai/`: [Mô-đun hoá] Hệ thống AI chấm điểm phong độ & viết nhận xét cá nhân hóa (`/api/ai/rate-match`), điều phối qua Facade trung tâm (`routes/ai.js`) và phân tách thành các submodule chuyên biệt:
@@ -169,8 +177,9 @@ Tách rời các endpoint từ `server.js` thành các module độc lập theo 
 
 ### `models/` (Dữ liệu & Mongoose Schemas)
 Chứa các định nghĩa Schema cấu trúc dữ liệu lưu trong MongoDB:
-- `Player.js`: Hồ sơ cầu thủ (họ tên, biệt danh, số áo, vị trí, ảnh đại diện, thông tin ngân hàng VietQR) và hệ thống tài khoản thành viên (`username`, `passwordHash` PBKDF2, `mustChangePassword`, `role`, `accountStatus`, `preferredFoot`, `height`, `weight`, `bio`, `lastLogin`).
+- `Player.js`: Hồ sơ cầu thủ (họ tên, biệt danh, số áo, vị trí, ảnh đại diện, thông tin ngân hàng VietQR, trạng thái khách mời `isGuest`) và hệ thống tài khoản thành viên (`username`, `passwordHash` PBKDF2, `mustChangePassword`, `role`, `fundBalance`, `accountStatus`, `preferredFoot`, `height`, `weight`, `bio`, `lastLogin`).
 - `Match.js`: Chi tiết trận đấu (ngày giờ, đối thủ, sân đấu, sơ đồ sân 7, bàn thắng, kiến tạo, điểm rating, MOTM, chi phí trận).
+- `FundTransaction.js`: Nhật ký giao dịch biến động số dư quỹ (nạp quỹ `TOPUP`, trừ tiền sân sau trận `MATCH_DEDUCT`, điều chỉnh `ADJUSTMENT`, hoàn quỹ `REFUND`).
 - `LiveMatchDraft.js`: Lưu trữ trạng thái tạm thời của trận đấu đang live/chưa kết thúc để đồng bộ thời gian thực.
 - `Moment.js`: Dữ liệu bài đăng kỷ niệm đội bóng (tiêu đề, hình ảnh, video, danh sách gắn thẻ, biểu cảm reactions, bình luận).
 - `Tactic.js`: Lưu trữ bài tập sa bàn chiến thuật (tọa độ x/y 14 quân cờ sân 7 + bóng, các nét vẽ mũi tên/vùng highlight, sơ đồ đội hình, tác giả và danh sách bình luận góp ý).
@@ -197,6 +206,7 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `matches/matches-list.js`: Render thẻ danh sách trận đấu trực quan và thẻ banner Live Match đang diễn ra.
   - `matches/matches-detail.js`: Quản lý Modal chi tiết trận (#match-detail-modal), dựng sa bàn sân 7 (3-1-2), danh sách dự bị & bộ lọc nhận xét phong độ cá nhân.
   - `matches/matches-form.js`: Quản lý Form tạo/sửa trận đấu (#match-form-modal), chọn danh sách tham gia, lưu trận & modal xác thực mã PIN an toàn khi sửa/xóa trận.
+  - `matches/matches-guest.js`: Quản lý Thêm nhanh & Sửa thông tin Khách mời / Viện binh (#quick-add-guest-modal), tối giản biểu mẫu (họ tên, tên gọi, người bảo lãnh, vị trí, màu áo, đặc điểm nhận diện/mô tả), tự động sinh avatar Áo Đấu SVG theo màu & đưa ngay vào danh sách đăng ký ra sân.
   - `matches/matches-pitch-dnd.js`: Engine kéo-thả (Drag & Drop) vị trí cầu thủ trên sân và cơ chế thay người vào/ra băng ghế dự bị.
   - `matches/matches-pitch-edit.js`: Thẻ Quick Edit chấm điểm cá nhân (1 - 10), bộ đếm bàn thắng/kiến tạo/thẻ phạt và lưu điểm toàn đội.
   - `matches/matches-pitch.js`: Render các vị trí trên sa bàn sân 7 Sofascore (3-1-2), huy hiệu sự kiện (⚽, 👟, 🟨, 🟥) và phân lớp màu điểm số chuẩn Sofascore.
@@ -208,16 +218,16 @@ Chứa toàn bộ logic giao diện, nghiệp vụ và tương tác dữ liệu:
   - `matches/matches-live-events.js`: Ma trận nút chọn cầu thủ sự kiện nhanh, ghi nhận diễn biến và hiển thị dòng thời gian (Timeline).
   - `matches/matches-live-voice.js`: Trợ lý ghi nhận sự kiện bằng giọng nói tiếng Việt tự nhiên (Web Speech API kết hợp Football NLP).
 - `players.js` & `players/`: [Mô-đun hoá] Quản lý cầu thủ, tài khoản & hồ sơ cá nhân, điều phối qua Facade trung tâm (~55 dòng) và phân tách thành 4 submodule chuyên biệt:
-  - `players/players-list.js`: Render lưới thẻ cầu thủ phong cách thẻ FIFA, hiển thị số áo, vị trí, số dư ví quỹ và bộ chỉ số phong độ.
-  - `players/players-form.js`: Quản lý Modal thêm/sửa thông tin cầu thủ (#player-modal), phân quyền Admin lưu trữ và xóa cầu thủ.
+  - `players/players-list.js`: Render lưới thẻ cầu thủ phong cách thẻ FIFA, hiển thị số áo, vị trí, số dư ví quỹ, đặc điểm nhận diện khách và bộ chỉ số phong độ.
+  - `players/players-form.js`: Quản lý Modal thêm/sửa thông tin cầu thủ chính thức (#player-modal), tự động chuyển hướng sang modal sửa khách gọn nhẹ (#quick-add-guest-modal) khi chỉnh sửa viện binh/khách mời.
   - `players/players-provision.js`: Quản lý Modal cấp tài khoản thành viên (#admin-provision-modal), tạo mật khẩu ngẫu nhiên, gợi ý username & sao chép thông tin gửi Zalo.
-  - `players/players-profile.js`: Quản lý Modal hồ sơ chi tiết (#player-profile-modal), xem lịch sử chấm điểm từng trận và Engine nén ảnh đại diện Canvas tự động.
+  - `players/players-profile.js`: Quản lý Modal hồ sơ chi tiết (#player-profile-modal), hiển thị huy hiệu Khách mời, người bảo lãnh, thẻ nổi bật đặc điểm nhận diện (VD: Đeo kính, người cao), xem lịch sử chấm điểm từng trận và Engine nén ảnh đại diện Canvas tự động.
 - `finance.js` & `finance/`: [Mô-đun hoá] Nghiệp vụ tính tiền sân & chia bill, điều phối qua Facade trung tâm (~57 dòng) và phân tách thành 3 submodule chuyên biệt:
   - `finance/finance-modal.js`: Giao diện Modal (#match-finance-modal), nhập liệu chi phí, tự động tính chia đầu người & làm tròn. Hỗ trợ phân quyền liên thông cho cả Quản trị viên (Admin) và Thủ Quỹ (Treasurer).
   - `finance/finance-checklist.js`: Bảng checklist nộp tiền, 1-chạm xác nhận đã nộp, trừ thẳng vào ví số dư quỹ (trải nghiệm 1-chạm quyền Thủ Quỹ không lặp lại mã PIN) & xuất báo cáo Messenger/Zalo.
   - `finance/finance-qr.js`: Sinh mã VietQR động theo từng cầu thủ, phát âm thanh "Ting ting" 🔔 độc lập qua Web Audio API & tự động gạch nợ realtime qua Casso Webhook Socket.IO.
 - `finance-funds.js` & `funds/`: [Mô-đun hoá] Phân hệ Sổ Quỹ Đội & Ví Thành Viên, điều phối qua Facade trung tâm và phân tách thành 4 submodule chuyên biệt:
-  - `funds/funds-core.js`: Quản lý trạng thái số dư, render bảng danh sách ví, thanh chỉ số an toàn quỹ đội (Coverage Bar) và bộ lọc Filter Pills.
+  - `funds/funds-core.js`: Quản lý trạng thái số dư, render bảng danh sách ví, thanh chỉ số an toàn quỹ đội (Coverage Bar) và bộ lọc Filter Pills. Tự động lọc riêng biệt chỉ hiển thị thành viên chính thức, loại bỏ hoàn toàn viện binh/khách mời.
   - `funds/funds-topup.js`: Quản lý Modal Nạp Quỹ / Thu Tiền (#modal-funds-topup), nhập số tiền hàng loạt (bulk inputs) và tính tổng tức thì.
   - `funds/funds-history.js`: Quản lý Modal Lịch Sử Biến Động (#modal-funds-history), lọc loại giao dịch (nạp quỹ, trừ tiền sân, điều chỉnh), nhật ký chi tiết và tính năng độc quyền cho Thủ Quỹ: hoàn tác & xóa giao dịch khôi phục số dư ví ban đầu, tự động cập nhật số dư trang sổ quỹ tức thì (không cần reload F5).
   - `funds/funds-adjust.js`: Xác thực mã PIN Thủ Quỹ, điều chỉnh số dư ví cá nhân thủ công kèm lý do và chức năng sao chép báo cáo chi tiết gửi Zalo 1 chạm.
@@ -262,18 +272,19 @@ Toàn bộ stylesheet được mô-đun hóa chuyên biệt theo từng miền g
 ### `utils/` (Mô-đun Dùng Chung - Nguyên Tắc DRY)
 Áp dụng mẫu Universal Module Definition (UMD) để tái sử dụng mã nguồn đồng thời trên cả Node.js Backend (`module.exports`) và Trình duyệt Frontend (`window` global) mà không phụ thuộc vào bundler:
 - `officialPlayers.js`: Nguồn sự thật duy nhất (Single Source of Truth - SSOT) cho danh sách 15 cầu thủ chính thức mặc định. Loại bỏ hoàn toàn sự trùng lặp dữ liệu giữa `server.js` và `js/state.js`.
+- `guestJersey.js`: Nguồn sự thật duy nhất (SSOT) cho phân hệ Khách Mời / Viện Binh: bảng màu áo thi đấu (Trắng, Đỏ, Xanh, Vàng, Bra, Arg...), tự động sinh Vector SVG Avatar áo đấu theo màu sắc kèm ký hiệu/số áo và nhận diện `isGuestPlayer` đồng bộ Client/Server.
 - `officialTactics.js`: Kịch bản các bài tập chiến thuật sân 7 chuẩn mẫu (phạt góc, ném biên, thoát pressing) đồng bộ giữa client và server.
 - `tacticsPieces.js`: Nguồn sự thật duy nhất (SSOT) cho 15 quân cờ sân 7 và bóng mặc định, dùng chung giữa `sockets/tacticsSocket.js` và `js/tactics/tactics-pieces.js`.
 - `playerAliases.js`: Bảng ánh xạ từ khóa/biệt danh phủi (`FC_TNT_KNOWN_ALIASES`) và thuật toán chuẩn hóa tên cầu thủ (`getPlayerAliases`). Phục vụ phân tích giọng nói (Voice-to-Event) ở frontend và NLP rating trận đấu của Gemini AI ở backend.
-- `validators.js`: Bộ kiểm chuẩn dữ liệu đầu vào (Avatar 2.5MB, Comment, Reactions) dùng chung UMD.
-- `rateLimiter.js`: Middleware giới hạn tần suất yêu cầu (Sliding Window Rate Limiter) thuần Node.js không phụ thuộc thư viện ngoài, bảo vệ cổng đăng nhập mã PIN khỏi tấn công dò quét (Brute-force) và bảo vệ hạn ngạch gọi Google Gemini API khỏi hành vi spam.
+- `validators.js`: Bộ kiểm chuẩn dữ liệu đầu vào (URL Scheme an toàn chống javascript:/vbscript:/data:, Avatar 2.5MB, Comment, Reactions) dùng chung UMD.
+- `rateLimiter.js`: Middleware giới hạn tần suất yêu cầu (Sliding Window Rate Limiter) thuần Node.js không phụ thuộc thư viện ngoài: Global API Rate Limiter (150 req/phút/IP), bảo vệ cổng đăng nhập mã PIN khỏi Brute-force, bảo vệ hạn ngạch AI Gemini, chống Spam Comment & DoS Avatar Upload.
 - `securityHeaders.js`: Bộ tạo HTTP Headers bảo vệ web (CSP, HSTS, X-Frame, No-Sniff, Permissions).
 
 ### `scripts/` (Công Cụ Tiện Ích)
 - `generate_favicons.py`: Script Python tự động sinh toàn bộ bộ nhận diện icon và favicon từ vector sang `assets/icons/` và `assets/images/`.
 
 ### `server.js` (App Bootstrap)
-- Đóng vai trò bootstrap tinh gọn (~390 dòng): khởi tạo Express, kết nối MongoDB, Socket.IO, cấu hình phục vụ static/fallback và gắn kết các route từ thư mục `routes/` cùng controller `sockets/`.
+- Đóng vai trò bootstrap tinh gọn (~400 dòng): khởi tạo Express, kết nối MongoDB, Socket.IO, cấu hình phục vụ static/fallback, gắn kết Global Rate Limiter cơ bản và các route từ thư mục `routes/` cùng controller `sockets/`.
 - Tích hợp middleware kiểm soát kích thước payload an toàn (`10mb`) và xử lý lỗi chuẩn HTTP 413 (`PayloadTooLargeError`), kết hợp thuật toán nén ảnh Canvas ở Client ([js/moments.js](file:///c:/Users/ADMIN/Documents/Cong_Quan/01_HocTap/03_DuAn/02_DuAnCaNhan/Bong_Da/Web/js/moments.js), [js/players.js](file:///c:/Users/ADMIN/Documents/Cong_Quan/01_HocTap/03_DuAn/02_DuAnCaNhan/Bong_Da/Web/js/players.js)) để bảo vệ RAM tiến trình Node.js và tuân thủ giới hạn 16MB BSON của MongoDB.
 
 ---
@@ -289,8 +300,8 @@ Toàn bộ stylesheet được mô-đun hóa chuyên biệt theo từng miền g
        ▼
 [Backend Server: server.js -> routes/]
        │
-       ├─► (3) Định tuyến yêu cầu đến routes/ (auth, players, matches, moments, weather)
-       ├─► (4) Truy vấn MongoDB thông qua models/ (Player, Match, Moment, Team)
+       ├─► (3) Định tuyến yêu cầu đến routes/ (auth, players, matches, funds, moments, weather)
+       ├─► (4) Truy vấn MongoDB thông qua models/ (Player, Match, Moment, Team, ProcessedPayment...)
        ├─► (5) Trả về JSON tổng hợp cho client
        │
        ▼
@@ -314,18 +325,19 @@ Khi cần can thiệp vào một tính năng, tra cứu trực tiếp theo bản
 
 | Nội dung cần sửa đổi | File / Thư mục đích | Ghi chú |
 | :--- | :--- | :--- |
-| **Khởi động server, Socket.IO, tĩnh** | [server.js](file:///server.js) | Bootstrap ứng dụng, mount routes |
-| **Xác thực PIN, phân quyền Admin** | [routes/auth.js](file:///routes/auth.js) | Đăng nhập PIN, đổi PIN, middleware `requireAdmin` |
+| **Khởi động server, Socket.IO, tĩnh, Global Rate Limit** | [server.js](file:///server.js) | Bootstrap ứng dụng, mount routes, global limiter |
+| **Xác thực PIN, phân quyền Admin & Thủ Quỹ** | [routes/auth.js](file:///routes/auth.js), [routes/auth/](file:///routes/auth/) | Đăng nhập PIN, đổi PIN, middleware `requireAdmin`, `requireTreasurer` |
 | **API Cầu thủ & Upload Avatar** | [routes/players.js](file:///routes/players.js) | Quản lý danh sách và hồ sơ cầu thủ |
 | **API Trận đấu, Quỹ sân, Live Match, AI Rating** | [routes/matches.js](file:///routes/matches.js) | Lịch sử trận, chia tiền, live draft, AI chấm điểm |
+| **API Sổ Quỹ Đội, Nạp Quỹ & Ví Thành Viên** | [routes/funds.js](file:///routes/funds.js), [routes/funds/](file:///routes/funds/) | Facade pattern: balances, transactions, operations |
 | **API Sa bàn chiến thuật, Playbook mẫu** | [routes/tactics.js](file:///routes/tactics.js) | Kịch bản sa bàn, thảo luận & bài tập mẫu |
 | **Realtime Whiteboard Socket sa bàn** | [sockets/tacticsSocket.js](file:///sockets/tacticsSocket.js) | Điều phối phòng họp chiến thuật trực tiếp |
 | **API Khoảnh khắc, Cảm xúc, Bình luận** | [routes/moments.js](file:///routes/moments.js) | Feed khoảnh khắc, tương tác |
 | **API Thời tiết Sân AKKA & Cố vấn AI** | [routes/weather.js](file:///routes/weather.js) | Open-Meteo API và tư vấn chiến thuật |
-| **Cấu trúc trường dữ liệu MongoDB** | [models/](file:///models/) | Mở model tương ứng (`Match.js`, `Player.js`, ...) |
+| **Cấu trúc trường dữ liệu MongoDB** | [models/](file:///models/) | Mở model tương ứng (`Match.js`, `Player.js`, `ProcessedPayment.js`...) |
 | **Gọi API từ client, State chung, Socket.IO** | [js/state.js](file:///js/state.js) | Quản lý `APP_STATE`, `apiCall()`, `saveLocalState()` |
 | **Giao diện sân 7 Sofascore, Live Match** | [js/matches.js](file:///js/matches.js) | Giao diện pitch Sofascore & live match |
-| **Chia tiền trận, quỹ đội, VietQR & Webhook tự động** | [js/finance.js](file:///js/finance.js), [routes/payments.js](file:///routes/payments.js) | Công thức chia tiền, VietQR cá nhân hóa, Casso Webhook & Ting ting |
+| **Chia tiền trận, quỹ đội, VietQR & Webhook tự động** | [js/finance.js](file:///js/finance.js), [routes/payments.js](file:///routes/payments.js) | Công thức chia tiền, VietQR cá nhân hóa, Casso Webhook chống Replay & Ting ting |
 | **Danh sách cầu thủ phía giao diện** | [js/players.js](file:///js/players.js) | Render danh sách và modal cầu thủ |
 | **Bảng vinh danh, tính toán danh hiệu** | [js/awards.js](file:///js/awards.js) | Top Goals/Assists/MOTM |
 | **Bài đăng kỷ niệm, bình luận phía Client** | [js/moments.js](file:///js/moments.js) | Feed giao diện và tương tác |

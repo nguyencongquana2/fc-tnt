@@ -32,13 +32,14 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // GET /api/tactics/:id (Chi tiết một bài chiến thuật)
   router.get('/:id', async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID bài chiến thuật không hợp lệ!' });
       if (isMongoConnected()) {
-        const tactic = await Tactic.findOne({ id });
+        const tactic = await Tactic.findOne({ id: cleanId });
         if (!tactic) return res.status(404).json({ error: 'Không tìm thấy bài chiến thuật!' });
         return res.json(tactic);
       }
-      const item = (fallbackData.tactics || []).find(t => t.id === id);
+      const item = (fallbackData.tactics || []).find(t => t.id === cleanId);
       if (!item) return res.status(404).json({ error: 'Không tìm thấy bài chiến thuật!' });
       res.json(item);
     } catch (err) {
@@ -118,7 +119,8 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // PUT /api/tactics/:id (Cập nhật kịch bản chiến thuật)
   router.put('/:id', tacticRateLimiter, async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID bài chiến thuật không hợp lệ!' });
       const adminToken = req.headers['x-admin-token'];
       const playerToken = req.headers['x-player-token'];
 
@@ -131,9 +133,9 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
 
       let existing = null;
       if (isMongoConnected()) {
-        existing = await Tactic.findOne({ id });
+        existing = await Tactic.findOne({ id: cleanId });
       } else {
-        existing = (fallbackData.tactics || []).find(t => t.id === id);
+        existing = (fallbackData.tactics || []).find(t => t.id === cleanId);
       }
 
       if (!existing) {
@@ -173,7 +175,8 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // DELETE /api/tactics/:id (Xóa bài chiến thuật)
   router.delete('/:id', async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID bài chiến thuật không hợp lệ!' });
       const adminToken = req.headers['x-admin-token'];
       const playerToken = req.headers['x-player-token'];
 
@@ -186,9 +189,9 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
 
       let existing = null;
       if (isMongoConnected()) {
-        existing = await Tactic.findOne({ id });
+        existing = await Tactic.findOne({ id: cleanId });
       } else {
-        existing = (fallbackData.tactics || []).find(t => t.id === id);
+        existing = (fallbackData.tactics || []).find(t => t.id === cleanId);
       }
 
       if (!existing) {
@@ -206,9 +209,9 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       }
 
       if (isMongoConnected()) {
-        await Tactic.findOneAndDelete({ id });
+        await Tactic.findOneAndDelete({ id: cleanId });
       } else {
-        fallbackData.tactics = (fallbackData.tactics || []).filter(t => t.id !== id);
+        fallbackData.tactics = (fallbackData.tactics || []).filter(t => t.id !== cleanId);
       }
 
       broadcastDataUpdate('tactics', `🗑️ Bài chiến thuật "${existing.title}" đã được xóa.`);
@@ -222,7 +225,8 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // POST /api/tactics/:id/comments (Thảo luận & Góp ý chiến thuật)
   router.post('/:id/comments', commentRateLimiter, async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID bài chiến thuật không hợp lệ!' });
       const playerToken = req.headers['x-player-token'];
       const session = verifyPlayerToken(playerToken);
 
@@ -243,17 +247,17 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       };
 
       if (isMongoConnected()) {
-        const tactic = await Tactic.findOne({ id });
+        const tactic = await Tactic.findOne({ id: cleanId });
         if (!tactic) return res.status(404).json({ error: 'Không tìm thấy bài chiến thuật!' });
 
         tactic.comments.push(comment);
         await tactic.save();
-        if (io) io.to('tactics_room').emit('tactics_comment_added', { tacticId: id, comment });
+        if (io) io.to('tactics_room').emit('tactics_comment_added', { tacticId: cleanId, comment });
         broadcastDataUpdate('tactics', `💬 Bình luận mới về chiến thuật "${tactic.title}"!`);
         return res.status(201).json(comment);
       }
 
-      const item = (fallbackData.tactics || []).find(t => t.id === id);
+      const item = (fallbackData.tactics || []).find(t => t.id === cleanId);
       if (!item) return res.status(404).json({ error: 'Không tìm thấy bài chiến thuật!' });
 
       item.comments = item.comments || [];
@@ -270,7 +274,9 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // DELETE /api/tactics/:id/comments/:commentId (Xóa bình luận)
   router.delete('/:id/comments/:commentId', async (req, res) => {
     try {
-      const { id, commentId } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      const cleanCommentId = String(req.params.commentId || '').trim();
+      if (!cleanId || !cleanCommentId) return res.status(400).json({ error: 'ID bài chiến thuật hoặc ID bình luận không hợp lệ!' });
       const adminToken = req.headers['x-admin-token'];
       const playerToken = req.headers['x-player-token'];
 
@@ -282,10 +288,10 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
       }
 
       if (isMongoConnected()) {
-        const tactic = await Tactic.findOne({ id });
+        const tactic = await Tactic.findOne({ id: cleanId });
         if (!tactic) return res.status(404).json({ error: 'Không tìm thấy bài chiến thuật!' });
 
-        const comment = tactic.comments.find(c => c.id === commentId);
+        const comment = tactic.comments.find(c => c.id === cleanCommentId);
         if (!comment) return res.status(404).json({ error: 'Không tìm thấy bình luận!' });
 
         const isCommentAuthor = playerSession && comment.playerId === playerSession.playerId;
@@ -293,17 +299,17 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
           return res.status(403).json({ error: 'Chỉ tác giả hoặc Quản trị viên mới được xóa bình luận này!' });
         }
 
-        tactic.comments = tactic.comments.filter(c => c.id !== commentId);
+        tactic.comments = tactic.comments.filter(c => c.id !== cleanCommentId);
         await tactic.save();
-        if (io) io.to('tactics_room').emit('tactics_comment_deleted', { tacticId: id, commentId });
+        if (io) io.to('tactics_room').emit('tactics_comment_deleted', { tacticId: cleanId, commentId: cleanCommentId });
         broadcastDataUpdate('tactics', '🗑️ Một bình luận chiến thuật đã được xóa.');
         return res.json({ success: true, message: 'Đã xóa bình luận thành công!' });
       }
 
-      const item = (fallbackData.tactics || []).find(t => t.id === id);
+      const item = (fallbackData.tactics || []).find(t => t.id === cleanId);
       if (!item) return res.status(404).json({ error: 'Không tìm thấy bài chiến thuật!' });
 
-      const comment = (item.comments || []).find(c => c.id === commentId);
+      const comment = (item.comments || []).find(c => c.id === cleanCommentId);
       if (!comment) return res.status(404).json({ error: 'Không tìm thấy bình luận!' });
 
       const isCommentAuthor = playerSession && comment.playerId === playerSession.playerId;
@@ -311,8 +317,8 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
         return res.status(403).json({ error: 'Chỉ tác giả hoặc Quản trị viên mới được xóa bình luận này!' });
       }
 
-      item.comments = (item.comments || []).filter(c => c.id !== commentId);
-      if (io) io.to('tactics_room').emit('tactics_comment_deleted', { tacticId: id, commentId });
+      item.comments = (item.comments || []).filter(c => c.id !== cleanCommentId);
+      if (io) io.to('tactics_room').emit('tactics_comment_deleted', { tacticId: cleanId, commentId: cleanCommentId });
       broadcastDataUpdate('tactics', '🗑️ Một bình luận chiến thuật đã được xóa.');
       res.json({ success: true, message: 'Đã xóa bình luận thành công!' });
     } catch (err) {
@@ -324,12 +330,13 @@ function createTacticsRouter({ isMongoConnected, fallbackData, broadcastDataUpda
   // POST /api/tactics/:id/like (Thả tim bài chiến thuật)
   router.post('/:id/like', reactionRateLimiter, async (req, res) => {
     try {
-      const { id } = req.params;
+      const cleanId = String(req.params.id || '').trim();
+      if (!cleanId) return res.status(400).json({ error: 'ID bài chiến thuật không hợp lệ!' });
       const { userId } = req.body;
       const userKey = userId || req.headers['x-player-token'] || req.ip;
 
       if (isMongoConnected()) {
-        const tactic = await Tactic.findOne({ id });
+        const tactic = await Tactic.findOne({ id: cleanId });
         if (!tactic) return res.status(404).json({ error: 'Không tìm thấy bài chiến thuật!' });
 
         const idx = tactic.likes.indexOf(userKey);

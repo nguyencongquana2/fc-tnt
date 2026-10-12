@@ -146,9 +146,17 @@ function createSocketRateLimiter({ windowMs = 1000, max = 30 }) {
   };
 }
 
+// 9. Global API Rate Limiter (Tối đa 150 request / phút / IP) chống DoS và scraping diện rộng
+const globalRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 150,
+  message: 'Bạn đang gửi quá nhiều yêu cầu tới hệ thống. Vui lòng chờ một chút trước khi thử lại.'
+});
+
 module.exports = {
   createRateLimiter,
   createSocketRateLimiter,
+  globalRateLimiter,
   loginRateLimiter,
   aiRateLimiter,
   commentRateLimiter,
