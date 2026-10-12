@@ -2183,10 +2183,6 @@
   font-weight: 700;
   white-space: nowrap;
 }
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid var(--accent-gold);
-}
 
 /* Toast */
 .toast-container {
