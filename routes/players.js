@@ -5,7 +5,7 @@
 
 const express = require('express');
 const Player = require('../models/Player');
-const { avatarRateLimiter } = require('../utils/rateLimiter');
+const { avatarRateLimiter } = require('../middlewares/rateLimiter');
 const { isValidAvatar } = require('../utils/validators');
 const { verifyAdminToken, verifyPlayerToken } = require('./auth');
 const { isGuestPlayer } = require('../utils/guestJersey');

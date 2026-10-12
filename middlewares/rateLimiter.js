@@ -1,7 +1,7 @@
 /**
- * FC TNT - Sliding Window Rate Limiter Middleware
- * Ngăn chặn tấn công Brute-force mã PIN và hạn chế lạm dụng Gemini AI API
- */
+2:  * FC TNT - Sliding Window Rate Limiter Middleware
+3:  * Ngăn chặn tấn công Brute-force mã PIN và hạn chế lạm dụng Gemini AI API
+4:  */
 
 function createRateLimiter({ windowMs = 60000, max = 30, message = 'Quá nhiều yêu cầu, vui lòng thử lại sau.' }) {
   const hits = new Map(); // ip -> Array<timestamp>

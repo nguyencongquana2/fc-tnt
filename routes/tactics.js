@@ -6,7 +6,7 @@
 const express = require('express');
 const Tactic = require('../models/Tactic');
 const { verifyAdminToken, verifyPlayerToken } = require('./auth');
-const { commentRateLimiter, tacticRateLimiter, reactionRateLimiter } = require('../utils/rateLimiter');
+const { commentRateLimiter, tacticRateLimiter, reactionRateLimiter } = require('../middlewares/rateLimiter');
 const { validateCommentInput } = require('../utils/validators');
 
 const ALLOWED_CATEGORIES = ['corner', 'throw_in', 'pressing_escape', 'freekick', 'defense', 'attack', 'custom'];

@@ -135,6 +135,9 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   └── weather/          # [Mô-đun hoá] Phân tách dịch vụ thời tiết & AI cố vấn
 │       ├── weather-service.js # Dữ liệu Open-Meteo, cache 10 phút, mã WMO & điểm Playability
 │       └── weather-ai.js      # Cố vấn AI sân bóng, nhận diện kèo đấu, chọn giày & dông sét
+├── middlewares/          # [Bảo mật Backend] Hệ thống Middleware kiểm soát truy cập & an ninh
+│   ├── rateLimiter.js     # Bộ lọc trượt (Sliding Window): Global Rate Limiter, Brute-force PIN, lạm dụng AI, Spam Comment & Avatar DoS
+│   └── securityHeaders.js # Bộ tạo HTTP Headers bảo vệ web (CSP, HSTS, X-Frame, No-Sniff, Permissions)
 ├── sockets/              # [Mô-đun hoá] Socket.IO event controllers
 │   └── tacticsSocket.js  # Phòng họp sa bàn trực tiếp, sync kéo thả & vẽ vector
 ├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung giữa Backend & Frontend (UMD)
@@ -143,9 +146,7 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   ├── officialTactics.js # Kịch bản bài tập chiến thuật sân 7 chuẩn mẫu (SSOT)
 │   ├── tacticsPieces.js  # 15 quân cờ sân 7 mặc định & bóng dùng chung Server/Client (SSOT)
 │   ├── playerAliases.js   # Từ điển alias và phân giải tên cầu thủ cho AI NLP & Voice
-│   ├── rateLimiter.js     # Bộ lọc trượt (Sliding Window): Global Rate Limiter, Brute-force PIN, lạm dụng AI, Spam Comment & Avatar DoS
-│   ├── validators.js      # Bộ kiểm chuẩn dữ liệu đầu vào (URL Scheme an toàn, Avatar, Comment, Reactions) dùng chung UMD
-│   └── securityHeaders.js # Bộ tạo HTTP Headers bảo vệ web (CSP, HSTS, X-Frame, No-Sniff, Permissions)
+│   └── validators.js      # Bộ kiểm chuẩn dữ liệu đầu vào (URL Scheme an toàn, Avatar, Comment, Reactions) dùng chung UMD
 ├── scripts/              # Công cụ tự động hóa
 │   └── generate_favicons.py # Tự động tạo bộ icon favicon & logo
 ├── .env                  # Biến môi trường (MONGODB_URI, GEMINI_API_KEY, ADMIN_PIN)
@@ -277,6 +278,8 @@ Toàn bộ stylesheet được mô-đun hóa chuyên biệt theo từng miền g
 - `tacticsPieces.js`: Nguồn sự thật duy nhất (SSOT) cho 15 quân cờ sân 7 và bóng mặc định, dùng chung giữa `sockets/tacticsSocket.js` và `js/tactics/tactics-pieces.js`.
 - `playerAliases.js`: Bảng ánh xạ từ khóa/biệt danh phủi (`FC_TNT_KNOWN_ALIASES`) và thuật toán chuẩn hóa tên cầu thủ (`getPlayerAliases`). Phục vụ phân tích giọng nói (Voice-to-Event) ở frontend và NLP rating trận đấu của Gemini AI ở backend.
 - `validators.js`: Bộ kiểm chuẩn dữ liệu đầu vào (URL Scheme an toàn chống javascript:/vbscript:/data:, Avatar 2.5MB, Comment, Reactions) dùng chung UMD.
+
+### `middlewares/` (Kiểm Soát An Ninh & Tần Suất Truy Cập Backend)
 - `rateLimiter.js`: Middleware giới hạn tần suất yêu cầu (Sliding Window Rate Limiter) thuần Node.js không phụ thuộc thư viện ngoài: Global API Rate Limiter (150 req/phút/IP), bảo vệ cổng đăng nhập mã PIN khỏi Brute-force, bảo vệ hạn ngạch AI Gemini, chống Spam Comment & DoS Avatar Upload.
 - `securityHeaders.js`: Bộ tạo HTTP Headers bảo vệ web (CSP, HSTS, X-Frame, No-Sniff, Permissions).
 

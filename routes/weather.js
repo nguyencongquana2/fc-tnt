@@ -11,7 +11,7 @@
  */
 
 const express = require('express');
-const { aiRateLimiter } = require('../utils/rateLimiter');
+const { aiRateLimiter } = require('../middlewares/rateLimiter');
 const {
   AKKA_VENUE,
   parseWmoWeather,

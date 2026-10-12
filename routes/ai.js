@@ -11,7 +11,7 @@
  */
 
 const express = require('express');
-const { aiRateLimiter } = require('../utils/rateLimiter');
+const { aiRateLimiter } = require('../middlewares/rateLimiter');
 const { analyzeMatchWithNLP, getPlayerAliases } = require('./ai/ai-engine');
 const { evaluateWithGemini } = require('./ai/ai-gemini');
 const { requireAdmin: defaultRequireAdmin } = require('./auth');

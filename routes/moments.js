@@ -7,7 +7,7 @@ const express = require('express');
 const Moment = require('../models/Moment');
 const Player = require('../models/Player');
 const { verifyAdminToken, verifyPlayerToken } = require('./auth');
-const { commentRateLimiter, reactionRateLimiter } = require('../utils/rateLimiter');
+const { commentRateLimiter, reactionRateLimiter } = require('../middlewares/rateLimiter');
 const { isValidReaction, validateCommentInput, isValidHttpUrl } = require('../utils/validators');
 
 function createMomentsRouter({ isMongoConnected, fallbackData, broadcastDataUpdate, requireAdmin }) {

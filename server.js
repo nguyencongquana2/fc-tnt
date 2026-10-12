@@ -38,8 +38,8 @@ const { createTacticsRouter } = require('./routes/tactics');
 const createUploadRouter = require('./routes/upload');
 const { createPaymentsRouter } = require('./routes/payments');
 const { createFundsRouter } = require('./routes/funds');
-const { securityHeadersMiddleware } = require('./utils/securityHeaders');
-const { globalRateLimiter } = require('./utils/rateLimiter');
+const { securityHeadersMiddleware } = require('./middlewares/securityHeaders');
+const { globalRateLimiter } = require('./middlewares/rateLimiter');
 const OFFICIAL_TACTICS = require('./utils/officialTactics');
 const { initTacticsSocket } = require('./sockets/tacticsSocket');
 

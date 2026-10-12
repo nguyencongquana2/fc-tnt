@@ -7,7 +7,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const { verifyAdminToken, verifyPlayerToken } = require('./auth');
-const { uploadRateLimiter } = require('../utils/rateLimiter');
+const { uploadRateLimiter } = require('../middlewares/rateLimiter');
 
 function createUploadRouter({ isMongoConnected }) {
   const router = express.Router();

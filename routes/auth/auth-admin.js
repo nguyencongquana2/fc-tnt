@@ -6,7 +6,7 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Team = require('../../models/Team');
-const { loginRateLimiter } = require('../../utils/rateLimiter');
+const { loginRateLimiter } = require('../../middlewares/rateLimiter');
 const { RUNTIME_FALLBACK_SECRET, hashPin, verifyPinHash } = require('./auth-common');
 
 // Secret ký chữ ký số HMAC an toàn kết hợp salt máy chủ và mã PIN

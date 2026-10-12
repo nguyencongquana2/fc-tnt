@@ -6,7 +6,7 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Player = require('../../models/Player');
-const { loginRateLimiter } = require('../../utils/rateLimiter');
+const { loginRateLimiter } = require('../../middlewares/rateLimiter');
 const { isValidAvatar } = require('../../utils/validators');
 const { RUNTIME_FALLBACK_SECRET } = require('./auth-common');
 

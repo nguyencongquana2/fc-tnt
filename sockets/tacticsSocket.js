@@ -3,7 +3,7 @@
  * Quản lý phòng họp chiến thuật, đồng bộ kéo thả quân cờ, nét vẽ vector và bài tập mẫu
  */
 
-const { createSocketRateLimiter } = require('../utils/rateLimiter');
+const { createSocketRateLimiter } = require('../middlewares/rateLimiter');
 const { getDefaultTacticsPieces } = require('../utils/tacticsPieces');
 
 function initTacticsSocket(io) {

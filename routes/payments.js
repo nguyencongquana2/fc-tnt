@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const Match = require('../models/Match');
 const Player = require('../models/Player');
 const ProcessedPayment = require('../models/ProcessedPayment');
-const { paymentWebhookLimiter } = require('../utils/rateLimiter');
+const { paymentWebhookLimiter } = require('../middlewares/rateLimiter');
 
 // Bộ nhớ đệm lưu tối đa 500 Transaction ID gần nhất để chống xử lý trùng lặp (FIFO Idempotency)
 const MAX_PROCESSED_IDS = 500;
