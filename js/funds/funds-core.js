@@ -366,11 +366,11 @@
           <table class="fin-table funds-table">
             <thead>
               <tr>
-                <th style="width: 48px; text-align: center;">Số Áo</th>
-                <th>Cầu Thủ</th>
-                <th style="text-align: right;">Số Dư Ví</th>
-                <th style="text-align: center; width: 120px;">Trạng Thái</th>
-                <th style="text-align: right; width: 130px;">Thao Tác</th>
+                <th class="col-jersey">Số Áo</th>
+                <th class="col-player-info">Cầu Thủ</th>
+                <th class="col-balance">Số Dư Ví</th>
+                <th class="col-status">Trạng Thái</th>
+                <th class="col-actions">Thao Tác</th>
               </tr>
             </thead>
             <tbody id="funds-table-tbody">

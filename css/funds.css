@@ -727,16 +727,59 @@
   background: rgba(255, 255, 255, 0.035);
 }
 
-.fund-status-badge-inline {
-  display: none;
-}
+/* =========================================================================
+   CĂN DÓNG BẢNG TRÊN DESKTOP (MÀN HÌNH >= 769px)
+   Bọc trong @media (min-width: 769px) để cách ly hoàn toàn với giao diện Mobile (< 768px)
+   ========================================================================= */
+@media (min-width: 769px) {
+  /* Ẩn hoàn toàn badge trạng thái inline và nhãn phụ trên Desktop */
+  .fund-status-badge-inline {
+    display: none !important;
+  }
 
-.mobile-col-label {
-  display: none;
-}
+  .mobile-col-label {
+    display: none !important;
+  }
 
-.mobile-action-text {
-  display: none;
+  .mobile-action-text {
+    display: none !important;
+  }
+
+  /* Căn dóng thẳng hàng tuyệt đối các cột trên Desktop */
+  .funds-table th.col-jersey,
+  .funds-table td.col-jersey {
+    width: 52px !important;
+    text-align: center !important;
+  }
+
+  .funds-table th.col-player-info,
+  .funds-table td.col-player-info {
+    text-align: left !important;
+  }
+
+  .funds-table th.col-balance,
+  .funds-table td.col-balance {
+    text-align: right !important;
+    font-weight: 800;
+    font-size: 0.98rem;
+    font-family: var(--font-display, inherit);
+  }
+
+  .funds-table th.col-balance {
+    width: 140px !important;
+  }
+
+  .funds-table th.col-status,
+  .funds-table td.col-status {
+    text-align: center !important;
+    width: 130px !important;
+  }
+
+  .funds-table th.col-actions,
+  .funds-table td.col-actions {
+    text-align: right !important;
+    width: 130px !important;
+  }
 }
 
 .fund-player-identity {
@@ -1828,6 +1871,7 @@
 
   .col-balance {
     grid-area: balance !important;
+    width: auto !important;
     padding: 0 !important;
     border: none !important;
     text-align: right !important;
