@@ -86,6 +86,18 @@
 
     onSearchInput(val) {
       this.searchQuery = (val || '').trim().toLowerCase();
+      const clearBtn = document.querySelector('.funds-search-clear-btn');
+      if (clearBtn) clearBtn.style.display = val ? 'flex' : 'none';
+      const tbody = document.getElementById('funds-table-tbody');
+      if (tbody) this._renderPlayersTable(tbody);
+    }
+
+    clearSearch() {
+      this.searchQuery = '';
+      const input = document.querySelector('.funds-search-input');
+      if (input) input.value = '';
+      const clearBtn = document.querySelector('.funds-search-clear-btn');
+      if (clearBtn) clearBtn.style.display = 'none';
       const tbody = document.getElementById('funds-table-tbody');
       if (tbody) this._renderPlayersTable(tbody);
     }
@@ -158,36 +170,42 @@
         }
 
         return `
-          <tr>
-            <td style="text-align: center; width: 48px;">
+          <tr class="fund-player-item-row">
+            <td class="col-jersey">
               <span class="fund-player-number-badge">${p.number || '-'}</span>
             </td>
-            <td>
-              <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <td class="col-player-info">
+              <div class="fund-player-identity">
                 <img src="${esc(p.avatar || 'assets/images/default-avatar.png')}" alt="" class="fin-table-avatar" onerror="this.src='assets/images/default-avatar.png'">
-                <div style="display: flex; flex-direction: column; min-width: 0;">
-                  <strong style="color: #fff; font-size: 0.92rem; white-space: nowrap;">${esc(p.name)}</strong>
-                  ${p.nickname ? `<span style="color: var(--text-dim, #94a3b8); font-size: 0.75rem; white-space: nowrap;">(${esc(p.nickname)})</span>` : ''}
+                <div class="fund-player-name-wrap">
+                  <div class="fund-player-name-row">
+                    <strong class="fund-player-name">${esc(p.name)}</strong>
+                    ${p.nickname ? `<span class="fund-player-nickname">(${esc(p.nickname)})</span>` : ''}
+                  </div>
+                  <span class="fund-status-badge fund-status-badge-inline ${badgeClass}">${statusText}</span>
                 </div>
               </div>
             </td>
-            <td style="text-align: right; font-weight: 800; font-size: 0.98rem; font-family: var(--font-display, inherit); color: ${balColor};">
-              ${balPrefix}${this.formatMoney(bal)}
+            <td class="col-balance">
+              <span class="mobile-col-label">Số dư:</span>
+              <span class="fund-balance-amount" style="color: ${balColor};">
+                ${balPrefix}${this.formatMoney(bal)}
+              </span>
             </td>
-            <td style="text-align: center; width: 120px;">
+            <td class="col-status">
               <span class="fund-status-badge ${badgeClass}">${statusText}</span>
             </td>
-            <td style="text-align: right; width: 130px;">
+            <td class="col-actions">
               <div class="funds-action-cell">
                 <button type="button" class="btn-fund-action btn-fund-history" onclick="window.TNT.funds.openHistoryModal('${p.id}')" title="Xem lịch sử biến động số dư">
-                  📜
+                  <span>📜</span><span class="mobile-action-text">Lịch sử</span>
                 </button>
                 ${isTreas ? `
                   <button type="button" class="btn-fund-action btn-fund-topup" onclick="window.TNT.funds.openIndividualTopup('${p.id}')" title="Nạp thêm tiền quỹ">
-                    ➕
+                    <span>➕</span><span class="mobile-action-text">Nạp quỹ</span>
                   </button>
                   <button type="button" class="btn-fund-action btn-fund-adjust" onclick="window.TNT.funds.openAdjustModal('${p.id}')" title="Điều chỉnh số dư quỹ">
-                    ⚙️
+                    <span>⚙️</span><span class="mobile-action-text">Sửa</span>
                   </button>
                 ` : ''}
               </div>
@@ -297,42 +315,49 @@
             <div class="funds-search-box">
               <span class="funds-search-icon">🔍</span>
               <input type="text" class="funds-search-input" placeholder="Tìm theo tên, số áo..." value="${esc(this.searchQuery)}" oninput="window.TNT.funds.onSearchInput(this.value)">
+              <button type="button" class="funds-search-clear-btn" style="${this.searchQuery ? 'display:flex;' : 'display:none;'}" onclick="window.TNT.funds.clearSearch()" title="Xóa tìm kiếm">&times;</button>
             </div>
             <div class="funds-filter-pills">
               <button type="button" class="funds-filter-pill ${this.filterStatus === 'all' ? 'active' : ''}" data-filter="all" onclick="window.TNT.funds.setFilterStatus('all')">
-                Tất cả (${totalPlayers})
+                <span class="pill-title">Tất cả</span> <strong class="pill-count">(${totalPlayers})</strong>
               </button>
-              <button type="button" class="funds-filter-pill ${this.filterStatus === 'good' ? 'active' : ''}" data-filter="good" onclick="window.TNT.funds.setFilterStatus('good')">
-                🟢 Dồi dào (${goodPlayers})
+              <button type="button" class="funds-filter-pill pill-good ${this.filterStatus === 'good' ? 'active' : ''}" data-filter="good" onclick="window.TNT.funds.setFilterStatus('good')">
+                <span class="pill-dot">🟢</span> <span class="pill-title">Dồi dào</span> <strong class="pill-count">(${goodPlayers})</strong>
               </button>
-              <button type="button" class="funds-filter-pill ${this.filterStatus === 'low' ? 'active' : ''}" data-filter="low" onclick="window.TNT.funds.setFilterStatus('low')">
-                🟡 Sắp hết (${lowPlayers})
+              <button type="button" class="funds-filter-pill pill-low ${this.filterStatus === 'low' ? 'active' : ''}" data-filter="low" onclick="window.TNT.funds.setFilterStatus('low')">
+                <span class="pill-dot">🟡</span> <span class="pill-title">Sắp hết</span> <strong class="pill-count">(${lowPlayers})</strong>
               </button>
-              <button type="button" class="funds-filter-pill ${this.filterStatus === 'debt' ? 'active' : ''}" data-filter="debt" onclick="window.TNT.funds.setFilterStatus('debt')">
-                🔴 Đang nợ (${debtPlayers})
+              <button type="button" class="funds-filter-pill pill-debt ${this.filterStatus === 'debt' ? 'active' : ''}" data-filter="debt" onclick="window.TNT.funds.setFilterStatus('debt')">
+                <span class="pill-dot">🔴</span> <span class="pill-title">Đang nợ</span> <strong class="pill-count">(${debtPlayers})</strong>
               </button>
             </div>
           </div>
 
-          <div class="funds-toolbar-actions">
+          <div class="funds-toolbar-actions ${isTreas ? 'is-treasurer' : 'not-treasurer'}">
             ${isTreas ? `
               <button type="button" class="btn btn-fund-topup-main" onclick="window.TNT.funds.openTopupModal()">
-                ➕ Nạp / Thu Tiền
+                <span>➕</span> <span class="btn-text-full">Nạp / Thu Tiền</span><span class="btn-text-short">Nạp Quỹ</span>
+              </button>
+              <button type="button" class="btn btn-fund-history-main" onclick="window.TNT.funds.openHistoryModal()">
+                <span>📜</span> <span class="btn-text-full">Lịch Sử Giao Dịch</span><span class="btn-text-short">Lịch Sử</span>
+              </button>
+              <button type="button" class="btn btn-fund-zalo" onclick="window.TNT.funds.copyZaloReport()" title="Sao chép báo cáo chi tiết gửi Zalo">
+                <span>📋</span> <span class="btn-text-full">Copy Zalo</span><span class="btn-text-short">Báo Cáo</span>
               </button>
               <button type="button" class="btn btn-fund-treasurer-active" onclick="window.TNT.funds.logoutTreasurer()" title="Bấm để khóa quyền Thủ Quỹ">
-                🔐 Khóa Thủ Quỹ
+                <span>🔐</span> <span class="btn-text-full">Khóa Thủ Quỹ</span><span class="btn-text-short">Khóa Quỹ</span>
               </button>
             ` : `
               <button type="button" class="btn btn-fund-treasurer" onclick="window.TNT.funds.promptTreasurerLogin()">
-                🔑 Mở Khóa Thủ Quỹ
+                <span>🔑</span> <span class="btn-text-full">Mở Khóa Thủ Quỹ</span><span class="btn-text-short">Mở Khóa Thủ Quỹ</span>
+              </button>
+              <button type="button" class="btn btn-fund-history-main" onclick="window.TNT.funds.openHistoryModal()">
+                <span>📜</span> <span class="btn-text-full">Lịch Sử Giao Dịch</span><span class="btn-text-short">Lịch Sử</span>
+              </button>
+              <button type="button" class="btn btn-fund-zalo" onclick="window.TNT.funds.copyZaloReport()" title="Sao chép báo cáo chi tiết gửi Zalo">
+                <span>📋</span> <span class="btn-text-full">Copy Zalo</span><span class="btn-text-short">Báo Cáo</span>
               </button>
             `}
-            <button type="button" class="btn btn-fund-history-main" onclick="window.TNT.funds.openHistoryModal()">
-              📜 Lịch Sử Giao Dịch
-            </button>
-            <button type="button" class="btn btn-fund-zalo" onclick="window.TNT.funds.copyZaloReport()" title="Sao chép báo cáo chi tiết gửi Zalo">
-              📋 Copy Zalo
-            </button>
           </div>
         </div>
 

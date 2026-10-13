@@ -49,7 +49,8 @@
       modal.style.display = 'flex';
       document.body.classList.add('no-scroll');
       modal.innerHTML = `
-        <div class="modal-card modal-funds-card" style="max-width: 820px; width: 95%;">
+        <div class="modal-card modal-funds-card modal-funds-card-history">
+          <div class="modal-sheet-drag-handle"></div>
           <div class="modal-header funds-modal-header">
             <h3 style="margin: 0; font-size: 1.15rem; color: #fff; font-weight: 800;">📜 Đang tải lịch sử giao dịch...</h3>
             <button type="button" class="modal-close-btn" onclick="window.TNT.funds.closeHistoryModal()">&times;</button>
@@ -79,7 +80,8 @@
       const adjustCount = this.rawTransactions.filter(t => t.type === 'ADJUSTMENT').length;
 
       modal.innerHTML = `
-        <div class="modal-card modal-funds-card" style="max-width: 820px; width: 95%;">
+        <div class="modal-card modal-funds-card modal-funds-card-history">
+          <div class="modal-sheet-drag-handle"></div>
           <!-- 1. MODAL HEADER Ở TRÊN CÙNG -->
           <div class="modal-header funds-modal-header">
             <div style="display: flex; align-items: center; gap: 0.65rem;">

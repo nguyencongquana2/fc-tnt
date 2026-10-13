@@ -46,7 +46,9 @@
       this.topupSearchQuery = '';
 
       modal.innerHTML = `
-        <div class="modal-card modal-funds-card" style="max-width: 680px; width: 95%;">
+        <div class="modal-card modal-funds-card modal-funds-card-topup">
+          <div class="modal-sheet-drag-handle"></div>
+
           <!-- 1. MODAL HEADER (CỐ ĐỊNH Ở TRÊN) -->
           <div class="modal-header funds-modal-header">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -65,7 +67,7 @@
             <div class="topup-config-box">
               <div class="topup-config-row">
                 <span class="topup-config-label">Số tiền mặc định:</span>
-                <input type="number" id="topup-default-amount" value="${defaultAmount}" step="10000" class="form-control" style="width: 135px; font-weight: 700; color: var(--accent-gold, #f59e0b);" oninput="window.TNT.funds.onDefaultAmountChange(this.value)">
+                <input type="number" id="topup-default-amount" value="${defaultAmount}" step="10000" class="form-control topup-default-input" oninput="window.TNT.funds.onDefaultAmountChange(this.value)">
                 <div class="topup-amount-chips">
                   <button type="button" class="topup-chip-btn" onclick="window.TNT.funds.setDefaultAmount(50000)">+50k</button>
                   <button type="button" class="topup-chip-btn" onclick="window.TNT.funds.setDefaultAmount(100000)">+100k</button>
@@ -75,17 +77,17 @@
               </div>
               <div class="topup-config-row">
                 <span class="topup-config-label">Nội dung thu:</span>
-                <input type="text" id="topup-bulk-note" class="form-control" placeholder="VD: Nạp quỹ tháng 10" value="Nạp quỹ tháng ${new Date().getMonth() + 1}" style="flex: 1;">
+                <input type="text" id="topup-bulk-note" class="form-control topup-note-input" placeholder="VD: Nạp quỹ tháng 10" value="Nạp quỹ tháng ${new Date().getMonth() + 1}">
               </div>
             </div>
 
             <!-- THANH CÔNG CỤ TÌM KIẾM & CHỌN NHANH -->
             <div class="topup-select-toolbar">
               <div class="topup-search-box">
-                <span style="font-size: 0.9rem; color: var(--text-dim, #94a3b8);">🔍</span>
+                <span class="topup-search-icon">🔍</span>
                 <input type="text" class="topup-search-input" placeholder="Tìm nhanh cầu thủ để tick..." oninput="window.TNT.funds.onTopupSearch(this.value)">
               </div>
-              <div style="display: flex; gap: 0.4rem;">
+              <div class="topup-select-actions">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.TNT.funds.toggleSelectAllTopup(true)">✓ Chọn tất cả</button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.TNT.funds.toggleSelectAllTopup(false)">✗ Bỏ chọn</button>
               </div>
@@ -100,22 +102,22 @@
                 const balPrefix = bal >= 0 ? '+' : '';
                 return `
                   <div class="topup-player-row ${isPre ? 'active' : ''}" id="topup-row-${p.id}" data-name="${esc(p.name)}" data-nickname="${esc(p.nickname || '')}" data-number="${p.number || ''}">
-                    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0;">
+                    <div class="topup-player-info">
                       <input type="checkbox" value="${p.id}" class="topup-chk" id="chk-topup-${p.id}" ${isPre ? 'checked' : ''} onchange="window.TNT.funds.onTopupCheckboxChange(this)">
-                      <span class="fund-player-number-badge" style="width: 24px; height: 24px; font-size: 0.75rem;">${p.number || '-'}</span>
-                      <img src="${esc(p.avatar || 'assets/images/default-avatar.png')}" alt="" class="fin-table-avatar" style="width: 32px; height: 32px;" onerror="this.src='assets/images/default-avatar.png'">
-                      <div style="display: flex; flex-direction: column; min-width: 0;">
-                        <strong style="color: #fff; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                          ${esc(p.name)} ${p.nickname ? `<span style="color: var(--text-dim, #94a3b8); font-size: 0.75rem; font-weight: normal;">(${esc(p.nickname)})</span>` : ''}
+                      <span class="fund-player-number-badge topup-number-badge">${p.number || '-'}</span>
+                      <img src="${esc(p.avatar || 'assets/images/default-avatar.png')}" alt="" class="fin-table-avatar topup-avatar" onerror="this.src='assets/images/default-avatar.png'">
+                      <div class="topup-player-details">
+                        <strong class="topup-player-name">
+                          ${esc(p.name)} ${p.nickname ? `<span class="topup-player-nickname">(${esc(p.nickname)})</span>` : ''}
                         </strong>
-                        <span style="font-size: 0.72rem; color: var(--text-dim, #94a3b8);">
+                        <span class="topup-player-bal">
                           Dư: <strong class="${balClass}">${balPrefix}${this.formatMoney(bal)}</strong>
                         </span>
                       </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.4rem;">
-                      <span style="font-size: 0.75rem; color: var(--text-dim, #94a3b8);">Nạp:</span>
-                      <input type="number" class="form-control topup-amount-input" data-player-id="${p.id}" value="${defaultAmount}" step="10000" style="width: 110px; text-align: right; font-weight: 700; color: var(--accent-gold, #f59e0b);" oninput="window.TNT.funds.updateTopupSummary()">
+                    <div class="topup-amount-field">
+                      <span class="topup-amount-label">Nạp:</span>
+                      <input type="number" class="form-control topup-amount-input" data-player-id="${p.id}" value="${defaultAmount}" step="10000" oninput="window.TNT.funds.updateTopupSummary()">
                     </div>
                   </div>
                 `;
@@ -124,10 +126,11 @@
           </div>
 
           <!-- 3. STICKY FOOTER Ở ĐÁY MODAL (LUÔN DÍNH CHẶT DƯỚI ĐÁY) -->
-          <div class="funds-modal-footer">
+          <div class="funds-modal-footer topup-modal-footer">
             <div class="topup-footer-summary">
               <span>Đang chọn: <strong id="topup-summary-count" style="color: #38bdf8;">0 người</strong></span>
-              <span>| Tổng tiền: <strong id="topup-summary-total" style="color: var(--accent-gold, #f59e0b);">0đ</strong></span>
+              <span class="topup-footer-divider">|</span>
+              <span>Tổng tiền: <strong id="topup-summary-total" style="color: var(--accent-gold, #f59e0b);">0đ</strong></span>
             </div>
             <button type="button" class="btn btn-submit-topup" id="btn-submit-topup" onclick="window.TNT.funds.submitTopup()">
               ⚡ Xác Nhận Nạp Quỹ
