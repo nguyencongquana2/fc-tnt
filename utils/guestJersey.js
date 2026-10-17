@@ -217,9 +217,68 @@
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
+  /**
+   * Phân giải tìm Thành viên chính thức bảo lãnh cho Cầu thủ khách
+   * @param {Object} guestPlayer - Cầu thủ khách
+   * @param {Array} allPlayers - Toàn bộ danh sách cầu thủ
+   * @returns {Object|null} Cầu thủ bảo lãnh (Thành viên chính thức) hoặc null
+   */
+  function resolveGuestSponsor(guestPlayer, allPlayers) {
+    if (!guestPlayer || !Array.isArray(allPlayers) || allPlayers.length === 0) return null;
+
+    // Lọc danh sách thành viên chính thức (không phải khách)
+    const official = allPlayers.filter(p => p && !isGuestPlayer(p));
+    if (official.length === 0) return null;
+
+    // 1. Khớp theo invitedById nếu có
+    if (guestPlayer.invitedById) {
+      const matchById = official.find(p => p.id === guestPlayer.invitedById);
+      if (matchById) return matchById;
+    }
+
+    // 2. Phân giải từ chuỗi invitedBy
+    const rawInvited = String(guestPlayer.invitedBy || '').trim();
+    if (!rawInvited) return null;
+
+    // Bỏ tiền tố "Bạn ", "bạn " và các hậu tố (#...), (GK), (DF)...
+    const cleanInvited = rawInvited
+      .replace(/^bạn\s+/i, '')
+      .replace(/\s*\(#?\d+.*?\).*$/, '')
+      .trim()
+      .toLowerCase();
+
+    if (!cleanInvited || cleanInvited.includes('không rõ') || cleanInvited.includes('cả đội') || cleanInvited.includes('ca doi')) {
+      return null;
+    }
+
+    // 2.1. So khớp chính xác theo ID
+    let match = official.find(p => p.id && p.id.toLowerCase() === cleanInvited);
+    if (match) return match;
+
+    // 2.2. So khớp chính xác theo Biệt danh (nickname) hoặc Tên (name)
+    match = official.find(p => {
+      const nick = (p.nickname || '').trim().toLowerCase();
+      const name = (p.name || '').trim().toLowerCase();
+      return (nick && nick === cleanInvited) || (name && name === cleanInvited);
+    });
+    if (match) return match;
+
+    // 2.3. So khớp bao hàm (includes)
+    match = official.find(p => {
+      const nick = (p.nickname || '').trim().toLowerCase();
+      const name = (p.name || '').trim().toLowerCase();
+      return (nick && (nick.includes(cleanInvited) || cleanInvited.includes(nick))) ||
+             (name && (name.includes(cleanInvited) || cleanInvited.includes(name)));
+    });
+    if (match) return match;
+
+    return null;
+  }
+
   return {
     JERSEY_PALETTES,
     isGuestPlayer,
-    generateJerseyDataUri
+    generateJerseyDataUri,
+    resolveGuestSponsor
   };
 });

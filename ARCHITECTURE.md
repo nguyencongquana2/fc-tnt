@@ -273,7 +273,7 @@ Toàn bộ stylesheet được mô-đun hóa chuyên biệt theo từng miền g
 ### `utils/` (Mô-đun Dùng Chung - Nguyên Tắc DRY)
 Áp dụng mẫu Universal Module Definition (UMD) để tái sử dụng mã nguồn đồng thời trên cả Node.js Backend (`module.exports`) và Trình duyệt Frontend (`window` global) mà không phụ thuộc vào bundler:
 - `officialPlayers.js`: Nguồn sự thật duy nhất (Single Source of Truth - SSOT) cho danh sách 15 cầu thủ chính thức mặc định. Loại bỏ hoàn toàn sự trùng lặp dữ liệu giữa `server.js` và `js/state.js`.
-- `guestJersey.js`: Nguồn sự thật duy nhất (SSOT) cho phân hệ Khách Mời / Viện Binh: bảng màu áo thi đấu (Trắng, Đỏ, Xanh, Vàng, Bra, Arg...), tự động sinh Vector SVG Avatar áo đấu theo màu sắc kèm ký hiệu/số áo và nhận diện `isGuestPlayer` đồng bộ Client/Server.
+- `guestJersey.js`: Nguồn sự thật duy nhất (SSOT) cho phân hệ Khách Mời / Viện Binh: bảng màu áo thi đấu (Trắng, Đỏ, Xanh, Vàng, Bra, Arg...), tự động sinh Vector SVG Avatar áo đấu theo màu sắc kèm ký hiệu/số áo, nhận diện `isGuestPlayer` và thuật toán phân giải người bảo lãnh `resolveGuestSponsor` dùng chung Client/Server (hỗ trợ tự động trừ ví người bảo lãnh).
 - `officialTactics.js`: Kịch bản các bài tập chiến thuật sân 7 chuẩn mẫu (phạt góc, ném biên, thoát pressing) đồng bộ giữa client và server.
 - `tacticsPieces.js`: Nguồn sự thật duy nhất (SSOT) cho 15 quân cờ sân 7 và bóng mặc định, dùng chung giữa `sockets/tacticsSocket.js` và `js/tactics/tactics-pieces.js`.
 - `playerAliases.js`: Bảng ánh xạ từ khóa/biệt danh phủi (`FC_TNT_KNOWN_ALIASES`) và thuật toán chuẩn hóa tên cầu thủ (`getPlayerAliases`). Phục vụ phân tích giọng nói (Voice-to-Event) ở frontend và NLP rating trận đấu của Gemini AI ở backend.

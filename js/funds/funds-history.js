@@ -207,6 +207,20 @@
           ? `<span class="fund-player-number-badge" style="width: 24px; height: 24px; font-size: 0.74rem;">${playerNum}</span>`
           : `<span class="fund-player-number-badge" style="width: 24px; height: 24px; font-size: 0.74rem; opacity: 0.7;">⚽</span>`;
 
+        const noteRaw = t.note || '-';
+        const sponsorMatch = noteRaw.match(/^(.*?)\s*\((Bảo\s*lãnh[^)]+)\)/i);
+        let noteContentHtml = '';
+        if (sponsorMatch) {
+          const mainText = sponsorMatch[1].trim() || 'Tiền sân trận đấu';
+          const sponsorText = sponsorMatch[2].trim();
+          noteContentHtml = `
+            <div class="history-note-main">${esc(mainText)}</div>
+            <div class="history-note-badge" title="${esc(noteRaw)}">🤝 ${esc(sponsorText)}</div>
+          `;
+        } else {
+          noteContentHtml = `<div class="history-note-main">${esc(noteRaw)}</div>`;
+        }
+
         return `
           <tr>
             <td style="font-size: 0.76rem; color: var(--text-dim, #94a3b8); white-space: nowrap;">${dateStr}</td>
@@ -223,8 +237,8 @@
             <td style="text-align: right; color: var(--text-dim, #94a3b8); font-size: 0.85rem; font-family: monospace;">
               ${this.formatMoney(t.balanceAfter)}
             </td>
-            <td style="font-size: 0.82rem; color: var(--text-main, #e2e8f0); max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
-              ${esc(t.note || '-')}
+            <td class="history-note-col" title="${esc(noteRaw)}">
+              ${noteContentHtml}
             </td>
             ${this.isTreasurer() ? `
               <td style="text-align: center; white-space: nowrap;">
