@@ -308,23 +308,67 @@
       if (modal) modal.classList.remove('active');
     },
 
-    openPlayerLoginModal() {
+    openPlayerLoginModal(defaultTab = 'player') {
       const modal = document.getElementById('player-login-modal');
       const userInput = document.getElementById('player-login-user');
       const passInput = document.getElementById('player-login-pass');
+      const mgmtPinInput = document.getElementById('management-pin-input');
       const errorEl = document.getElementById('player-login-error');
+      const mgmtPinError = document.getElementById('management-pin-error');
+
       if (errorEl) errorEl.innerText = '';
+      if (mgmtPinError) mgmtPinError.innerText = '';
       if (userInput) userInput.value = '';
       if (passInput) {
         passInput.value = '';
         passInput.type = 'password';
       }
+      if (mgmtPinInput) {
+        mgmtPinInput.value = '';
+        mgmtPinInput.type = 'password';
+      }
       const toggleBtn = document.getElementById('toggle-player-pass-btn');
       if (toggleBtn) toggleBtn.innerText = '👁️';
+      const toggleMgmtBtn = document.getElementById('toggle-management-pin-btn');
+      if (toggleMgmtBtn) toggleMgmtBtn.innerText = '👁️';
+
+      this.switchLoginTab(defaultTab);
 
       if (modal) {
         modal.classList.add('active');
-        setTimeout(() => userInput && userInput.focus(), 150);
+        if (defaultTab === 'pin') {
+          setTimeout(() => mgmtPinInput && mgmtPinInput.focus(), 150);
+        } else {
+          setTimeout(() => userInput && userInput.focus(), 150);
+        }
+      }
+    },
+
+    switchLoginTab(tab = 'player') {
+      const tabPlayerBtn = document.getElementById('login-tab-player');
+      const tabPinBtn = document.getElementById('login-tab-pin');
+      const panelPlayer = document.getElementById('login-panel-player');
+      const panelPin = document.getElementById('login-panel-pin');
+      const userInput = document.getElementById('player-login-user');
+      const mgmtPinInput = document.getElementById('management-pin-input');
+      const errorEl = document.getElementById('player-login-error');
+      const mgmtPinError = document.getElementById('management-pin-error');
+
+      if (errorEl) errorEl.innerText = '';
+      if (mgmtPinError) mgmtPinError.innerText = '';
+
+      if (tab === 'pin') {
+        if (tabPlayerBtn) tabPlayerBtn.classList.remove('active');
+        if (tabPinBtn) tabPinBtn.classList.add('active');
+        if (panelPlayer) panelPlayer.style.display = 'none';
+        if (panelPin) panelPin.style.display = 'block';
+        setTimeout(() => mgmtPinInput && mgmtPinInput.focus(), 100);
+      } else {
+        if (tabPinBtn) tabPinBtn.classList.remove('active');
+        if (tabPlayerBtn) tabPlayerBtn.classList.add('active');
+        if (panelPin) panelPin.style.display = 'none';
+        if (panelPlayer) panelPlayer.style.display = 'block';
+        setTimeout(() => userInput && userInput.focus(), 100);
       }
     },
 
