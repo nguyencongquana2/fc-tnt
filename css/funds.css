@@ -514,6 +514,71 @@
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.18);
 }
 
+/* =========================================================================
+   HỘP SẮP XẾP DANH SÁCH VÍ (FUNDS SORT BOX)
+   ========================================================================= */
+.funds-sort-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.funds-sort-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  color: var(--text-dim, #94a3b8);
+  pointer-events: none;
+  z-index: 1;
+  transition: color 0.2s ease;
+}
+
+.funds-sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: rgba(10, 16, 30, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.42rem 1.85rem 0.42rem 1.85rem;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 10px;
+}
+
+.funds-sort-select:hover,
+.funds-sort-select:focus {
+  border-color: rgba(245, 158, 11, 0.5);
+  background-color: rgba(10, 16, 30, 0.95);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  color: #fff;
+}
+
+.funds-sort-select.is-sorted {
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  background-color: rgba(245, 158, 11, 0.15);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
+}
+
+.funds-sort-box:has(.is-sorted) .funds-sort-icon {
+  color: #fbbf24;
+}
+
+.funds-sort-select option {
+  background: #0f172a;
+  color: #fff;
+}
+
 .funds-toolbar-actions {
   display: flex;
   gap: 0.45rem;
@@ -712,6 +777,46 @@
   padding: 0.65rem 0.85rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   white-space: nowrap !important;
+}
+
+/* Tiêu đề cột có hỗ trợ sắp xếp */
+.funds-table th.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.funds-table th.th-sortable:hover {
+  color: #fbbf24 !important;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.funds-table th.th-sortable.active-sort {
+  color: #fbbf24 !important;
+}
+
+.th-sort-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.th-sort-inner-right {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.sort-indicator {
+  font-size: 0.72rem;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.th-sortable.active-sort .sort-indicator {
+  opacity: 1;
+  color: #fbbf24;
 }
 
 .funds-table td {
@@ -1409,6 +1514,20 @@
     padding: 0.4rem 2.2rem 0.4rem 2.2rem !important;
     box-sizing: border-box !important;
     border-radius: 999px !important;
+  }
+
+  /* Hộp sắp xếp trên mobile full-width */
+  .funds-sort-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .funds-sort-select {
+    width: 100% !important;
+    height: 38px !important;
+    font-size: 0.84rem !important;
+    box-sizing: border-box !important;
   }
 
   /* Bộ lọc trạng thái quỹ (Filter Pills) 2x2 Grid cân xứng 100% */

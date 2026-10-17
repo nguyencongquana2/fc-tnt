@@ -16,6 +16,7 @@
         playerCount: 0
       };
       this.filterStatus = 'all'; // all, good, low, debt
+      this.sortBy = 'default'; // default, balance_desc, balance_asc, jersey_asc
       this.searchQuery = '';
       this.topupSearchQuery = '';
       this.historyFilterType = 'all';
@@ -102,6 +103,50 @@
       if (tbody) this._renderPlayersTable(tbody);
     }
 
+    setSortBy(val) {
+      const validSorts = ['default', 'balance_desc', 'balance_asc', 'jersey_asc'];
+      this.sortBy = validSorts.includes(val) ? val : 'default';
+      const sortSelect = document.querySelector('.funds-sort-select');
+      if (sortSelect) {
+        sortSelect.value = this.sortBy;
+        sortSelect.classList.toggle('is-sorted', this.sortBy !== 'default');
+      }
+      this._updateSortHeaders();
+      const tbody = document.getElementById('funds-table-tbody');
+      if (tbody) this._renderPlayersTable(tbody);
+    }
+
+    toggleBalanceSort() {
+      const nextSort = this.sortBy === 'balance_desc' ? 'balance_asc' : (this.sortBy === 'balance_asc' ? 'default' : 'balance_desc');
+      this.setSortBy(nextSort);
+    }
+
+    toggleJerseySort() {
+      this.setSortBy(this.sortBy === 'jersey_asc' ? 'default' : 'jersey_asc');
+    }
+
+    _getSortIndicator(field) {
+      if (field === 'balance') return this.sortBy === 'balance_desc' ? '▼' : (this.sortBy === 'balance_asc' ? '▲' : '⇅');
+      if (field === 'jersey') return this.sortBy === 'jersey_asc' ? '▲' : '⇅';
+      return '';
+    }
+
+    _updateSortHeaders() {
+      const balTh = document.querySelector('.funds-table th.col-balance');
+      const balInd = document.getElementById('th-sort-balance');
+      if (balTh && balInd) {
+        balTh.classList.toggle('active-sort', this.sortBy === 'balance_desc' || this.sortBy === 'balance_asc');
+        balInd.textContent = this._getSortIndicator('balance');
+      }
+
+      const jerTh = document.querySelector('.funds-table th.col-jersey');
+      const jerInd = document.getElementById('th-sort-jersey');
+      if (jerTh && jerInd) {
+        jerTh.classList.toggle('active-sort', this.sortBy === 'jersey_asc');
+        jerInd.textContent = this._getSortIndicator('jersey');
+      }
+    }
+
     _renderPlayersTable(tbody) {
       if (!tbody) return;
 
@@ -137,6 +182,26 @@
           const num = String(p.number || '');
           return name.includes(this.searchQuery) || nick.includes(this.searchQuery) || num.includes(this.searchQuery);
         });
+      }
+
+      // 3. Sắp xếp danh sách ví (an toàn số âm, NaN và số áo 0)
+      const parseJersey = (p) => {
+        const n = parseInt(p.number, 10);
+        return Number.isNaN(n) ? 999 : n;
+      };
+
+      if (this.sortBy === 'balance_desc') {
+        filtered.sort((a, b) => {
+          const diff = (Number(b.fundBalance) || 0) - (Number(a.fundBalance) || 0);
+          return diff !== 0 ? diff : (parseJersey(a) - parseJersey(b));
+        });
+      } else if (this.sortBy === 'balance_asc') {
+        filtered.sort((a, b) => {
+          const diff = (Number(a.fundBalance) || 0) - (Number(b.fundBalance) || 0);
+          return diff !== 0 ? diff : (parseJersey(a) - parseJersey(b));
+        });
+      } else if (this.sortBy === 'jersey_asc') {
+        filtered.sort((a, b) => parseJersey(a) - parseJersey(b));
       }
 
       if (filtered.length === 0) {
@@ -317,6 +382,15 @@
               <input type="text" class="funds-search-input" placeholder="Tìm theo tên, số áo..." value="${esc(this.searchQuery)}" oninput="window.TNT.funds.onSearchInput(this.value)">
               <button type="button" class="funds-search-clear-btn" style="${this.searchQuery ? 'display:flex;' : 'display:none;'}" onclick="window.TNT.funds.clearSearch()" title="Xóa tìm kiếm">&times;</button>
             </div>
+            <div class="funds-sort-box">
+              <span class="funds-sort-icon">⇅</span>
+              <select class="funds-sort-select ${this.sortBy !== 'default' ? 'is-sorted' : ''}" onchange="window.TNT.funds.setSortBy(this.value)" aria-label="Sắp xếp danh sách ví">
+                <option value="default" ${this.sortBy === 'default' ? 'selected' : ''}>Sắp xếp: Mặc định</option>
+                <option value="balance_desc" ${this.sortBy === 'balance_desc' ? 'selected' : ''}>Số dư: Cao ➔ Thấp (Giảm dần)</option>
+                <option value="balance_asc" ${this.sortBy === 'balance_asc' ? 'selected' : ''}>Số dư: Thấp ➔ Cao (Tăng dần)</option>
+                <option value="jersey_asc" ${this.sortBy === 'jersey_asc' ? 'selected' : ''}>Số áo: Nhỏ ➔ Lớn</option>
+              </select>
+            </div>
             <div class="funds-filter-pills">
               <button type="button" class="funds-filter-pill ${this.filterStatus === 'all' ? 'active' : ''}" data-filter="all" onclick="window.TNT.funds.setFilterStatus('all')">
                 <span class="pill-title">Tất cả</span> <strong class="pill-count">(${totalPlayers})</strong>
@@ -366,9 +440,19 @@
           <table class="fin-table funds-table">
             <thead>
               <tr>
-                <th class="col-jersey">Số Áo</th>
+                <th class="col-jersey th-sortable ${this.sortBy === 'jersey_asc' ? 'active-sort' : ''}" onclick="window.TNT.funds.toggleJerseySort()" title="Bấm để sắp xếp theo số áo">
+                  <div class="th-sort-inner">
+                    <span>Số Áo</span>
+                    <span class="sort-indicator" id="th-sort-jersey">${this._getSortIndicator('jersey')}</span>
+                  </div>
+                </th>
                 <th class="col-player-info">Cầu Thủ</th>
-                <th class="col-balance">Số Dư Ví</th>
+                <th class="col-balance th-sortable ${this.sortBy === 'balance_desc' || this.sortBy === 'balance_asc' ? 'active-sort' : ''}" onclick="window.TNT.funds.toggleBalanceSort()" title="Bấm để đổi sắp xếp: Cao ➔ Thấp / Thấp ➔ Cao">
+                  <div class="th-sort-inner th-sort-inner-right">
+                    <span>Số Dư Ví</span>
+                    <span class="sort-indicator" id="th-sort-balance">${this._getSortIndicator('balance')}</span>
+                  </div>
+                </th>
                 <th class="col-status">Trạng Thái</th>
                 <th class="col-actions">Thao Tác</th>
               </tr>
@@ -391,8 +475,6 @@
         modal.style.display = 'none';
       }
     }
-
-
 
     formatMoney(amount) {
       if (root.TNT && root.TNT.utils && typeof root.TNT.utils.formatMoney === 'function') {
