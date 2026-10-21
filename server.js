@@ -14,6 +14,7 @@ try {
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const mongoose = require('mongoose');
 const path = require('path');
 const { Server } = require('socket.io');
@@ -97,6 +98,7 @@ initTacticsSocket(io);
 // Middleware
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
+app.use(compression());
 app.use(securityHeadersMiddleware);
 app.use(cors(corsOptions));
 app.use('/api', globalRateLimiter);
@@ -122,49 +124,9 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-// 15 Cầu thủ chính thức của đội bóng (Shared SSOT)
+// Dữ liệu dùng chung Server và Client (Shared SSOT)
 const OFFICIAL_PLAYERS = require('./utils/officialPlayers');
-
-const INITIAL_MOMENTS = [
-  {
-    id: 'moment_1',
-    title: 'Liên hoan tất niên & Chúc mừng chuỗi trận bất bại',
-    date: '2026-09-08',
-    location: 'Nhà hàng Lẩu Nướng 79 - Cầu Giấy, Hà Nội',
-    category: 'party',
-    description: 'Bữa tiệc liên hoan ấm cúng cùng toàn thể anh em FC TNT sau chuỗi trận thi đấu cống hiến hết mình. Thắng cùng mừng, thua cùng uống, tinh thần anh em là số 1!',
-    images: [
-      'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&auto=format&fit=crop&q=80'
-    ],
-    videoUrl: '',
-    taggedPlayerIds: ['p_1', 'p_2', 'p_3', 'p_4', 'p_6'],
-    reactions: { heart: 8, football: 5, beer: 15, fire: 10, userReactions: [] },
-    comments: [
-      { id: 'c_1', authorName: 'Quân Kun', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', content: 'Hôm đấy vui quá anh em ơi, bia vào chân đá lại càng dẻo! 🍻🔥', createdAt: new Date('2026-09-08T22:30:00') },
-      { id: 'c_2', authorName: 'Tài Thọ', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', content: 'Trận sau cứ thắng 3 bàn trở lên lại làm bữa nữa nhé đội trưởng! ⚽💪', createdAt: new Date('2026-09-08T23:15:00') }
-    ]
-  },
-  {
-    id: 'moment_2',
-    title: 'Ra mắt mẫu áo đấu sân nhà mùa giải mới',
-    date: '2026-09-01',
-    location: 'Sân bóng PVV - Trần Thái Tông',
-    category: 'jersey',
-    description: 'Chính thức trình làng bộ trang phục thi đấu mới cực chiến của FC TNT. Chúc toàn đội luôn giữ vững phong độ và tinh thần đoàn kết!',
-    images: [
-      'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=80'
-    ],
-    videoUrl: '',
-    taggedPlayerIds: ['p_1', 'p_2', 'p_4', 'p_5', 'p_7', 'p_12'],
-    reactions: { heart: 12, football: 18, beer: 6, fire: 20, userReactions: [] },
-    comments: [
-      { id: 'c_3', authorName: 'Vinh Lê', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', content: 'Áo mặc vào tôn dáng cực kỳ, chất vải thoáng mát đá bao sướng! 👕⭐', createdAt: new Date('2026-09-01T18:00:00') }
-    ]
-  }
-];
+const INITIAL_MOMENTS = require('./utils/initialMoments');
 
 // Fallback in-memory storage if MongoDB is connecting or unavailable
 const fallbackData = {
@@ -426,35 +388,57 @@ app.use('/api/payments', createPaymentsRouter(routeContext));
 app.use('/api/funds', createFundsRouter(routeContext));
 
 // =========================================================================
-// STATIC ASSETS & COMPATIBILITY ROUTES
+// STATIC ASSETS & CACHE-OPTIMIZED ROUTES
 // =========================================================================
 
-// Phục vụ thư mục assets
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
+// Cấu hình HTTP Cache tối ưu băng thông (7 ngày trên production, hỗ trợ ETag 304)
+const staticCacheOptions = {
+  maxAge: isProd ? '7d' : 0,
+  etag: true,
+  lastModified: true
+};
 
-// Tương thích ngược cho các icon ở thư mục gốc (để browser & search bot không bị 404)
-app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'icons', 'favicon.ico')));
-app.get('/favicon.png', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'icons', 'favicon.png')));
-app.get('/favicon-48.png', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'icons', 'favicon-48.png')));
-app.get('/favicon.svg', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'icons', 'favicon.svg')));
-app.get('/apple-touch-icon.png', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'icons', 'apple-touch-icon.png')));
+// Phục vụ các thư mục tài nguyên tĩnh công khai phía Client kèm Cache-Control
+app.use('/assets', express.static(path.join(__dirname, 'assets'), staticCacheOptions));
+app.use('/css', express.static(path.join(__dirname, 'css'), staticCacheOptions));
+app.use('/js', express.static(path.join(__dirname, 'js'), staticCacheOptions));
+app.use('/utils', express.static(path.join(__dirname, 'utils'), staticCacheOptions));
 
-// Tương thích ngược cho các đường dẫn cũ dưới /assets/
-app.get('/assets/favicon-192.png', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'icons', 'favicon-192.png')));
-app.get('/assets/logo-512.png', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'images', 'logo-512.png')));
-app.get('/assets/logo.png', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'images', 'logo.png')));
-app.get('/assets/logo.svg', (req, res) => res.sendFile(path.join(__dirname, 'assets', 'images', 'logo.svg')));
+// Helper gửi icon/ảnh kèm Cache-Control dài hạn
+const sendCachedIcon = (filePath) => (req, res) => {
+  if (isProd) res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 ngày
+  res.sendFile(filePath);
+};
 
-// Phục vụ các thư mục tài nguyên tĩnh công khai phía Client (ngăn chặn rò rỉ mã nguồn backend)
-app.use('/css', express.static(path.join(__dirname, 'css')));
-app.use('/js', express.static(path.join(__dirname, 'js')));
-app.use('/utils', express.static(path.join(__dirname, 'utils')));
+// Tương thích ngược cho các icon & logo thư mục gốc/cũ
+[
+  ['/favicon.ico', 'icons/favicon.ico'],
+  ['/favicon.png', 'icons/favicon.png'],
+  ['/favicon-48.png', 'icons/favicon-48.png'],
+  ['/favicon.svg', 'icons/favicon.svg'],
+  ['/apple-touch-icon.png', 'icons/apple-touch-icon.png'],
+  ['/assets/favicon-192.png', 'icons/favicon-192.png'],
+  ['/assets/logo-512.png', 'images/logo-512.png'],
+  ['/assets/logo.png', 'images/logo.png'],
+  ['/assets/logo.svg', 'images/logo.svg']
+].forEach(([route, rel]) => {
+  app.get(route, sendCachedIcon(path.join(__dirname, 'assets', rel)));
+});
+
+// Endpoint kiểm tra sức khỏe siêu nhẹ (< 50 bytes) cho ping giữ thức / uptime monitor
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: Math.round(process.uptime()) });
+});
 
 // Các tệp web công khai ở thư mục gốc
 app.get('/manifest.json', (req, res) => res.sendFile(path.join(__dirname, 'manifest.json')));
 app.get('/robots.txt', (req, res) => res.sendFile(path.join(__dirname, 'robots.txt')));
 app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'sitemap.xml')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/', (req, res) => {
+  // index.html dùng no-cache, must-revalidate để trình duyệt kiểm tra ETag 304, tránh cache phiên bản cũ
+  res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Route fallback cho Single Page App (ngăn rò rỉ các file mã nguồn/cấu hình khi truy cập qua URL)
 app.get('*', (req, res) => {

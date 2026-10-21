@@ -142,6 +142,7 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 │   └── tacticsSocket.js  # Phòng họp sa bàn trực tiếp, sync kéo thả & vẽ vector
 ├── utils/                # [DRY - Shared Logic] Mô-đun dùng chung giữa Backend & Frontend (UMD)
 │   ├── officialPlayers.js # Nguồn sự thật duy nhất (SSOT) cho 15 cầu thủ mặc định ban đầu
+│   ├── initialMoments.js # Dữ liệu khoảnh khắc mẫu ban đầu (SSOT) dùng chung cho khởi tạo hệ thống
 │   ├── guestJersey.js    # Nhận diện khách mời (SSOT), sinh avatar Áo Đấu SVG theo màu & người bảo lãnh
 │   ├── officialTactics.js # Kịch bản bài tập chiến thuật sân 7 chuẩn mẫu (SSOT)
 │   ├── tacticsPieces.js  # 15 quân cờ sân 7 mặc định & bóng dùng chung Server/Client (SSOT)
@@ -153,9 +154,9 @@ Tài liệu tóm tắt cấu trúc kỹ thuật và định hướng tra cứu m
 ├── .gitignore
 ├── index.html            # Khung giao diện Single-Page Application
 ├── manifest.json         # Cấu hình Progressive Web App (PWA)
-├── package.json          # Quản lý dependencies (Express, Mongoose, Socket.IO)
-├── robots.txt            # Chỉ thị SEO cho Googlebot
-├── server.js             # App bootstrap tinh gọn (~390 dòng), kết nối DB & Socket.IO
+├── package.json          # Quản lý dependencies (Express, Compression, Mongoose, Socket.IO)
+├── robots.txt            # Chỉ thị SEO cho Googlebot & chặn bot cào ngốn băng thông
+├── server.js             # App bootstrap tinh gọn (~468 dòng), nén Gzip compression, HTTP Caching 7 ngày & Socket.IO
 └── sitemap.xml           # Sơ đồ trang web phục vụ SEO
 ```
 
