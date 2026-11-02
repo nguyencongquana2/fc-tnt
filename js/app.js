@@ -40,6 +40,46 @@ window.appModule = {
         if (window.tacticsModule) window.tacticsModule.renderPlaybookList();
       });
     }
+
+    // Khôi phục tab trước khi reload (Ưu tiên URL hash > LocalStorage > Dashboard)
+    this.restoreActiveTab();
+  },
+
+  restoreActiveTab() {
+    let initialTab = '';
+
+    // 1. Đọc từ URL hash (ví dụ: #moments hoặc #tab-moments)
+    if (window.location.hash) {
+      const hash = window.location.hash.replace(/^#\/?(tab-)?/, '').trim();
+      if (hash && document.getElementById(`tab-${hash}`)) {
+        initialTab = hash;
+      }
+    }
+
+    // 2. Fallback đọc từ LocalStorage
+    if (!initialTab) {
+      try {
+        const savedTab = localStorage.getItem('tnt_active_tab');
+        if (savedTab && document.getElementById(`tab-${savedTab}`)) {
+          initialTab = savedTab;
+        }
+      } catch (e) {
+        console.warn('[App] Không thể đọc active tab từ LocalStorage:', e.message);
+      }
+    }
+
+    // 3. Nếu có tab hợp lệ khác dashboard, kích hoạt ngay tab đó
+    if (initialTab && initialTab !== 'dashboard') {
+      this.switchTab(initialTab, { noScroll: true });
+    }
+
+    // 4. Lắng nghe hashchange hỗ trợ Back/Forward trình duyệt
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace(/^#\/?(tab-)?/, '').trim();
+      if (hash && document.getElementById(`tab-${hash}`) && hash !== this.currentTab) {
+        this.switchTab(hash, { skipHash: true });
+      }
+    });
   },
 
   bindNavigation() {
@@ -52,8 +92,25 @@ window.appModule = {
     });
   },
 
-  switchTab(tabName) {
+  switchTab(tabName, options = {}) {
+    if (!tabName) return;
     this.currentTab = tabName;
+
+    // Lưu tab vào LocalStorage để reload trang vẫn giữ nguyên
+    try {
+      localStorage.setItem('tnt_active_tab', tabName);
+    } catch (e) {
+      console.warn('[App] Không thể lưu active tab vào LocalStorage:', e.message);
+    }
+
+    // Đồng bộ URL hash để tiện bookmark và nhận diện reload
+    if (!options.skipHash && window.location.hash !== `#${tabName}`) {
+      try {
+        history.replaceState(null, '', `#${tabName}`);
+      } catch (e) {
+        console.warn('[App] Không thể cập nhật URL hash:', e.message);
+      }
+    }
 
     // Update Tab Buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -110,7 +167,9 @@ window.appModule = {
       window.TNT.events.emit('tab:changed', tabName);
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!options.noScroll) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   },
 
   renderDashboard() {
