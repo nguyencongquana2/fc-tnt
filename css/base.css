@@ -161,8 +161,9 @@ body {
 .brand-title {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.25rem;
-  letter-spacing: -0.5px;
+  font-size: 1.3rem;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
   background: linear-gradient(to right, #ffffff, #a7f3d0);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

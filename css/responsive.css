@@ -483,6 +483,9 @@
 
   /* Weather Tab */
   .weather-venue-badge {
+    align-self: flex-start;
+    width: fit-content;
+    max-width: 100%;
     font-size: 0.75rem;
     padding: 0.4rem 0.75rem;
     word-break: break-word;
